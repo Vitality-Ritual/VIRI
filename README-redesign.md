@@ -514,3 +514,47 @@ messages come from `bindSignup` rather than one from the browser.
 was walked end to end: an empty submit is refused, a first name alone is refused, both names open
 `#/join` at step 02/04, and stepping back shows "Margaret Cole" prefilled. Login is untouched and
 still opens a saved profile from its email field.
+
+## Alignment, Barre3, and two features archived
+
+Asked for on 27 September.
+
+**The studio carousel lines up with its photographs.** When the arrows moved out of the section
+head they became the leftmost and rightmost things in the row, so *Find your next favorite*, *All
+studios* and the member-count footnote were all aligning to the arrows rather than to the cards.
+`.studio-section .section-head` and `.section-foot` now carry
+`padding-inline:calc(38px + clamp(10px,1.5vw,22px))` — one arrow plus one gap — which puts the
+heading and the footnote on the left edge of the first photograph and the link on the right edge
+of the last. Below 760px the arrows sit under the cards and the inset is reset to zero.
+
+**The longevity heading is level with the 50%.** `.longevity-grid` was `align-items:center`, which
+centred each column against the other and dropped the heading below the figure. It is `start` now;
+measured one pixel apart.
+
+**Instagram is live.** The footer icon and the contact page both point at
+`https://www.instagram.com/vitalityritual.co/`, new tab, `rel="noopener"`. The contact page used to
+say the account was coming soon.
+
+**Barre3 is in every city.** Eight venues added to `VENUES` in `explore-data.js`, one per city, all
+category `Barre`, in neighbourhoods deliberately away from each city's existing barre studio so the
+map does not stack two pins. Classes generate from venues, so this produced 151 Barre3 classes
+across all eight cities with no other change. It is not in the `studios` array, so it does not
+appear in the home page carousel or on `#/studios` — as asked.
+
+**Create an activity and community clubs are archived, not deleted.** Both are in
+`archive/clubs-and-activities.md` with their full source: `seedClubs`, `createActivity()`, the two
+click handlers, the explore-page markup, and the old dead `explore`/`filteredEvents()` pair that
+went with them. The CSS they used is deliberately still in `styles.css`, and `state.created` is
+still in the saved state shape, so nobody's existing preview data is destroyed and restoring is
+mostly a paste.
+
+**One trap worth recording.** `eventCard()` spans three lines, and removing it by matching the
+first line alone left two orphaned continuation lines and a page that would not parse —
+*Unexpected token '?'*, every route blank. It also turned out `eventCard` is still needed: the
+profile page uses it for a suggested plan, which is neither a club nor part of the create flow. It
+was restored in full from the `gh-pages` copy. The other four removals were genuinely single-line,
+which was checked against the original before trusting it.
+
+**Checked** at 390 and 1440px across thirteen routes — nothing empty, no overflow, no console
+errors. Barre3 confirmed rendering in the explore list; alignment confirmed by measuring the text
+ranges rather than the border boxes, which is what made the footnote look wrong at first.

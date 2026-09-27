@@ -221,8 +221,9 @@ strong{font-weight:500}
 .longevity-cta{display:inline-flex;align-items:center;gap:10px;margin-top:26px;font-size:9.5px;border-bottom:1px solid var(--line-2);padding-bottom:6px;align-self:flex-start}
 .longevity-cta svg{width:13px;height:13px}
 .longevity-split{background:var(--cream-2);padding:clamp(72px,8.4vw,126px) 0}
+/* top-aligned so the heading starts level with the 50%, not below it */
 .longevity-grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);
-  gap:clamp(28px,5vw,90px);align-items:center}
+  gap:clamp(28px,5vw,90px);align-items:start}
 .longevity-title{font-size:clamp(2rem,4.2vw,3.4rem);text-transform:uppercase;letter-spacing:.02em;
   color:var(--cocoa);margin:0;max-width:13ch;text-wrap:balance}
 /* the 50% is a big display numeral on a .9 line-height; it needs headroom or
@@ -246,6 +247,10 @@ strong{font-weight:500}
 .cards-three,.explore-grid,.studio-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gap)}
 .studio-carousel{display:grid;grid-template-columns:auto minmax(0,1fr) auto;
   align-items:center;gap:clamp(10px,1.5vw,22px)}
+/* the arrows sit outside the cards, so the heading, the All studios link and the
+   footnote have to be inset by an arrow plus a gap to line up with the photographs */
+.studio-section .section-head,
+.studio-section .section-foot{padding-inline:calc(38px + clamp(10px,1.5vw,22px))}
 .carousel-arrow:disabled{opacity:.28;cursor:default}
 .carousel-arrow:disabled:hover{border-color:var(--line-2);color:var(--muted)}
 .tile{min-width:0}
@@ -673,6 +678,9 @@ dialog p{color:var(--muted)}
      flex so the grid still takes the full content width on its own row */
   .studio-carousel{display:flex;flex-wrap:wrap;justify-content:center;gap:16px}
   .studio-carousel #studio-grid{flex:0 0 100%;order:-1;margin-bottom:8px}
+  /* cards are full width here, so the inset above would push the head off */
+  .studio-section .section-head,
+  .studio-section .section-foot{padding-inline:0}
   .form-row{grid-template-columns:1fr;gap:0}
   /* 16px keeps iOS Safari from zooming the page when a field takes focus */
   input,select,textarea,.field input,.field textarea,.field select{font-size:16px}
