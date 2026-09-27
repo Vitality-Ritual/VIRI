@@ -8,7 +8,9 @@ still present.**
 
 **27 September 2026.** `pin-stretch.jpg` and `mat-class.jpg` were freed when the community clubs
 feature was archived — they were the two club card photographs. Both stay on disk: see
-`archive/clubs-and-activities.md`, which is what would put them back in use.
+`archive/clubs-and-activities.md`, which is what would put them back in use. `barre-white.jpg` is
+now the Barre3 studio photograph; it had been offered in the story composer's pool but never
+actually displayed, so nothing lost it.
 
 **24 September 2026.** `connect2.jpg` is the single Find your circle photograph; `typing.jpg` came
 in for that section and went out again when it dropped to one picture; `pin-legs.jpg`,
