@@ -224,7 +224,17 @@
     V('at-pb-bu', 'Pure Barre', 'atl', 'Buckhead', -84.3804, 33.8384, 'Barre'),
     V('at-cl-wm', 'Club Pilates', 'atl', 'West Midtown', -84.4126, 33.7864, 'Pilates'),
     V('at-cb-ip', 'CycleBar', 'atl', 'Inman Park', -84.3534, 33.7614, 'Cycling'),
-    V('at-ot-vh', 'Orangetheory Fitness', 'atl', 'Virginia-Highland', -84.3544, 33.7794, 'Strength')
+    V('at-ot-vh', 'Orangetheory Fitness', 'atl', 'Virginia-Highland', -84.3544, 33.7794, 'Strength'),
+    /* Barre3 — one in every city. Neighbourhoods chosen to sit away from the
+       existing barre studio in each, so the map does not stack two pins. */
+    V('dc-b3-sh', 'Barre3', 'dc', 'Shaw', -77.0220, 38.9134, 'Barre'),
+    V('ny-b3-bh', 'Barre3', 'nyc', 'Brooklyn Heights', -73.9936, 40.6960, 'Barre'),
+    V('la-b3-lr', 'Barre3', 'la', 'Larchmont', -118.3244, 34.0760, 'Barre'),
+    V('mi-b3-gb', 'Barre3', 'mia', 'Coral Gables', -80.2588, 25.7506, 'Barre'),
+    V('bo-b3-fw', 'Barre3', 'bos', 'Fenway', -71.0972, 42.3448, 'Barre'),
+    V('ch-b3-ot', 'Barre3', 'chi', 'Old Town', -87.6382, 41.9106, 'Barre'),
+    V('ph-b3-oc', 'Barre3', 'phl', 'Old City', -75.1450, 39.9510, 'Barre'),
+    V('at-b3-vh', 'Barre3', 'atl', 'Poncey-Highland', -84.3596, 33.7716, 'Barre')
   ];
 
   /* ---------- sample members --------------------------------------------------

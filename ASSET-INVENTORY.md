@@ -3,14 +3,19 @@
 Generated 20 September 2026 from the files actually on disk, cross-referenced against the
 original `ASSET_SOURCES.json` (which only covers the first build).
 
-**39 catalogued files, of the 51 now in the folder. 26 referenced by the site, 13 retired but
-still present.** Updated 24 September 2026: `connect2.jpg` is the single Find your circle
-photograph; `typing.jpg` came in for that section and went out again when it dropped to one
-picture; `pin-legs.jpg`, `pin-rug.jpg` and `studio-still.jpg` were freed when the section stopped
-being a three-photograph sequence; `coffee-table.jpg` was freed when the longevity band lost its
-photograph; `brand-cyclebar.webp` was wrongly marked retired and is in fact in use. The twelve
-uncatalogued files were already on disk before this inventory was first generated and still have
-no row.
+**39 catalogued files, of the 51 now in the folder. 24 referenced by the site, 15 retired but
+still present.**
+
+**27 September 2026.** `pin-stretch.jpg` and `mat-class.jpg` were freed when the community clubs
+feature was archived — they were the two club card photographs. Both stay on disk: see
+`archive/clubs-and-activities.md`, which is what would put them back in use.
+
+**24 September 2026.** `connect2.jpg` is the single Find your circle photograph; `typing.jpg` came
+in for that section and went out again when it dropped to one picture; `pin-legs.jpg`,
+`pin-rug.jpg` and `studio-still.jpg` were freed when the section stopped being a three-photograph
+sequence; `coffee-table.jpg` was freed when the longevity band lost its photograph;
+`brand-cyclebar.webp` was wrongly marked retired and is in fact in use. The twelve uncatalogued
+files were already on disk before this inventory was first generated and still have no row.
 
 `ASSET_SOURCES.json` carries full URLs and dimensions for the 12 files it knows about. Everything
 else came in later — mostly from Margaret's Pinterest board — and has no provenance record at all.
@@ -40,13 +45,13 @@ else came in later — mostly from Margaret's Pinterest board — and has no pro
 | `hero-pilates.jpg` | yes | https://www.ohouse.kr/main/ospace | Copyright retained by source/photographer; no explicit reuse license verified. |
 | `hero-tree-pose.jpg` | yes | not recorded | Not recorded. Supplied by Margaret or added during the redesign; treat as third-party and unl… |
 | `lockers.jpg` | yes | not recorded | Not recorded. Supplied by Margaret or added during the redesign; treat as third-party and unl… |
-| `mat-class.jpg` | yes | not recorded | Not recorded. Supplied by Margaret or added during the redesign; treat as third-party and unl… |
+| `mat-class.jpg` | — | not recorded | Not recorded. Supplied by Margaret or added during the redesign; treat as third-party and unl… |
 | `pin-balls.jpg` | — | not recorded | Not recorded. Supplied by Margaret or added during the redesign; treat as third-party and unl… |
 | `pin-cafe.jpg` | yes | not recorded | Not recorded. Supplied by Margaret or added during the redesign; treat as third-party and unl… |
 | `pin-legs.jpg` | — | not recorded | Not recorded. Supplied by Margaret or added during the redesign; treat as third-party and unl… |
 | `pin-matclass.jpg` | yes | not recorded | Not recorded. Supplied by Margaret or added during the redesign; treat as third-party and unl… |
 | `pin-rug.jpg` | — | not recorded | Not recorded. Supplied by Margaret or added during the redesign; treat as third-party and unl… |
-| `pin-stretch.jpg` | yes | not recorded | Not recorded. Supplied by Margaret or added during the redesign; treat as third-party and unl… |
+| `pin-stretch.jpg` | — | not recorded | Not recorded. Supplied by Margaret or added during the redesign; treat as third-party and unl… |
 | `pin-trail.jpg` | yes | not recorded | Not recorded. Supplied by Margaret or added during the redesign; treat as third-party and unl… |
 | `reading.jpg` | yes | not recorded | Not recorded. Supplied by Margaret or added during the redesign; treat as third-party and unl… |
 | `studio-arches.jpg` | yes | not recorded | Not recorded. Supplied by Margaret or added during the redesign; treat as third-party and unl… |
@@ -77,7 +82,9 @@ These are unreferenced. They are kept because they may be wanted again; delete t
 - `caveat-OFL.txt`
 - `caveat.woff`
 - `coffee-table.jpg`
+- `mat-class.jpg`
 - `pin-balls.jpg`
+- `pin-stretch.jpg`
 - `pin-legs.jpg`
 - `pin-rug.jpg`
 - `studio-still.jpg`
