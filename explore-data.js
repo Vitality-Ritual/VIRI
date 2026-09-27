@@ -162,13 +162,13 @@
     V('dc-pb-du', 'Pure Barre', 'dc', 'Dupont Circle', -77.0448, 38.9112, 'Barre'),
     V('dc-cp-du', 'CorePower Yoga', 'dc', 'Dupont Circle', -77.0412, 38.9078, 'Yoga'),
     V('dc-sl-gt', 'SoulCycle', 'dc', 'Georgetown', -77.0668, 38.9042, 'Cycling'),
-    V('dc-br-cc', "Barry's", 'dc', 'U Street', -77.0316, 38.9172, 'Strength'),
+    V('dc-br-cc', 'Barry’s', 'dc', 'U Street', -77.0316, 38.9172, 'Strength'),
     V('dc-cl-nv', 'Club Pilates', 'dc', 'Navy Yard', -77.0022, 38.8772, 'Pilates'),
     V('dc-ot-ch', 'Orangetheory Fitness', 'dc', 'Capitol Hill', -76.9962, 38.8902, 'Strength'),
     V('dc-cb-am', 'CycleBar', 'dc', 'Adams Morgan', -77.0428, 38.9208, 'Cycling'),
     /* New York */
     V('ny-sl-wv', 'SoulCycle', 'nyc', 'West Village', -74.0038, 40.7340, 'Cycling'),
-    V('ny-br-ch', "Barry's", 'nyc', 'Chelsea', -74.0016, 40.7448, 'Strength'),
+    V('ny-br-ch', 'Barry’s', 'nyc', 'Chelsea', -74.0016, 40.7448, 'Strength'),
     V('ny-sc-fl', '[solidcore]', 'nyc', 'Flatiron', -73.9906, 40.7402, 'Strength'),
     V('ny-pb-ue', 'Pure Barre', 'nyc', 'Upper East Side', -73.9588, 40.7752, 'Barre'),
     V('ny-cp-uw', 'CorePower Yoga', 'nyc', 'Upper West Side', -73.9790, 40.7828, 'Yoga'),
@@ -177,7 +177,7 @@
     V('ny-ot-tr', 'Orangetheory Fitness', 'nyc', 'Tribeca', -74.0082, 40.7180, 'Strength'),
     /* Los Angeles */
     V('la-sl-wh', 'SoulCycle', 'la', 'West Hollywood', -118.3798, 34.0902, 'Cycling'),
-    V('la-br-wh', "Barry's", 'la', 'West Hollywood', -118.3848, 34.0880, 'Strength'),
+    V('la-br-wh', 'Barry’s', 'la', 'West Hollywood', -118.3848, 34.0880, 'Strength'),
     V('la-sc-sm', '[solidcore]', 'la', 'Santa Monica', -118.4912, 34.0202, 'Strength'),
     V('la-cp-br', 'CorePower Yoga', 'la', 'Brentwood', -118.4712, 34.0532, 'Yoga'),
     V('la-pb-cc', 'Pure Barre', 'la', 'Culver City', -118.3948, 34.0222, 'Barre'),
@@ -185,7 +185,7 @@
     V('la-cb-pa', 'CycleBar', 'la', 'Pasadena', -118.1452, 34.1462, 'Cycling'),
     V('la-ot-ve', 'Orangetheory Fitness', 'la', 'Venice', -118.4686, 33.9922, 'Strength'),
     /* Miami */
-    V('mi-br-sb', "Barry's", 'mia', 'South Beach', -80.1306, 25.7862, 'Strength'),
+    V('mi-br-sb', 'Barry’s', 'mia', 'South Beach', -80.1306, 25.7862, 'Strength'),
     V('mi-sl-sb', 'SoulCycle', 'mia', 'South Beach', -80.1332, 25.7902, 'Cycling'),
     V('mi-sc-br', '[solidcore]', 'mia', 'Brickell', -80.1936, 25.7612, 'Strength'),
     V('mi-cp-br', 'CorePower Yoga', 'mia', 'Brickell', -80.1918, 25.7648, 'Yoga'),
@@ -193,7 +193,7 @@
     V('mi-cl-wy', 'Club Pilates', 'mia', 'Wynwood', -80.1988, 25.8022, 'Pilates'),
     V('mi-ot-ed', 'Orangetheory Fitness', 'mia', 'Edgewater', -80.1874, 25.7942, 'Strength'),
     /* Boston */
-    V('bo-br-bb', "Barry's", 'bos', 'Back Bay', -71.0806, 42.3486, 'Strength'),
+    V('bo-br-bb', 'Barry’s', 'bos', 'Back Bay', -71.0806, 42.3486, 'Strength'),
     V('bo-sl-bb', 'SoulCycle', 'bos', 'Back Bay', -71.0832, 42.3494, 'Cycling'),
     V('bo-sc-se', '[solidcore]', 'bos', 'South End', -71.0736, 42.3418, 'Strength'),
     V('bo-cp-ca', 'CorePower Yoga', 'bos', 'Cambridge', -71.1048, 42.3722, 'Yoga'),
@@ -202,7 +202,7 @@
     V('bo-ot-so', 'Orangetheory Fitness', 'bos', 'Somerville', -71.0982, 42.3868, 'Strength'),
     /* Chicago */
     V('ch-sl-rn', 'SoulCycle', 'chi', 'River North', -87.6348, 41.8928, 'Cycling'),
-    V('ch-br-wl', "Barry's", 'chi', 'West Loop', -87.6462, 41.8842, 'Strength'),
+    V('ch-br-wl', 'Barry’s', 'chi', 'West Loop', -87.6462, 41.8842, 'Strength'),
     V('ch-sc-rn', '[solidcore]', 'chi', 'River North', -87.6312, 41.8946, 'Strength'),
     V('ch-cp-lp', 'CorePower Yoga', 'chi', 'Lincoln Park', -87.6468, 41.9226, 'Yoga'),
     V('ch-pb-gc', 'Pure Barre', 'chi', 'Gold Coast', -87.6282, 41.9046, 'Barre'),
@@ -218,7 +218,7 @@
     V('ph-ot-nl', 'Orangetheory Fitness', 'phl', 'Northern Liberties', -75.1404, 39.9652, 'Strength'),
     V('ph-cb-uc', 'CycleBar', 'phl', 'University City', -75.1944, 39.9534, 'Cycling'),
     /* Atlanta */
-    V('at-br-mi', "Barry's", 'atl', 'Midtown', -84.3846, 33.7836, 'Strength'),
+    V('at-br-mi', 'Barry’s', 'atl', 'Midtown', -84.3846, 33.7836, 'Strength'),
     V('at-sc-mi', '[solidcore]', 'atl', 'Midtown', -84.3822, 33.7862, 'Strength'),
     V('at-cp-of', 'CorePower Yoga', 'atl', 'Old Fourth Ward', -84.3664, 33.7624, 'Yoga'),
     V('at-pb-bu', 'Pure Barre', 'atl', 'Buckhead', -84.3804, 33.8384, 'Barre'),

@@ -558,3 +558,29 @@ which was checked against the original before trusting it.
 **Checked** at 390 and 1440px across thirteen routes — nothing empty, no overflow, no console
 errors. Barre3 confirmed rendering in the explore list; alignment confirmed by measuring the text
 ranges rather than the border boxes, which is what made the footnote look wrong at first.
+
+## Barre3 joins the studios page
+
+Asked for on 27 September, straight after the explore change: the studios page should list every
+brand that appears on the map, not a subset.
+
+Barre3 is now a ninth entry in the `studios` array, so it appears on `#/studios`, in the home
+carousel and at `#/studios/barre3` with its own copy. Its photograph is `barre-white.jpg`, which
+was sitting in the story composer's offered pool but had never actually been displayed anywhere —
+so taking it keeps the one-photograph-one-subject rule, and because the composer's `taken` set is
+built from `Object.values(STUDIO_PHOTO)` it removed itself from the pool automatically.
+
+**The one thing that did not adapt on its own** was the member count. `studioCard()` reads from a
+positional array, `[128,96,84,112,105,76,93,68]`, indexed by `studios.indexOf(s)` — eight long, so
+a ninth studio rendered "undefined members". Extended to nine. Everything else in the carousel is
+derived from `studios.length` and adjusted by itself: the paging went from six steps to seven, the
+All studios card now reads "9 in Washington, DC", and it still ends on Barre3 followed by that card.
+
+**An inconsistency surfaced while checking the two lists matched.** `explore-data.js` wrote the
+brand as `"Barry's"` with a straight apostrophe while the rest of the site uses the typographic
+`Barry’s`, so the same studio rendered two ways depending on the page. Normalised in the data, all
+seven venues. Nothing compares brand strings to studio names, so it is display-only and safe.
+
+**Checked** the brand list from `VIRI.venues` against the names rendered on `#/studios`: nine each
+and identical, no missing and no extras. Sixteen routes at 1440px and nine at 390px, nothing empty,
+no overflow, no console errors.
