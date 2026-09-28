@@ -584,3 +584,30 @@ seven venues. Nothing compares brand strings to studio names, so it is display-o
 **Checked** the brand list from `VIRI.venues` against the names rendered on `#/studios`: nine each
 and identical, no missing and no extras. Sixteen routes at 1440px and nine at 390px, nothing empty,
 no overflow, no console errors.
+
+## Find your circle — new photograph and roomier framing (28 September 2026)
+
+The section now uses `connect-kerb.jpg`: the supplied kerb photograph with the red workout set
+recoloured brown and the two garment logos painted out. The masters and the whole pipeline are in
+`project/Photos/` and `project/tools/photo-recolour/README.md`.
+
+The old framing cropped its photograph to **51% of the image height**, which on a 3:4 portrait
+cuts heads and shoes. Three changes fix that:
+
+- `.feature-connect .feature-media` takes `min-height:clamp(440px,50vw,760px)`. Because the
+  column is also 50vw, the box is square from roughly 880px to 1520px of viewport, so the crop is
+  **identical at every width in that range** (75% of the image height) instead of getting worse as
+  the column grows. Below 880px the floor makes it taller than wide, which shows more, not less.
+  Above 1520px the cap stops the band running away, at the cost of a little more crop.
+- `object-position` moved from `center 38%` to `center 44%`, which balances headroom above the
+  bun against the dead road below the shoes.
+- The steps breathe to match the taller panel: `padding-block:clamp(18px,3.4vw,50px)` on each
+  list item, with a little more room around the heading and the link. List items went from 77px
+  to 142px tall at the 1280px canvas.
+
+Stacked under 980px the media is full width, so it gets its own
+`min-height:clamp(420px,92vw,620px)` — a square box there would be enormous. At 375px it shows
+88% of the image.
+
+Checked at 1280, 1440 and 375. `.feature` is used only by this section, so none of it reaches
+anything else.
