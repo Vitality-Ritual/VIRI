@@ -634,6 +634,8 @@ dialog p{color:var(--muted)}
   .feature{grid-template-columns:1fr}
   .feature-reverse .feature-media{order:0}
   .feature-media{height:clamp(240px,52vw,360px)}
+  /* stacked, the media is full width, so the portrait needs its own height */
+  .feature-connect .feature-media{height:auto;min-height:clamp(420px,92vw,620px)}
   .map-layout{grid-template-columns:1fr}
   .map-frame{height:370px}
   .map-list{max-height:none}
@@ -739,9 +741,18 @@ dialog p{color:var(--muted)}
 /* ---- 3. Find your circle ----------------------------------- */
 /* the photograph is an ungraded original; this warms and mutes it into the
    palette without greyscaling, which editorial photographs never get */
-.connect-media img{object-position:center 38%;
+.connect-media img{object-position:center 44%;
   filter:saturate(.62) sepia(.14) brightness(1.03) contrast(.96)}
+/* The photograph is a 3:4 portrait, so a half-width column crops it hard: at
+   the base height only 51% of its height survived, which cut heads and shoes.
+   Height tracks the column width so the crop stays even as the section grows,
+   and the cap keeps the band from running away on very wide screens. */
+.feature-connect .feature-media{min-height:clamp(440px,50vw,760px)}
 .feature-connect .feature-panel{justify-content:center}
+/* the taller media box leaves the steps floating, so they breathe to match */
+.feature-connect .panel-list li{padding-block:clamp(18px,3.4vw,50px)}
+.feature-connect .feature-panel h2{margin-bottom:clamp(20px,2.4vw,34px)}
+.feature-connect .panel-link{margin-top:clamp(22px,2.8vw,38px)}
 .panel-list li{align-items:flex-start;gap:16px}
 .panel-body{display:block}
 .panel-t{display:block}

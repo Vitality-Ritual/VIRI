@@ -59,7 +59,7 @@ function home(){return `<div class="home-page">
 </section>
 <section class="feature feature-connect" data-reveal>
   <figure class="feature-media connect-media">
-    <img src="${A}connect2.jpg" alt="A woman stretching on a reformer in a lit studio" loading="lazy">
+    <img src="${A}connect-kerb.jpg" alt="Two women in matching brown workout sets sitting together on a curb after a class" loading="lazy">
   </figure>
   <div class="feature-panel">
     <h2>Find your circle</h2>
@@ -130,7 +130,7 @@ function writeStory(id){
      cannot duplicate a picture that is already somewhere */
   const taken=new Set([...articles,...(state.drafts||[])].filter(x=>!d||x.id!==d.id).map(x=>x.img)
     .concat(Object.values(STUDIO_PHOTO),
-      ['pin-trail.jpg','connect2.jpg',
+      ['pin-trail.jpg','connect-kerb.jpg',
        'studio-sculpt.jpg','studio-entry.jpg']));
   const imgs=['pin-cafe.jpg','connect-reformers.jpg','hero-tree-pose.jpg','barre-white.jpg',
     'studio-arches.jpg','barre-balls.jpg','lockers.jpg','studio-shelf.jpg','detail-weights.jpg']

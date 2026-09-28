@@ -6,6 +6,12 @@ original `ASSET_SOURCES.json` (which only covers the first build).
 **39 catalogued files, of the 51 now in the folder. 24 referenced by the site, 15 retired but
 still present.**
 
+**28 September 2026.** `connect-kerb.jpg` is the new Find your circle photograph, replacing
+`connect2.jpg`. It is the supplied kerb photograph with the red workout set recoloured brown and
+the two garment logos painted out — masters and the pipeline are in `project/Photos/` and
+`project/tools/photo-recolour/`. `connect2.jpg` is no longer displayed anywhere; it stays on disk
+and stays out of the story composer's pool. Rights are unchanged: still third-party and unlicensed.
+
 **27 September 2026.** `pin-stretch.jpg` and `mat-class.jpg` were freed when the community clubs
 feature was archived — they were the two club card photographs. Both stay on disk: see
 `archive/clubs-and-activities.md`, which is what would put them back in use. `barre-white.jpg` is
