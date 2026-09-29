@@ -682,3 +682,16 @@ the archive lists the seven redirects that were temporarily pointed elsewhere.
   text rather than as a lead-in. It is left in place on every other eyebrow.
 
 Checked across 16 routes with no console errors, plus 1280, 1440 and 375px on the home page.
+
+## Explore: no city label, no coach in search (29 September 2026)
+
+The page head's eyebrow printed the current city's name, which read as "VIRI is a Washington thing"
+directly above the city tabs that say otherwise. Removed, along with the `const city=exCity()` it
+was the only consumer of — the tabs use `ex.city`, which is a different variable.
+
+Coach came out of the search: both the placeholder's promise and the haystack in the filter, which
+was `c.title + brand + area + cat + coach`. Verified after: studio, category and neighbourhood
+queries still match (Barre3 3, Pilates 4, Shaw 3) and a coach name now returns 0.
+
+Coach names are still *displayed* on class cards, in the class modal and on the booking page — that
+is display rather than search, so it was left alone.
