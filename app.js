@@ -87,7 +87,7 @@ function home(){return `<div class="home-page">
   </div>
   
 </div></section>
-<section class="section edit-section"><div class="wrap"><div class="section-head" data-reveal><h2 class="section-title">The VIRI edit</h2><a class="text-link" href="#/read">All stories ${arrow}</a></div><div class="cards-three">${allArticles().slice(0,3).map((a,i)=>a.draft?draftCard(a,i):articleCard(a,i)).join('')}</div></div></section>
+<section class="section edit-section"><div class="wrap"><div class="section-head" data-reveal><h2 class="section-title">The VIRI edit</h2><a class="text-link" href="#/read">All stories ${arrow}</a></div><div class="cards-three">${allArticles().slice(0,3).map((a,i)=>articleCard(a,i)).join('')}</div></div></section>
 <section class="testimonial" data-reveal><div class="wrap">
   <p class="stars" aria-label="Five stars">★★★★★</p>
   <blockquote>${reviews[0].text}</blockquote>
@@ -125,66 +125,13 @@ const articles=[
  {id:'shared-rituals',date:'2026-08-08',category:'Community',title:'Why the people beside you matter',img:'detail-weights.jpg',desc:'The connection between our relationships and living well.',body:`<p>A workout can give us a reason to get together. The conversation before class and the familiar face on the next mat can become part of the ritual.</p><h2>Connection deserves our attention</h2><p>A 2010 meta-analysis combined 148 studies involving 308,849 participants. Stronger social relationships were associated with 50% higher odds of survival over the studies’ follow-up periods.</p><p>This does not mean a 50% longer life, and it does not establish that joining a workout community causes that outcome. It shows why social connection belongs in a conversation about well-being.</p><h2>Start with something you share</h2><p>Our idea is simple: shared interests and routines create opportunities to meet. Find a class you enjoy, invite someone along, and see what develops.</p><p><a href="${studyURL}" target="_blank" rel="noopener">Read the original research in PLOS Medicine</a>.</p>`}
  ,{id:'after-class',date:'2026-07-25',category:'Community',title:'The ritual after the ritual',img:'studio-shelf.jpg',desc:'Leave a little room for a coffee and a conversation.',body:`<p>Sometimes the best part of a class is what happens after it. You put your mat away, step outside, and realize you have a few minutes to spare.</p><h2>Make a small invitation</h2><p>“I’m getting a coffee nearby—would you like to come?” A simple invitation gives someone a choice without turning an ordinary moment into a big plan.</p><h2>Keep it easy to repeat</h2><p>You don’t need a new destination every week. A familiar café or a walk around the block can become a comfortable place to pick up a conversation.</p><h2>Let connection take its time</h2><p>Some days you’ll linger; other days you’ll head straight home. The point is to make space for the people you keep seeing, in a way that fits both of your lives.</p><p class="small">An original VIRI editorial preview.</p>`}
 ];
-const allArticles=()=>[...(state.drafts||[]),...articles]
+/* drafts used to be merged in ahead of the published articles here; see
+   archive/story-composer.md. state.drafts is still in the saved state shape. */
+const allArticles=()=>[...articles]
   .sort((x,y)=>(artDate(y.date)?.getTime()||0)-(artDate(x.date)?.getTime()||0));
 /* Issue number: allArticles() runs newest-first, so the oldest is No. 01 and the
    newest is highest. Home slices the first three, which keeps these indices. */
 const artNo=(a,i)=>{const n=allArticles();return String(n.length-(i??n.indexOf(a))).padStart(2,'0');};
-function draftCard(d,i){return `<article class="tile" data-reveal><a href="#/read/${d.id}"><div class="tile-media"><img src="${A+d.img}" alt="${escapeHTML(d.desc)}" loading="lazy"></div><p class="tile-meta"><span class="tile-index"><span class="tile-no">No. ${artNo(d,i)}</span>${d.date?`<time class="tile-date" datetime="${d.date}">${fmtShort(d.date)}</time>`:'<span class="tile-date">Your draft</span>'}</span></p><h3>${escapeHTML(d.title)}</h3><p>${escapeHTML(d.desc)}</p></a></article>`;}
-function writeStory(id){
-  const d=(state.drafts||[]).find(x=>x.id===id);
-  /* only offer photographs nothing else on the site is using, so a new story
-     cannot duplicate a picture that is already somewhere */
-  const taken=new Set([...articles,...(state.drafts||[])].filter(x=>!d||x.id!==d.id).map(x=>x.img)
-    .concat(Object.values(STUDIO_PHOTO),
-      ['pin-trail.jpg','connect-kerb.jpg',
-       'studio-sculpt.jpg','studio-entry.jpg']));
-  const imgs=['pin-cafe.jpg','connect-reformers.jpg','hero-tree-pose.jpg','barre-white.jpg',
-    'studio-arches.jpg','barre-balls.jpg','lockers.jpg','studio-shelf.jpg','detail-weights.jpg']
-    .filter(x=>!taken.has(x)||(d&&d.img===x));
-  openModal(d?'Edit your story':'Write a story',
-  `<p class="small" style="margin-bottom:20px">Written here, a story is saved in this browser only — nobody else can see it and it does not survive clearing your site data. To publish it for real, write it here, then use <b>Copy for publishing</b> and send me the text.</p>
-   <form id="story-form">
-     <div class="field"><label for="st-title">Headline</label>
-       <input id="st-title" name="title" maxlength="90" required value="${d?escapeHTML(d.title):''}"></div>
-     <div class="form-row">
-       <div class="field"><label for="st-cat">Category</label>
-         <select id="st-cat" name="category">${['Movement','Community','Style'].map(c=>`<option ${d&&d.category===c?'selected':''}>${c}</option>`).join('')}</select></div>
-       <div class="field"><label for="st-img">Photograph</label>
-         <select id="st-img" name="img">${imgs.map(i=>`<option value="${i}" ${d&&d.img===i?'selected':''}>${i.replace(/\.(jpg|png|webp)$/,'').replace(/-/g,' ')}</option>`).join('')}</select></div>
-     </div>
-     <div class="field"><label for="st-desc">Standfirst — one line under the headline</label>
-       <input id="st-desc" name="desc" maxlength="140" required value="${d?escapeHTML(d.desc):''}"></div>
-     <div class="field"><label for="st-body">The story</label>
-       <textarea id="st-body" name="body" rows="12" required placeholder="Write in plain paragraphs. Leave a blank line between them.">${d?escapeHTML(d.raw||''):''}</textarea></div>
-     <p id="st-error" class="field-error" role="alert"></p>
-     <div class="dialog-actions">
-       ${d?`<button type="button" class="button outline small" data-action="delete-story" data-id="${d.id}">Delete</button>`:''}
-       <button type="button" class="button outline small" data-action="close-modal">Cancel</button>
-       <button class="button small" type="submit">${d?'Save changes':'Add to the edit'}</button>
-     </div>
-   </form>`,
-  ()=>{$('#story-form').addEventListener('submit',e=>{
-    e.preventDefault();
-    const f=Object.fromEntries(new FormData(e.target));
-    const raw=String(f.body).trim();
-    if(!raw){$('#st-error').textContent='The story needs some words in it.';return;}
-    const html=raw.split(/\n\s*\n/).map(p=>`<p>${escapeHTML(p.trim()).replace(/\n/g,'<br>')}</p>`).join('');
-    const today=new Date();const iso=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-    const entry={id:d?d.id:'draft-'+crypto.randomUUID().slice(0,8),draft:true,date:d?d.date:iso,
-      title:String(f.title).trim(),category:f.category,img:f.img,desc:String(f.desc).trim(),raw,body:html};
-    state.drafts=d?(state.drafts||[]).map(x=>x.id===entry.id?entry:x):[entry,...(state.drafts||[])];
-    save();closeModal();location.hash='#/read';render(false);
-    toast(d?'Story updated on this device.':'Story added. It lives in this browser only.');
-  });});
-}
-function copyStory(id){
-  const d=(state.drafts||[]).find(x=>x.id===id); if(!d)return;
-  const text=`TITLE: ${d.title}\nCATEGORY: ${d.category}\nSTANDFIRST: ${d.desc}\nPHOTO: ${d.img}\n\n${d.raw}`;
-  navigator.clipboard?.writeText(text).then(
-    ()=>toast('Copied. Send me that text and I will publish it into the site properly.'),
-    ()=>toast('Could not reach the clipboard — select the text in the story and copy it by hand.'));
-}
 function articleCard(a,i){return `<article class="tile" data-reveal><a href="#/read/${a.id}"><div class="tile-media"><img src="${A+a.img}" alt="${escapeHTML(a.desc)}" loading="lazy"></div><p class="tile-meta"><span class="tile-index"><span class="tile-no">No. ${artNo(a,i)}</span>${a.date?`<time class="tile-date" datetime="${a.date}">${fmtShort(a.date)}</time>`:''}</span></p><h3>${escapeHTML(a.title)}</h3><p>${escapeHTML(a.desc)}</p></a></article>`;}
 function readNext(current){
   const others=allArticles().filter(x=>x.id!==current).slice(0,3);
@@ -212,7 +159,7 @@ function readPage(id){if(id){const a=allArticles().find(x=>x.id===id);if(!a)retu
       <a href="#/read" class="text-link">${arrowLeft} All stories</a>
       <header class="article-head">
         <div class="article-titles">
-          <p class="eyebrow">${escapeHTML(a.category)} &middot; ${a.draft?'Your draft &middot; saved on this device only':'The VIRI edit'}</p>
+          <p class="eyebrow">${escapeHTML(a.category)} &middot; The VIRI edit</p>
           <h1>${escapeHTML(a.title)}</h1>
           <p class="standfirst">${escapeHTML(a.desc)}</p>
           <p class="byline">${a.date?`<time datetime="${a.date}">${fmtLong(a.date)}</time>`:''}${a.author?`<span class="byline-dot" aria-hidden="true">&middot;</span><span>By ${escapeHTML(a.author)}</span>`:''}</p>
@@ -223,13 +170,12 @@ function readPage(id){if(id){const a=allArticles().find(x=>x.id===id);if(!a)retu
         <aside class="article-rail">${subscribeBox()}${readNext(a.id)}</aside>
         <div class="article-prose">
           ${a.body}
-          ${a.draft?`<div class="draft-bar"><button class="button small outline" data-action="write-story" data-id="${a.id}">Edit</button><button class="button small" data-action="copy-story" data-id="${a.id}">Copy for publishing</button></div>`:''}
           <div class="article-foot">${button('Find your next ritual','#/explore')}</div>
         </div>
       </div>
     </div>
   </article>`;}
-  return `<section class="page-head"><div class="wrap"><p class="eyebrow">The VIRI edit</p><h1>A little inspiration<br>for your everyday.</h1><p>Movement, community, and the rituals that bring us together.</p></div></section><section class="wrap" style="padding-bottom:80px"><div class="toolbar" style="justify-content:flex-end"><button class="button small outline" data-action="write-story">Write a story ${arrow}</button></div><div class="cards-three">${allArticles().map((a,i)=>a.draft?draftCard(a,i):articleCard(a,i)).join('')}</div></section>`;}
+  return `<section class="page-head"><div class="wrap"><p class="eyebrow">The VIRI edit</p><h1>A little inspiration<br>for your everyday.</h1><p>Movement, community, and the rituals that bring us together.</p></div></section><section class="wrap" style="padding-bottom:80px"><div class="cards-three">${allArticles().map((a,i)=>articleCard(a,i)).join('')}</div></section>`;}
 /* ===================== Explore: map, classes, rosters ===================== */
 let ex={city:'dc',cat:'All',day:0,time:'All',members:false,query:'',venue:null,cls:null};
 const exCity=()=>VIRI.cities.find(c=>c.id===ex.city)||VIRI.cities[0];
@@ -853,9 +799,6 @@ case 'ex-class':ex={...ex,cls:t.dataset.id};exRefresh();$('#ex-panel')?.scrollIn
 case 'ex-back':ex={...ex,cls:null};exRefresh();break;
 case 'ex-person':exPersonModal(t.dataset.id);break;
 case 'ex-connect':exConnect(t.dataset.id);break;
-case 'write-story':writeStory(t.dataset.id);break;
-case 'copy-story':copyStory(t.dataset.id);break;
-case 'delete-story':state.drafts=(state.drafts||[]).filter(x=>x.id!==t.dataset.id);save();closeModal();location.hash='#/read';render(false);toast('Draft deleted.');break;
 case 'book-existing':bookChoose(t.dataset.id,'existing');break;
 case 'book-new':bookChoose(t.dataset.id,'new');break;
 case 'book-plan':bookChoose(t.dataset.id,'plan');break;

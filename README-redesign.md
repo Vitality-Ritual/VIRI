@@ -695,3 +695,29 @@ queries still match (Barre3 3, Pilates 4, Shaw 3) and a coach name now returns 0
 
 Coach names are still *displayed* on class cards, in the class modal and on the booking page — that
 is display rather than search, so it was left alone.
+
+## Remove the story composer; studios lede; about-page rule (29 September 2026)
+
+The VIRI edit is written by Margaret and Annabel, not by members, so the "Write a story" composer
+came out. Archived to `archive/story-composer.md`: `draftCard()`, `writeStory()`, `copyStory()`, the
+composer button on `#/read`, the Edit / "Copy for publishing" bar on a draft article, and the
+`write-story`, `copy-story` and `delete-story` handlers.
+
+Removing it left three things that a naive delete would have missed, all found by grepping for each
+identifier rather than trusting the obvious ones:
+
+- Both tile grids branched `a.draft?draftCard(...):articleCard(...)`. With drafts gone the branch is
+  dead, so both collapse to `articleCard`.
+- `allArticles()` merged `state.drafts` ahead of `articles` before sorting. It keeps the sort and
+  drops the merge; every other caller (`artNo`, `readNext`, `readPage`) is untouched.
+- The article detail eyebrow still branched on `a.draft` to print "Your draft · saved on this device
+  only". Simplified to "The VIRI edit".
+
+`drafts:[]` stays in `defaultState`, so anything already written in someone's browser is not
+destroyed — same convention as the clubs archive.
+
+Also: the studios lede is now "Add your favorite places to move, then find your people.", and the
+rule before the about page's "Vitality Ritual" eyebrow is removed, matching the join finale.
+
+Checked across 16 routes with no console errors; the edit still lists five articles numbered 01–05
+and the home page shows 05/04/03.
