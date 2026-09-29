@@ -777,3 +777,24 @@ which is ordinary editorial practice. Height went 717 → 480 at 1024, and at 14
 on the h3 so a subhead cannot be stranded at the foot of a column.
 
 Under 860px it collapses to one column.
+
+## Photograph for the corporate burnout article (29 September 2026)
+
+`coat-journal.jpg` replaces the placeholder. It is the supplied image with the "Jaśnie Plan" text
+taken off the notebook. At 736x920 it is exactly the 4:5 the tile and article figure use, so it is
+uncropped in both.
+
+Removing the text took three attempts, and the failures are the useful part:
+
+- **Threshold detection does not work.** The linen weave's own dark pixels reach a luma deficit of
+  ~64 and the ink only reaches ~95, so the two overlap: any cut either leaves strokes behind or eats
+  the weave. The first mask swallowed the entire search box.
+- **So the whole block is cloned from clean linen elsewhere on the cover** — but picking the donor by
+  luma statistics also fails, because the beige coat behind the cover sits in the *same luma band* as
+  the linen. A donor that passed "every pixel is plain weave" still contained the cover's lit edge
+  and left a bright seam. A low-frequency flatness test rejected everything, since the reference
+  weave itself has a block spread of 11.3. The donor was chosen by looking at it: x440-572, y235-309.
+- **A lighting offset is not enough.** Interpolating brightness from bands above and below left the
+  donor's own structure visible. The fix is a proper field swap: fit a quadratic to the ring around
+  the block (which the ink never touches) and another to the donor, then keep the donor's weave and
+  subtract its lighting field while adding the target's. That is what makes the patch invisible.

@@ -6,6 +6,12 @@ original `ASSET_SOURCES.json` (which only covers the first build).
 **39 catalogued files, of the 51 now in the folder. 24 referenced by the site, 15 retired but
 still present.**
 
+**29 September 2026 (later).** `coat-journal.jpg` is the corporate burnout article's photograph,
+replacing its "Photo to come" placeholder. It is the supplied image with the "Jaśnie Plan" text
+removed from the notebook cover — masters in `project/Photos/CoatJournal-original.png` and
+`CoatJournal-blank-master.png`, method in `project/tools/photo-recolour/remove-notebook-text.rb`.
+At 736x920 it is exactly the 4:5 the tile and article figure use, so nothing is cropped.
+
 **29 September 2026.** `connect-kerb.jpg` was recropped to 955x878 so neither woman's face is in
 frame — the right-hand one was mid-sentence and the expression was not what the section wanted.
 The full-length 3:4 version is still `project/Photos/KerbSet-brown-master.png`; the cropped master
