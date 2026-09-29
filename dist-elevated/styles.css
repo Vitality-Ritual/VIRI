@@ -783,6 +783,7 @@ body:after{
 /* centred over the join finale the rule reads as a stray mark beside the text
    rather than as a lead-in, so it comes off there */
 .join-inner .eyebrow:before{display:none}
+.about-hero .eyebrow:before{display:none}
 .statement h2:after,.join-inner h2:before,.testimonial .stars:after{
   content:'';display:block;width:7px;height:7px;border:1px solid currentColor;transform:rotate(45deg);
   margin:clamp(20px,2.4vw,30px) auto 0;opacity:.45
