@@ -252,7 +252,7 @@ function exMatch(c){
   if(ex.members&&!c.going.length)return false;
   if(ex.time!=='All'){const h=d.getHours()+d.getMinutes()/60,b=DAYBANDS[ex.time];if(h<b[0]||h>=b[1])return false;}
   if(ex.query){const v=exVenue(c.venue),q=ex.query.toLowerCase();
-    if(!((c.title+' '+v.brand+' '+c.area+' '+c.cat+' '+c.coach).toLowerCase().includes(q)))return false;}
+    if(!((c.title+' '+v.brand+' '+c.area+' '+c.cat).toLowerCase().includes(q)))return false;}
   return true;
 }
 const exFiltered=()=>exClasses().filter(exMatch);
@@ -497,9 +497,8 @@ function exList(){
 
 /* ---- page ---- */
 function explorePage(){
-  const city=exCity();
   return `<section class="page-head"><div class="wrap"><div class="page-head-row">
-    <div><p class="eyebrow">${escapeHTML(city.name)}</p>
+    <div>
     <h1>Add your classes. Find the people in them.</h1>
     <p>Every studio near you, every class this week, and who from VIRI is already going.</p></div>
   </div></div></section>
@@ -513,7 +512,7 @@ function explorePage(){
         aria-pressed="${d.i===ex.day}"><b>${d.label}</b><span>${d.sub}</span></button>`).join('')}</div>
     <div class="toolbar">
       <label class="search-field"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="m15 15 6 6"/></svg>
-        <input type="search" id="ex-search" aria-label="Search classes" placeholder="Search a class, studio, coach or neighborhood" value="${escapeHTML(ex.query)}"></label>
+        <input type="search" id="ex-search" aria-label="Search classes" placeholder="Search a class, studio or neighborhood" value="${escapeHTML(ex.query)}"></label>
       <select id="ex-time" aria-label="Time of day">${['All','Early','Midday','Evening'].map(t=>
         `<option value="${t}" ${t===ex.time?'selected':''}>${t==='All'?'Any time':t==='Early'?'Before 9am':t==='Midday'?'9am – 4pm':'After 4pm'}</option>`).join('')}</select>
       <button class="chip ${ex.members?'active':''}" data-action="ex-members" aria-pressed="${ex.members}">Members going</button>
