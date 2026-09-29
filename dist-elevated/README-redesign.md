@@ -721,3 +721,17 @@ rule before the about page's "Vitality Ritual" eyebrow is removed, matching the 
 
 Checked across 16 routes with no console errors; the edit still lists five articles numbered 01–05
 and the home page shows 05/04/03.
+
+## About page: philosophy copy and an inline citation (29 September 2026)
+
+Opening section reworded, and the philosophy section's first two paragraphs revised — "what they do
+not have is anyone to do it with" becomes "what is currently lacking is the consistency of having
+other people to do it with", and "the women nearby" becomes "the people nearby".
+
+The Farrance, Tsofliou & Clark citation moves off its own line and onto the word **research**, the
+same move the Holt-Lunstad citation made on the home page. It needed the underline moved with it:
+`.philosophy-source a` became `.philosophy-copy p a`, tuned for the dark band — an unmarked link is
+invisible there, since body copy on that band is already near-white.
+
+`.philosophy-source` and `.longevity-source` are now dead rules in `styles.css`, left in place per
+the convention the clubs archive set.
