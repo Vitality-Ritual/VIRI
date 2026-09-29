@@ -576,14 +576,26 @@ input::placeholder,textarea::placeholder{color:#a0968a}
    Deliberately not a tile: it sits on the cream band with a rule above it so
    it reads as an editorial footer rather than as another story. */
 .edit-note{padding:clamp(52px,6vw,86px) 0 clamp(76px,9vw,120px);background:var(--cream-2)}
-.edit-note-inner{max-width:62ch;margin:0 auto;text-align:left;
+/* The block spans the full wrap now. At one column that would be a ~145
+   character measure, far past readable, so the body flows in two columns
+   instead: wider block, about half the height, measure still sane. */
+.edit-note-inner{max-width:none;margin:0;text-align:left;
   border-top:1px solid var(--line);padding-top:clamp(34px,4vw,52px)}
+.edit-note-cols{columns:2;column-gap:clamp(34px,4.2vw,72px)}
+/* paragraphs may split across the break: holding them whole stops the browser
+   balancing the two columns and left the first one 150px short */
+/* keep a subhead attached to the paragraph it introduces */
+.edit-note-cols h3{break-inside:avoid;break-after:avoid;margin-top:0}
+.edit-note-cols > :first-child{margin-top:0}
 .edit-note h2{font-size:clamp(1.4rem,2.3vw,2rem);text-transform:uppercase;letter-spacing:.03em;
   color:var(--cocoa);margin:0 0 clamp(18px,2vw,26px);text-wrap:balance}
 .edit-note h3{font-size:clamp(1.05rem,1.5vw,1.25rem);text-transform:uppercase;letter-spacing:.06em;
   color:var(--cocoa);margin:clamp(28px,3vw,38px) 0 clamp(12px,1.4vw,16px)}
 .edit-note p{color:var(--muted);font-size:16px;line-height:1.85;margin:0 0 16px}
 .edit-note p:last-child{margin-bottom:0}
+@media (max-width:860px){
+  .edit-note-cols{columns:1}
+}
 
 .article-foot{margin-top:clamp(34px,4vw,52px)}
 

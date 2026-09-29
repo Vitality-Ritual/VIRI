@@ -760,3 +760,20 @@ text pending one.
 **The edit's closing note.** Standalone text under the last article explaining what the edit is for.
 Not a tile and not an article: `.edit-note` sits on the cream band with a rule above it so it reads
 as an editorial footer. "ViRi" in the supplied copy was normalised to VIRI.
+
+## Widen the edit's closing note into two columns (29 September 2026)
+
+The note was a 62ch column centred in the wrap — 593px of text inside 938px at a 1024 viewport, so
+172px of margin either side, and 717px tall.
+
+"Wider" and "no more than half a page" cannot both hold at one column: filling the wrap would give a
+~145 character measure, roughly twice the readable maximum. So the block spans the full wrap and the
+body flows in **two columns**, which keeps the measure at 59–75ch depending on viewport.
+
+`break-inside:avoid` on the paragraphs had to come off. It stops the browser balancing the columns,
+which left the first one 150px short of the second; without it a paragraph splits across the break,
+which is ordinary editorial practice. Height went 717 → 480 at 1024, and at 1440×900 the block is
+430px against a 450px half-page, so it now meets the brief. `break-inside`/`break-after:avoid` stay
+on the h3 so a subhead cannot be stranded at the foot of a column.
+
+Under 860px it collapses to one column.
