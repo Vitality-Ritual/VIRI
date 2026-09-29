@@ -735,3 +735,28 @@ invisible there, since body copy on that band is already near-white.
 
 `.philosophy-source` and `.longevity-source` are now dead rules in `styles.css`, left in place per
 the convention the clubs archive set.
+
+## New article, and a closing note on the edit page (29 September 2026)
+
+**"Dealing With Corporate Burnout? Here's How I Avoid it."** by Margaret Cole, 28 September 2026,
+filed under Mindset. Dated newest, so it is No. 06 and leads both the edit index and the home page's
+three tiles.
+
+Its photograph is **deliberately blank** for now. Rather than invent a placeholder, it reuses the
+site's existing "Photo to come" pattern (`.card-ph` + `phMark()`), which until now only appeared on
+event cards and the about hero. Two call sites had to learn about it: `articleCard()` and the
+article detail's `<figure>` both interpolated `${A+a.img}` unconditionally, which with an empty `img`
+would have requested `assets/` and 404'd. Both now branch on `a.img`. `.card-ph` carries its own
+`aspect-ratio:3/2`, which fights the 4/5 tile and figure, so it is overridden to fill its container.
+
+The body needed `<ul>`/`<li>` styling — `.article-prose` had rules for `h2`, `p`, `a` and `em` only,
+so the morning-routine list would have fallen back to browser defaults and missed the muted colour.
+
+Two links in the source: the reference to the September reset piece is wired to `#/read/september-reset`
+as an internal route rather than the absolute vitalityritual.org URL it was pasted with, so it does
+not force a full page load. The other, "check out [this] article", had no URL — rendered as plain
+text pending one.
+
+**The edit's closing note.** Standalone text under the last article explaining what the edit is for.
+Not a tile and not an article: `.edit-note` sits on the cream band with a rule above it so it reads
+as an editorial footer. "ViRi" in the supplied copy was normalised to VIRI.
