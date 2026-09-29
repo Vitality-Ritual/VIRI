@@ -648,8 +648,10 @@ the two dots flanking the monogram. Both are inlined into `app.js` with the C2PA
 and `#5A4433` swapped for `currentColor`, so `.footer-seal` can still tint it cream. Letterforms are
 already outlined, so neither needs a font, and neither carries an `id`, so inlining twice is safe.
 
-The cover rail uses `viri-02` (reduced, no ring type): the rail sets its own "Est. 2026" caption
-under a hairline, which the full seal was repeating.
+I first put the reduced `viri-02` (no ring type) in the cover rail, because the rail sets its own
+"Est. 2026" caption under a hairline and the full seal repeats it. That was an unrequested change
+and was reverted: `viri-01` is the mark everywhere. The rail caption still duplicates the seal's
+own EST. 2026 — left alone deliberately, since it is site furniture rather than the logo.
 
 ### Header and the profile page
 
