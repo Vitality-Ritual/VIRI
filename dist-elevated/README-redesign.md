@@ -611,3 +611,72 @@ Stacked under 980px the media is full width, so it gets its own
 
 Checked at 1280, 1440 and 375. `.feature` is used only by this section, so none of it reaches
 anything else.
+
+## Faces out of the Find your circle photograph, plus a batch of fixes (29 September 2026)
+
+### The photograph
+
+The right-hand woman was in three-quarter profile, looking at her friend mid-sentence, and the
+expression was not what the section wanted. Turning her head is generative work — inventing the
+back of a skull, an ear and a jawline the camera never saw — and there is no AI image tooling on
+this machine, so the honest options were a crop, a different photograph, or an outside tool. The
+crop won because swapping photographs would have thrown away the recolour.
+
+`connect-kerb.jpg` is now 955x878, cut below both chins. That leaves it slightly **landscape**
+(1.088), where the previous version was 3:4 portrait, and the two interact badly if you are not
+careful:
+
+- The two columns must be the same height, so **the panel has to fit inside the media box**. At
+  first the panel's generous step spacing drove the box to 545px tall against a 512px column, which
+  made it *portrait*, and a landscape picture in a portrait box loses its **width** — it cut 14% off
+  the sides and took her arm with it.
+- Sizing the box to the picture's exact aspect fixed the crop but showed every last inch of asphalt
+  and read bottom-heavy.
+- What works: keep the box a little **shorter** than the picture's own aspect so the overflow is
+  vertical, and anchor it with `object-position:center top` so all of it is spent on the road.
+  `min-height:clamp(340px,40vw,660px)` against a 50vw column does that, trimming ~12% off the bottom
+  at 1280. Stacked under 980px the media is full width and takes `aspect-ratio:955/878` instead,
+  which is exact — zero crop at 375px.
+- Step spacing came down from `clamp(18px,3.4vw,50px)` to `clamp(12px,1.9vw,30px)` to fit, so list
+  items are 104px at 1280 rather than 142px. Still well above the original 77px.
+
+### The seal
+
+Replaced with the brand kit's own mark. The hand-rolled SVG ran `VITALITY RITUAL EST. 2026` as a
+single run around the ring, so the back half sat upside down; the kit splits it top and bottom with
+the two dots flanking the monogram. Both are inlined into `app.js` with the C2PA metadata stripped
+and `#5A4433` swapped for `currentColor`, so `.footer-seal` can still tint it cream. Letterforms are
+already outlined, so neither needs a font, and neither carries an `id`, so inlining twice is safe.
+
+The cover rail uses `viri-02` (reduced, no ring type): the rail sets its own "Est. 2026" caption
+under a hairline, which the full seal was repeating.
+
+### Header and the profile page
+
+`Join` and the profile icon were two controls for the same destination, so the text link is gone and
+the icon is the single entry point — it now goes to `#/signup` rather than to a mock profile.
+
+The profile page is archived to `archive/profile-page.md` and comes back as the post-login
+destination once sign-up and login are finished. `#/profile` redirects to `#/signup` so old links
+do not 404. Only `profilePage()` and its router arm were removed; `eventCard()`, `postActivity()`,
+the three profile action handlers and every profile CSS rule were deliberately left in place, and
+the archive lists the seven redirects that were temporarily pointed elsewhere.
+
+### Smaller things
+
+- Longevity copy: the closing sentence is now "VIRI functions by bringing you the connections that
+  already exist in your day-to-day routines."
+- The Holt-Lunstad source line is deleted; the study is linked on **308,849 people** instead. It
+  needed the old `.longevity-source a` underline moved onto `.longevity-lede a` — without it the
+  link was the same colour as body text with no decoration, so nothing showed it was clickable.
+- The brand name is **VIRI** in caps everywhere (47 replacements). Every occurrence was checked to
+  be a standalone word first; the JS global `VIRI` and the `viri-*` asset filenames are different
+  casings and untouched.
+- The ViRi edit numbers now run oldest-first: `allArticles()` is sorted newest-first, so `index+1`
+  was making the newest No. 01. `artNo()` counts down the array instead, making the number a stable
+  issue number — oldest is No. 01, newest is No. 05, and the home page's `slice(0,3)` keeps the same
+  indices so the three newest show their real numbers.
+- The rule before the join finale's eyebrow is removed; centred, it read as a stray mark beside the
+  text rather than as a lead-in. It is left in place on every other eyebrow.
+
+Checked across 16 routes with no console errors, plus 1280, 1440 and 375px on the home page.

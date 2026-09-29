@@ -1,4 +1,4 @@
-/* ViRi — explore dataset.
+/* VIRI — explore dataset.
    Studio names are real brands; the coordinates are approximate and every class time,
    instructor, roster and member profile below is invented sample data for this prototype.
    See README-explore.md for where the real versions of each field would come from. */

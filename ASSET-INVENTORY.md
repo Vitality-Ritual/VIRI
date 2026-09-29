@@ -6,6 +6,14 @@ original `ASSET_SOURCES.json` (which only covers the first build).
 **39 catalogued files, of the 51 now in the folder. 24 referenced by the site, 15 retired but
 still present.**
 
+**29 September 2026.** `connect-kerb.jpg` was recropped to 955x878 so neither woman's face is in
+frame — the right-hand one was mid-sentence and the expression was not what the section wanted.
+The full-length 3:4 version is still `project/Photos/KerbSet-brown-master.png`; the cropped master
+is `KerbSet-brown-cropped.png`. The site's seal is now the brand kit's `viri-01` (full, in the
+footer) and `viri-02` reduced (in the cover rail), inlined into `app.js` with their C2PA metadata
+stripped and `#5A4433` swapped for `currentColor` — the hand-rolled seal they replace ran the ring
+type as one continuous run, which left the bottom half upside down.
+
 **28 September 2026.** `connect-kerb.jpg` is the new Find your circle photograph, replacing
 `connect2.jpg`. It is the supplied kerb photograph with the red workout set recoloured brown and
 the two garment logos painted out — masters and the pipeline are in `project/Photos/` and
