@@ -963,7 +963,10 @@ body:after{
 .philosophy-note{border-left:1px solid rgba(244,239,232,.42);padding-left:clamp(15px,1.6vw,22px)}
 .philosophy-source{font-size:11px;letter-spacing:.1em;text-transform:uppercase;
   color:rgba(244,239,232,.74)!important;margin-top:clamp(16px,1.8vw,24px)}
-.philosophy-source a{border-bottom:1px solid currentColor}
+/* the citation moved off its own line and onto the word it supports, so the
+   underline moves with it - on this dark band an unmarked link is invisible */
+.philosophy-copy p a{border-bottom:1px solid rgba(244,239,232,.5);transition:border-color .3s}
+.philosophy-copy p a:hover{border-color:rgba(244,239,232,.95)}
 
 .founders-grid{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);
   gap:clamp(28px,5vw,84px);align-items:center}
