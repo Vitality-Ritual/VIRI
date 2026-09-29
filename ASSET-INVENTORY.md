@@ -9,8 +9,8 @@ still present.**
 **29 September 2026.** `connect-kerb.jpg` was recropped to 955x878 so neither woman's face is in
 frame — the right-hand one was mid-sentence and the expression was not what the section wanted.
 The full-length 3:4 version is still `project/Photos/KerbSet-brown-master.png`; the cropped master
-is `KerbSet-brown-cropped.png`. The site's seal is now the brand kit's `viri-01` (full, in the
-footer) and `viri-02` reduced (in the cover rail), inlined into `app.js` with their C2PA metadata
+is `KerbSet-brown-cropped.png`. The site's seal is now the brand kit's `viri-01`
+everywhere it appears — footer and cover rail — inlined into `app.js` with their C2PA metadata
 stripped and `#5A4433` swapped for `currentColor` — the hand-rolled seal they replace ran the ring
 type as one continuous run, which left the bottom half upside down.
 
