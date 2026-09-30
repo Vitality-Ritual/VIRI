@@ -820,3 +820,29 @@ shorter one. Three narrow columns also break earlier than the old two did, so at
 pair up and the photograph goes full width, and at 820px everything stacks with the photograph first.
 
 The joint letter it replaced is in `archive/founders-joint-letter.md`.
+
+## Sign-up landing: scattered polaroids (30 September 2026)
+
+`#/signup` is now a photo-dump landing in the style of the CapCut "camera shutter photo dump"
+template: 14 polaroid frames scattered across the viewport, arriving one or two at a time while
+JOIN NOW types in a letter at a time underneath. Both finish together at about 4.8s.
+
+Measured timeline from a cold load — 0.3s: 1 frame, 0 letters · 1s: 3 / 1 · 2s: 7 / 3 · 3s: 10 / 4 ·
+4s: 12 / 6 · 5s: 14 / 7, complete.
+
+The frames are **blank** (`.pola-shot` is a flat taupe panel) pending photographs. Each frame's
+position, rotation and delay is a custom property written by `signupPage()`, so the scatter is data
+in `app.js` rather than a wall of nth-child rules, and dropping images in means putting them inside
+`.pola-shot`.
+
+**The reduced-motion trap.** The site's global rule is `*,*:before,*:after{animation:none!important}`.
+Everything here starts at `opacity:0` and animates up, so under that rule the whole page would have
+rendered blank — a sign-up page that does not exist for anyone with the OS setting on. There is an
+explicit fallback setting `opacity:1` on the frames and letters, placed after the global block so it
+wins.
+
+**The form did not go anywhere.** The tennis-court name form that used to be `#/signup` now lives at
+`#/start`, and JOIN NOW links to it, so the funnel gained a step rather than losing a page:
+landing → names → the existing `#/join` steps. `bindSignup()` is now bound on `start`. If you would
+rather the landing go straight to `#/join`, that is a one-line change — `#/join`'s first step is
+already the name step, which is what `#/start` duplicates.
