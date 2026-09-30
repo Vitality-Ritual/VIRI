@@ -573,6 +573,9 @@ input::placeholder,textarea::placeholder{color:#a0968a}
 .article-prose a{color:var(--ink);border-bottom:1px solid var(--line-2);transition:border-color .3s}
 .article-prose a:hover{border-bottom-color:var(--cocoa)}
 .article-prose em{font-style:italic}
+/* balance evens a two-line heading rather than filling the first line; section
+   headings read better filled, so they opt out of the global rule */
+.article-prose h2,.article-prose h3{text-wrap:pretty}
 .article-prose h3{font-size:clamp(1rem,1.35vw,1.2rem);margin:32px 0 10px;
   text-transform:uppercase;letter-spacing:.05em;color:var(--cocoa)}
 /* the whole heading is the product link, so it does not want the inline rule */
