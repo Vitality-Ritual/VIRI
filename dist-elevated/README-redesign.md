@@ -954,7 +954,6 @@ filed under Mindset. No. 08, the newest. Cover is the desk-and-candles photograp
 **One correction to the copy.** The title says 13 ways, the body has 13 numbered sections, but the
 intro read "Here are 15 small ways". Set to 13.
 
-Both this and the running essentials piece carry the same date. `allArticles()` sorts by date
-descending and JS sort is stable, so the tie falls back to array order — new entries go in at the
-top, which puts this at No. 08 and running essentials at No. 07. Worth knowing the ordering of
-same-day articles is positional, not alphabetical or by id.
+Dated 1 October so it does not share a date with the running essentials piece. That tie would have
+resolved on array order — `allArticles()` sorts by date descending and JS sort is stable, so
+same-day articles order by position, not by id or title. A distinct date takes the guesswork out.
