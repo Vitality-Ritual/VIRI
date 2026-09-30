@@ -824,19 +824,20 @@ dialog p{color:var(--muted)}
 
 /* ---- sign-up: photograph at its own width, form beside it -------------- */
 /* The picture is used exactly as supplied - not cropped, not graded. */
-.signup-split{display:grid;grid-template-columns:1fr 1fr;align-items:center;
+.signup-split{display:grid;grid-template-columns:1fr 1fr;align-items:end;
   gap:clamp(20px,3vw,48px);max-width:1320px;margin-inline:auto;
-  padding:clamp(26px,3.4vw,56px) var(--gutter);
+  padding:clamp(26px,3.4vw,56px) var(--gutter) 0;
   min-height:calc(100svh - var(--header));background:var(--cream)}
-.signup-split-shot{margin:0;overflow:visible;line-height:0;display:flex;justify-content:flex-end}
+.signup-split-shot{margin:0;overflow:visible;line-height:0;display:flex;
+  justify-content:flex-end;align-items:flex-end}
 /* shown whole: no crop, no grade, no stretch. capping the height scales the
    whole picture down to the band rather than trimming it, and the column is
    then as wide as the picture happens to be, with the form taking the rest. */
 .signup-split-shot img{display:block;width:auto;height:auto;max-width:100%;
-  max-height:calc(100svh - var(--header) - clamp(52px,6.8vw,112px));object-fit:contain}
+  max-height:calc(100svh - var(--header) - clamp(26px,3.4vw,56px));object-fit:contain}
 .signup-split-form{display:flex;align-items:center;justify-content:flex-start;
-  padding:clamp(28px,3.4vw,60px);background:var(--cream-2);border:1px solid var(--line);
-  align-self:stretch}
+  padding:clamp(28px,3.4vw,60px);background:var(--cream-2);
+  border:1px solid var(--line);border-bottom:0;align-self:stretch}
 .signup-split-inner{width:min(100%,330px)}
 .signup-split-inner h1{font-size:clamp(1.9rem,2.6vw,2.5rem);margin:0}
 .signup-split-lede{margin:14px 0 26px;color:var(--muted);font-size:15px}
