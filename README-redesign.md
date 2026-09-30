@@ -1031,3 +1031,26 @@ Measured on heading 4, line widths against a 632px measure:
 orphan protection. This is the third place `balance` has caused the same complaint — the tile
 headings and the detail `h1` were the other two — so it is worth remembering that the global rule
 applies to every heading on the site.
+
+## Article headline: two layouts (30 September 2026)
+
+The budgeting piece wants three lines on its own page and two in the gallery. Those are different
+elements — the detail `h1` reads `titleLines`, the tile `h3` reads the plain `title` — so they were
+already independent. `titleLines` is now three entries.
+
+Its cover also had to rise level with the headline. That meant putting the headline back in the
+first column, which is where it sat before it was widened — and widening it was the fix for long
+titles wrapping badly in half the measure. Both needs are real, so the header now has two modes:
+
+- **Default** — the headline spans the head, the picture sits below it in the second column.
+- **`.is-split`**, set when an article supplies `titleLines` — the headline drops into the first
+  column and the picture rises beside it, tops level.
+
+An article that sets its own breaks has taken charge of its measure, so it is safe to narrow. One
+that has not is left at full width. Checked after: the budgeting piece is 3 lines at 585px with the
+figure offset at exactly 0, and the running piece is back to 2 lines at 1172px — it had gone to
+**five** while the narrow column applied to everything.
+
+The `h1`'s `margin-top:8px` also came off. It pushed the headline 8px below the figure sharing its
+row; the gap under the eyebrow already separates them, so the alignment is now exact by
+construction rather than by a matching magic number.
