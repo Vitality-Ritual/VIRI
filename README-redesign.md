@@ -901,3 +901,27 @@ a background prop looks like at that size anyway.
 
 Framing is `object-position:center 45%`, keeping the held newspaper and the floor copies both in
 frame, with the site's warm grade over the cool studio white.
+
+## Sign-up photograph: shown whole (30 September 2026)
+
+`signup-viri.webp` replaces the newspaper composite. It is used **exactly as supplied** — copied
+byte-for-byte with no re-encode, no crop, no grade.
+
+That rules out `object-fit:cover`, which is how the previous two were framed. Instead the image
+keeps `width:auto;height:auto` and is capped with `max-height:calc(100svh - var(--header))`, so the
+whole picture scales down to the band rather than being trimmed to it. The photo column is `auto`,
+so it is simply as wide as the picture turns out to be — 625px of 1280 at a 1280x860 canvas, with
+the form taking the remaining 655px.
+
+Three things could have cropped it silently, and all three are closed:
+
+- `height:100%` on a content-sized grid row does not resolve, so the first attempt rendered at the
+  natural 968px and pushed the section past the viewport. `max-height` fixes it without a crop.
+- `overflow:hidden` on the photo column is removed. If anything ever does overflow here it should be
+  visible rather than trimmed away.
+- The global `img{object-fit:cover}` still applied. It has nothing to act on while the box matches
+  the intrinsic aspect, but `object-fit:contain` is now stated so no later change to the box can
+  start trimming.
+
+Verified at 1280x860 and 375x812: rendered aspect matches the natural 776x968 to within 0.004,
+scale is uniform, `filter:none`, and the whole image sits inside its column.

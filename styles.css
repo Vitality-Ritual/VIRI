@@ -798,18 +798,16 @@ dialog p{color:var(--muted)}
 .panel-d{display:block;margin-top:6px;
   font-size:13px;line-height:1.6;letter-spacing:.01em;color:rgba(255,255,255,.78)}
 
-/* ---- sign-up: photograph two thirds, form one third -------------------- */
-/* The picture is a true black-and-white, toned to a warm duotone in the file
-   rather than filtered in CSS - sepia() over grey gives a flat wash. See
-   project/tools/photo-recolour/duotone.rb. */
-.signup-split{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);
+/* ---- sign-up: photograph at its own width, form beside it -------------- */
+/* The picture is used exactly as supplied - not cropped, not graded. */
+.signup-split{display:grid;grid-template-columns:auto minmax(0,1fr);
   min-height:calc(100svh - var(--header));background:var(--cream)}
-.signup-split-shot{margin:0;position:relative;overflow:hidden;background:var(--taupe-light)}
-/* portrait picture in a landscape panel, so it crops hard: 45% keeps the
-   newspaper she is holding and the copies on the floor both in frame */
-.signup-split-shot img{position:absolute;inset:0;width:100%;height:100%;
-  object-fit:cover;object-position:center 45%;
-  filter:saturate(.72) sepia(.12) brightness(1.02) contrast(.97)}
+.signup-split-shot{margin:0;overflow:visible;background:var(--cream);line-height:0}
+/* shown whole: no crop, no grade, no stretch. capping the height scales the
+   whole picture down to the band rather than trimming it, and the column is
+   then as wide as the picture happens to be, with the form taking the rest. */
+.signup-split-shot img{display:block;width:auto;height:auto;max-width:100%;
+  max-height:calc(100svh - var(--header));object-fit:contain}
 .signup-split-form{display:flex;align-items:center;justify-content:center;
   padding:clamp(28px,3.4vw,60px);background:var(--cream-2)}
 .signup-split-inner{width:min(100%,330px)}
@@ -819,9 +817,11 @@ dialog p{color:var(--muted)}
 .signup-split-inner .signup-foot{margin-top:22px;font-size:12px;letter-spacing:.04em;color:var(--muted)}
 .signup-split-inner .signup-foot a{border-bottom:1px solid var(--line-2)}
 @media (max-width:860px){
-  /* stacked, a two-thirds column means nothing; give the picture a band */
+  /* stacked, it spans the width and keeps its own aspect - a fixed band
+     height here would crop it, which is the one thing not to do */
   .signup-split{grid-template-columns:1fr;min-height:0}
-  .signup-split-shot{height:clamp(260px,58vw,420px)}
+  .signup-split-shot{height:auto}
+  .signup-split-shot img{width:100%;height:auto}
   .signup-split-form{padding:clamp(34px,7vw,56px) var(--gutter) clamp(54px,9vw,80px)}
 }
 
