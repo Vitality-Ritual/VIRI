@@ -1054,3 +1054,29 @@ figure offset at exactly 0, and the running piece is back to 2 lines at 1172px �
 The `h1`'s `margin-top:8px` also came off. It pushed the headline 8px below the figure sharing its
 row; the gap under the eyebrow already separates them, so the alignment is now exact by
 construction rather than by a matching magic number.
+
+## The split header across every article (30 September 2026)
+
+All four articles now carry their own `titleLines`, so every one gets the headline-beside-the-picture
+layout. Measured at 1280x900: all four `is-split`, figure top offset exactly 0, no line overflowing
+the 585px column (widest is 564 on the September reset).
+
+**The headline had to size down.** In half the measure, "Dealing With Corporate Burnout?" needs
+630px *at 31px type* — it cannot sit on one line at any readable size. Rather than shrink the type
+far enough to fit whole titles, the breaks fall on phrase boundaries and the split headline sizes to
+`clamp(1.55rem,2.95vw,2.5rem)` — 38px at 1280, where every planned line fits. The running piece
+takes five short lines; its title is simply long, and five clean breaks read better than four that
+split "Running / Journey?".
+
+**A stacking bug this introduced.** `grid-column:2` on the figure still creates an *implicit* second
+column once the grid collapses to `1fr`, so the header stayed side by side on a phone — the headline
+and picture were 153px and 160px wide at a 375px viewport. The placements now reset to
+`grid-column:1;grid-row:auto` inside the media query. Stacked order is eyebrow, picture, headline,
+standfirst.
+
+## Sign-up form matches the picture's width (30 September 2026)
+
+The bordered panel was already exactly the picture's width — both 567px. What was short was the form
+inside it: 330px, left-aligned, leaving 192px of dead panel beside it. The form now fills the column
+and the panel's side padding and border are gone, so the fields measure the same 567px as the
+photograph. The tonal panel stays as a background with room above and below.
