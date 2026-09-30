@@ -798,6 +798,51 @@ dialog p{color:var(--muted)}
 .panel-d{display:block;margin-top:6px;
   font-size:13px;line-height:1.6;letter-spacing:.01em;color:rgba(255,255,255,.78)}
 
+/* ---- sign-up landing: scattered polaroids ------------------------------ */
+/* The frames arrive a couple at a time over ~4.8s while JOIN NOW types in
+   underneath them. Every position, rotation and delay is a custom property on
+   the element, so the whole scatter is data in app.js rather than a wall of
+   nth-child rules here. */
+.pola-page{position:relative;min-height:calc(100svh - var(--header));overflow:hidden;
+  background:var(--cream);display:grid;place-items:center;isolation:isolate}
+.pola-field{position:absolute;inset:0;z-index:1}
+.pola{position:absolute;left:var(--l);top:var(--t);width:clamp(92px,13.5vw,186px);
+  background:#fff;padding:7px 7px 26px;box-shadow:0 14px 32px rgba(59,50,42,.15);
+  opacity:0;transform:translateY(16px) scale(.9) rotate(var(--r));
+  animation:pola-in .62s cubic-bezier(.2,.7,.3,1) var(--d) forwards}
+/* blank for now - photographs drop straight into .pola-shot */
+.pola-shot{display:block;aspect-ratio:1/1;background:var(--taupe-light)}
+@keyframes pola-in{
+  from{opacity:0;transform:translateY(16px) scale(.9) rotate(var(--r))}
+  to{opacity:1;transform:translateY(0) scale(1) rotate(var(--r))}
+}
+/* lifts the wordmark off the collage; matters more once there are photographs */
+.pola-page:before{content:'';position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:radial-gradient(ellipse 58% 42% at 50% 47%,
+    rgba(233,228,220,.94),rgba(233,228,220,.6) 58%,rgba(233,228,220,0) 80%)}
+.pola-join{position:relative;z-index:3;display:block;text-align:center;
+  padding:clamp(14px,3vw,30px) clamp(18px,5vw,56px)}
+.pola-word{display:inline-block;white-space:nowrap;font-family:var(--display);font-weight:400;
+  text-transform:uppercase;font-size:clamp(3rem,11.5vw,8.5rem);line-height:.92;
+  letter-spacing:.045em;color:var(--cocoa)}
+.pola-word span{display:inline-block;opacity:0;
+  animation:pola-type .42s ease-out calc(var(--i) * .72s) forwards}
+.pola-sp{display:inline-block;width:.34em}
+@keyframes pola-type{from{opacity:0}to{opacity:1}}
+.pola-join:hover .pola-word{color:var(--taupe-deep)}
+.pola-foot{position:relative;z-index:3;margin:0;text-align:center;font-size:12px;
+  letter-spacing:.06em;color:var(--muted)}
+.pola-foot a{border-bottom:1px solid var(--line-2)}
+/* the global reduced-motion rule kills every animation, and these start at
+   opacity:0 - without this the page would simply be blank */
+@media (prefers-reduced-motion:reduce){
+  .pola{opacity:1;transform:rotate(var(--r))}
+  .pola-word span{opacity:1}
+}
+@media (max-width:700px){
+  .pola{width:clamp(78px,23vw,150px);padding:5px 5px 19px}
+}
+
 /* ---- 4. film grain ----------------------------------------- */
 body:after{
   content:'';position:fixed;inset:0;z-index:9000;pointer-events:none;opacity:.05;
