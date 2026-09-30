@@ -6,6 +6,10 @@ original `ASSET_SOURCES.json` (which only covers the first build).
 **39 catalogued files, of the 51 now in the folder. 24 referenced by the site, 15 retired but
 still present.**
 
+**30 September 2026 (later still).** `money-coat.jpg` is the budgeting article's cover, replacing
+`money-desk.jpg`, which is no longer displayed but stays on disk. Masters for both are in
+`project/Photos/`.
+
 **30 September 2026 (later).** Four edit articles retired — `fall-rituals`, `running-together`,
 `shared-rituals`, `after-class`. Their covers (`lockers.jpg`, `barre-balls.jpg`,
 `detail-weights.jpg`, `studio-shelf.jpg`) stay in `assets` and are also copied to
