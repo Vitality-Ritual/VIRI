@@ -6,6 +6,12 @@ original `ASSET_SOURCES.json` (which only covers the first build).
 **39 catalogued files, of the 51 now in the folder. 24 referenced by the site, 15 retired but
 still present.**
 
+**30 September 2026 (later).** Four edit articles retired — `fall-rituals`, `running-together`,
+`shared-rituals`, `after-class`. Their covers (`lockers.jpg`, `barre-balls.jpg`,
+`detail-weights.jpg`, `studio-shelf.jpg`) stay in `assets` and are also copied to
+`project/Photos/retired-covers/` so they are easy to find for another use. The articles themselves
+are in `archive/edit-articles-retired.md`.
+
 **30 September 2026.** `signup-viri.webp` is the sign-up photograph, copied byte-for-byte from
 what Margaret supplied — no re-encode, no crop, no grade. Six new files for the running
 essentials article: `run-essentials.jpg` (cover) and `gear-vest`, `gear-bottle`, `gear-shoe`,

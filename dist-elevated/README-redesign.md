@@ -957,3 +957,27 @@ intro read "Here are 15 small ways". Set to 13.
 Dated 1 October so it does not share a date with the running essentials piece. That tie would have
 resolved on array order — `allArticles()` sorts by date descending and JS sort is stable, so
 same-day articles order by position, not by id or title. A distinct date takes the guesswork out.
+
+## Retire four articles; full-width article headline (30 September 2026)
+
+`fall-rituals`, `running-together`, `shared-rituals` and `after-class` are out of the edit and in
+`archive/edit-articles-retired.md`. Four articles remain and renumber themselves — the September
+reset is No. 01 and the budgeting piece No. 04, since the number is derived from position in the
+sorted list. Their four cover photographs stay in `assets` and are also copied to
+`project/Photos/retired-covers/`.
+
+Worth noting for future edits: the last two entries in the `articles` array carried their comma at
+the *start* of the following line rather than the end of their own, so a "does this line end with
+`},`" check rejects them. The archive records this.
+
+**The headline moved out of the left column.** It sat in `.article-titles`, roughly half the head's
+width — 585px at a 1280 canvas. The budgeting title needs 596px for its second line *at 31px type*,
+so the requested two-line break could not hold there at any sensible size, and any long title wrapped
+awkwardly. The eyebrow and `h1` now span the head (`grid-column:1 / -1`) with the standfirst and
+figure below, giving the headline the full 1172px.
+
+Articles can now set their own line breaks with a `titleLines` array, used only by the detail
+heading — `title` stays plain for the tiles, the document title and `readNext`. The lines join with
+`' <br>'` rather than `'<br>'` so `textContent` keeps the word space for screen readers and
+copy-paste, and `text-wrap:balance` is dropped when a heading contains a break so balancing cannot
+re-break it.
