@@ -825,15 +825,25 @@ The joint letter it replaced is in `archive/founders-joint-letter.md`.
 
 `#/signup` is now a photo-dump landing in the style of the CapCut "camera shutter photo dump"
 template: 14 polaroid frames scattered across the viewport, arriving one or two at a time while
-JOIN NOW types in a letter at a time underneath. Both finish together at about 4.8s.
+JOIN NOW types in a letter at a time underneath. The frames take the full 5s; the wordmark was
+retimed to land at 2.5s, which reads better than making you wait the whole way for it.
 
-Measured timeline from a cold load — 0.3s: 1 frame, 0 letters · 1s: 3 / 1 · 2s: 7 / 3 · 3s: 10 / 4 ·
-4s: 12 / 6 · 5s: 14 / 7, complete.
+Measured timeline from a cold load — 1s: 3 frames / 2 letters · 1.8s: 6 / 5 · 2.6s: 9 / 7 (typing
+done) · 5.2s: 14 / 7, complete.
+
+The wordmark is centred on the page, which took pinning the "Already have a profile" link to the
+bottom: as a second grid item it made `place-items:center` centre the PAIR, which left JOIN NOW
+142px high.
 
 The frames are **blank** (`.pola-shot` is a flat taupe panel) pending photographs. Each frame's
 position, rotation and delay is a custom property written by `signupPage()`, so the scatter is data
 in `app.js` rather than a wall of nth-child rules, and dropping images in means putting them inside
 `.pola-shot`.
+
+Arrival order is a separate `ORDER` array from the `SPOTS` positions. Laying the delays out in
+array order made the frames sweep the perimeter clockwise, which read as a ring being drawn rather
+than frames landing at random; the order now jumps across the screen on every beat, and the two
+pairs that share a beat are always far apart. A script check asserts it is still a permutation.
 
 **The reduced-motion trap.** The site's global rule is `*,*:before,*:after{animation:none!important}`.
 Everything here starts at `opacity:0` and animates up, so under that rule the whole page would have
