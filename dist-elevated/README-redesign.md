@@ -824,12 +824,12 @@ The joint letter it replaced is in `archive/founders-joint-letter.md`.
 ## Sign-up landing: scattered polaroids (30 September 2026)
 
 `#/signup` is now a photo-dump landing in the style of the CapCut "camera shutter photo dump"
-template: 14 polaroid frames scattered across the viewport, arriving one or two at a time while
+template: 10 polaroid frames scattered across the viewport, arriving one or two at a time while
 JOIN NOW types in a letter at a time underneath. The frames take the full 5s; the wordmark was
 retimed to land at 2.5s, which reads better than making you wait the whole way for it.
 
-Measured timeline from a cold load — 1s: 3 frames / 2 letters · 1.8s: 6 / 5 · 2.6s: 9 / 7 (typing
-done) · 5.2s: 14 / 7, complete.
+Each frame is about 40% of the page's width and 41% of its height, so every one overlaps several
+neighbours — 14 smaller frames read as a sprinkle rather than a pile. Last frame lands at ~4.7s.
 
 The wordmark is centred on the page, which took pinning the "Already have a profile" link to the
 bottom: as a second grid item it made `place-items:center` centre the PAIR, which left JOIN NOW
