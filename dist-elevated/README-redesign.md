@@ -1001,10 +1001,15 @@ at a 1280 canvas — and the columns split `1fr 1fr` so the picture stops on the
 right edge lands at 621 against a 640 midpoint). The form panel takes a 1px rule so the two halves
 read as one contained block.
 
-The no-crop rule still holds: `max-width` and `max-height` are both caps on an auto-sized image, so
-it shrinks whole to whichever runs out first. Measured at 1280x900 — rendered 567x707 against a
-natural 776x968, aspect identical, `filter:none`. The section fills the 820px band exactly. Under
-860px the padding and max-width are dropped so the picture still spans the full width.
+It is inset on three sides only — the bottom is open, so the picture runs off the foot of the
+screen rather than being framed by it. The grid bottom-aligns, the section's bottom padding is
+zero and the form panel drops its bottom border. Measured at 1280x900: the image's bottom edge
+lands on 900, the viewport edge, with no gap under it.
+
+The no-crop rule still holds: `max-width` and `max-height` are both caps on an auto-sized image,
+so it shrinks whole to whichever runs out first — rendered 567x707 against a natural 776x968,
+aspect identical, `filter:none`. Under 860px the padding and max-width are dropped so the picture
+still spans the full width.
 
 Also: the budgeting standfirst is now "The small decisions I make to save money while still living
 my best life."
