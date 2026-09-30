@@ -997,16 +997,30 @@ body:after{
 .philosophy-copy p a{border-bottom:1px solid rgba(244,239,232,.5);transition:border-color .3s}
 .philosophy-copy p a:hover{border-color:rgba(244,239,232,.95)}
 
-.founders-grid{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);
-  gap:clamp(28px,5vw,84px);align-items:center}
+/* Two letters and the photograph. align-items:start because the letters are
+   different lengths and centring them would float the shorter one. */
+.founders-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,.8fr);
+  gap:clamp(26px,3.4vw,54px);align-items:start}
+.founder-letter{display:flex;flex-direction:column;height:100%}
+.founder-letter .prose{flex:1}
+/* the blank Annabel is waiting to fill - same dashed treatment as the photo */
+.letter-ph{flex:1;min-height:clamp(240px,26vw,380px);display:flex;align-items:center;justify-content:center;
+  text-align:center;border:1px dashed rgba(59,50,42,.42);background:var(--cream-2);color:rgba(59,50,42,.6)}
+.founders-cta{margin-top:clamp(30px,3.4vw,46px)}
+/* three columns get too narrow before the old two did: letters pair up, photo goes wide */
+@media (max-width:1080px){
+  .founders-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .founders-photo{grid-column:1 / -1;aspect-ratio:16/9}
+}
 .founders-title{margin:0 0 clamp(20px,2.4vw,32px);line-height:.86;display:flex;flex-direction:column}
 .f-script{font-family:var(--script);font-size:clamp(3rem,6vw,5rem);color:var(--taupe-deep);
   text-transform:none;letter-spacing:.01em;padding-left:.08em;line-height:.9}
 .f-serif{font-family:var(--display);font-weight:400;font-size:clamp(2.4rem,5.2vw,4.4rem);
   text-transform:uppercase;letter-spacing:.06em;color:var(--cocoa);margin-top:-.3em;padding-left:.95em}
-.founders-copy .prose p{margin-bottom:clamp(13px,1.4vw,19px);max-width:52ch}
-.founders-sign{display:flex;flex-direction:column;gap:5px;margin:clamp(22px,2.6vw,34px) 0 clamp(20px,2.2vw,28px)}
-.founders-sign .founder-signature{font-size:clamp(2rem,3.4vw,2.9rem);color:var(--cocoa);line-height:1}
+.founder-letter .prose p{margin-bottom:clamp(12px,1.3vw,17px);max-width:46ch;font-size:15px}
+.founders-sign{display:flex;flex-direction:column;gap:5px;margin:clamp(18px,2vw,26px) 0 0}
+/* two signatures side by side, so smaller than the single one it replaces */
+.founders-sign .founder-signature{font-size:clamp(1.7rem,2.4vw,2.2rem);color:var(--cocoa);line-height:1}
 .founders-role{font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
 .founders-photo{margin:0;aspect-ratio:4/5;background:var(--taupe-light);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
@@ -1017,6 +1031,7 @@ body:after{
   .philosophy-media{min-height:clamp(220px,52vw,340px)}
   .founders-grid{grid-template-columns:1fr;gap:26px}
   .founders-photo{order:-1;aspect-ratio:3/2}
+  .letter-ph{min-height:200px}
   .f-serif{padding-left:.4em}
 }
 

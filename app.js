@@ -516,21 +516,31 @@ function aboutPage(){return `<section class="about-hero is-placeholder"><div cla
     <p class="philosophy-note">Our co-founder Margaret holds a BA in sociology, where course after course came back to the same finding \u2014 that community and connection sit underneath physical and mental wellbeing rather than beside them. VIRI is that idea, built for the hour of the day when people are already together and not yet talking.</p>
   </div>
 </div></section>
-<section class="section founders" data-reveal><div class="wrap founders-grid">
-  <div class="founders-copy">
-    <h2 class="founders-title"><span class="f-script">Meet&nbsp;the</span><span class="f-serif">Founders</span></h2>
-    <div class="prose">
-      <p>We grew up in Colorado, where being active was simply how you met people. You showed up to the same trail or the same class, and a summer later those faces were your friends. When we moved to Washington, DC, we kept the habit and lost the part that made it matter \u2014 the people.</p>
-      <p>We are not the only ones. Every week someone tells us they have a studio they love, a standing 6.45, a route they run alone, and still no one to text afterwards. The gap is not motivation. It is the ten minutes after class, when everyone files out and nobody says anything.</p>
-      <p>VIRI is our attempt to close it. Find the women already going where you are going, say hello before you get there, and let a shared hour turn into something that outlasts it. We hope it makes your corner of the city feel a little more like home.</p>
-    </div>
-    <p class="founders-sign"><span class="founder-signature">Margaret &amp; Annabel</span>
-      <span class="founders-role">Margaret Cole &amp; Annabel Green &middot; Co-founders</span></p>
-    <a class="button outline" href="#/connect">Connect with us ${arrow}</a>
+<section class="section founders" data-reveal><div class="wrap">
+  <h2 class="founders-title"><span class="f-script">Meet&nbsp;the</span><span class="f-serif">Founders</span></h2>
+  <div class="founders-grid">
+    <article class="founder-letter">
+      <div class="prose">
+        <p>Growing up in Colorado, I was always active &mdash; running, skiing, swimming, tennis, golf, hiking, you name it. Making friends through fitness was easy, because my classmates were just as into the active lifestyle as I was. The pattern continued in college, but once I graduated and moved to Washington, DC, the disconnect between fitness and connection was obvious. Everyone was in their own world, but weirdly, right next to each other, often living parallel lives.</p>
+        <p>I would show up to my early morning workout classes and think the whole time, &ldquo;Why is she up at 5am too? When did she move here? Is she training for something? Maybe she works in corporate.&rdquo;</p>
+        <p>But we live in an age of digital connection, where walking up to someone in your workout class and starting a conversation is far harder than it sounds. That was when I realized we needed VIRI.</p>
+        <p>VIRI takes the routines you have already built and elevates them. Our goal is to connect you with the people nearby living the same lifestyle, because the power of social connection is backed by science. Whether you are looking for someone to chat with before class or an accountability partner, we guarantee that you will benefit.</p>
+      </div>
+      <p class="founders-sign"><span class="founder-signature">Margaret</span>
+        <span class="founders-role">Margaret Cole &middot; Co-founder</span></p>
+    </article>
+    <article class="founder-letter">
+      <div class="letter-ph" role="img" aria-label="Annabel&rsquo;s letter, to come">
+        <span class="ph-cap">Annabel&rsquo;s letter<br>to come</span>
+      </div>
+      <p class="founders-sign"><span class="founder-signature">Annabel</span>
+        <span class="founders-role">Annabel Green &middot; Co-founder</span></p>
+    </article>
+    <figure class="founders-photo" aria-label="Photograph of Margaret and Annabel — to come">
+      <span class="ph-mark">${phMark()}</span><span class="ph-cap">A photograph of<br>Margaret &amp; Annabel<br>to come</span>
+    </figure>
   </div>
-  <figure class="founders-photo" aria-label="Photograph of Margaret and Annabel — to come">
-    <span class="ph-mark">${phMark()}</span><span class="ph-cap">A photograph of<br>Margaret &amp; Annabel<br>to come</span>
-  </figure>
+  <a class="button outline founders-cta" href="#/connect">Connect with us ${arrow}</a>
 </div></section>${joinSection()}`;}
 function contactPage(){return `<section class="page-head"><div class="wrap"><p class="eyebrow">Let’s connect</p><h1>Good things start<br>with a conversation.</h1><p>Meet the people behind VIRI.</p></div></section><div class="wrap"><div class="contact-grid">${[{name:'Margaret Cole',initials:'MC'},{name:'Annabel Green',initials:'AG'}].map(f=>`<article class="contact-card"><div class="founder-monogram">${f.initials}</div><h2>${f.name}</h2><p>Co-founder · Washington, DC</p><p>Building a community around movement, shared routines, and the people nearby.</p><div class="contact-actions"><button class="button small outline" data-action="contact-info" data-name="${f.name}" data-channel="Email">Email ${arrow}</button><button class="button small outline" data-action="contact-info" data-name="${f.name}" data-channel="LinkedIn">LinkedIn ${arrow}</button></div></article>`).join('')}</div><div class="notice-box" style="margin-top:-35px;margin-bottom:70px"><h3>Follow the next chapter.</h3><p style="margin-top:15px">VIRI is on Instagram at <a href="https://www.instagram.com/vitalityritual.co/" target="_blank" rel="noopener">@vitalityritual.co</a>. TikTok and founder contact links are coming soon.</p><p class="small" style="margin-top:12px">Contact details and social account URLs have not been supplied for this preview.</p></div></div>`;}
 /* the sign-up screen takes the name only; the rest is asked one question at a
