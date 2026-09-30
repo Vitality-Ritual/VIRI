@@ -546,21 +546,26 @@ function contactPage(){return `<section class="page-head"><div class="wrap"><p c
 /* the sign-up screen takes the name only; the rest is asked one question at a
    time on #/join, which starts on the email step because the name is in hand */
 function polaroidPage(){return `<section class="pola-page"><div class="pola-field" aria-hidden="true"><span class="pola" style="--l:0%;--t:2%;--r:-8deg;--d:1.0s"><span class="pola-shot"></span></span><span class="pola" style="--l:17%;--t:22%;--r:6deg;--d:3.0s"><span class="pola-shot"></span></span><span class="pola" style="--l:34%;--t:0%;--r:-5deg;--d:0.0s"><span class="pola-shot"></span></span><span class="pola" style="--l:52%;--t:20%;--r:7deg;--d:2.33s"><span class="pola-shot"></span></span><span class="pola" style="--l:70%;--t:2%;--r:-6deg;--d:1.67s"><span class="pola-shot"></span></span><span class="pola" style="--l:78%;--t:46%;--r:5deg;--d:0.67s"><span class="pola-shot"></span></span><span class="pola" style="--l:56%;--t:54%;--r:-7deg;--d:1.33s"><span class="pola-shot"></span></span><span class="pola" style="--l:34%;--t:44%;--r:6deg;--d:2.67s"><span class="pola-shot"></span></span><span class="pola" style="--l:13%;--t:56%;--r:-4deg;--d:0.33s"><span class="pola-shot"></span></span><span class="pola" style="--l:-3%;--t:38%;--r:8deg;--d:2.0s"><span class="pola-shot"></span></span></div><a class="pola-join" href="#/signup" aria-label="Join now"><span class="pola-word" aria-hidden="true"><span style="--i:0">J</span><span style="--i:1">O</span><span style="--i:2">I</span><span style="--i:3">N</span><span class="pola-sp"> </span><span style="--i:4">N</span><span style="--i:5">O</span><span style="--i:6">W</span></span></a><p class="pola-foot">Already have a profile? <a href="#/login">Log in</a></p></section>`;}
-function signupPage(){return `<section class="signup-hero">
-  <img class="signup-photo" src="${A}tennis-court.webp" alt="Two women resting either side of the net on a tennis court">
-  <div class="signup-panel">
-    <h1>Sign up now</h1>
-    <form id="signup-form" novalidate>
-      <label class="sr-only" for="su-first">First name</label>
-      <input id="su-first" name="first" placeholder="First name" autocomplete="given-name" maxlength="40">
-      <label class="sr-only" for="su-last">Last name</label>
-      <input id="su-last" name="last" placeholder="Last name" autocomplete="family-name" maxlength="40">
-      <p id="su-error" class="field-error" role="alert"></p>
-      <button class="button light" type="submit">Go ${arrow}</button>
-    </form>
-    <p class="signup-foot">Already have a profile? <a href="#/login">Log in</a></p>
+function signupPage(){return `<section class="signup-split">
+  <figure class="signup-split-shot">
+    <img src="${A}studio-pair.jpg" alt="Two women steadying each other through a balance, hands clasped overhead, in a bright studio">
+  </figure>
+  <div class="signup-split-form">
+    <div class="signup-split-inner">
+      <p class="eyebrow">Join VIRI</p>
+      <h1>Sign up now</h1>
+      <p class="signup-split-lede">Start with your name. The rest takes a minute.</p>
+      <form id="signup-form" novalidate>
+        <div class="field"><label for="su-first">First name</label>
+          <input id="su-first" name="first" autocomplete="given-name" maxlength="40"></div>
+        <div class="field"><label for="su-last">Last name</label>
+          <input id="su-last" name="last" autocomplete="family-name" maxlength="40"></div>
+        <p id="su-error" class="field-error" role="alert"></p>
+        <button class="button" type="submit">Go ${arrow}</button>
+      </form>
+      <p class="signup-foot">Already have a profile? <a href="#/login">Log in</a></p>
+    </div>
   </div>
-  <p class="signup-statement">A new ritual.<br>A new circle.<br>A little more you.</p>
 </section>`;}
 function bindSignup(){
   const f=$('#signup-form');if(!f)return;
