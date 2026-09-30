@@ -805,10 +805,11 @@ dialog p{color:var(--muted)}
 .signup-split{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);
   min-height:calc(100svh - var(--header));background:var(--cream)}
 .signup-split-shot{margin:0;position:relative;overflow:hidden;background:var(--taupe-light)}
-/* portrait picture in a landscape panel, so it crops hard: 52% keeps their
-   hands at the top and the mats at the bottom inside the frame */
+/* portrait picture in a landscape panel, so it crops hard: 45% keeps the
+   newspaper she is holding and the copies on the floor both in frame */
 .signup-split-shot img{position:absolute;inset:0;width:100%;height:100%;
-  object-fit:cover;object-position:center 52%}
+  object-fit:cover;object-position:center 45%;
+  filter:saturate(.72) sepia(.12) brightness(1.02) contrast(.97)}
 .signup-split-form{display:flex;align-items:center;justify-content:center;
   padding:clamp(28px,3.4vw,60px);background:var(--cream-2)}
 .signup-split-inner{width:min(100%,330px)}
