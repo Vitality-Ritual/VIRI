@@ -981,3 +981,14 @@ heading — `title` stays plain for the tiles, the document title and `readNext`
 `' <br>'` rather than `'<br>'` so `textContent` keeps the word space for screen readers and
 copy-paste, and `text-wrap:balance` is dropped when a heading contains a break so balancing cannot
 re-break it.
+
+## Tile headings fill their measure (30 September 2026)
+
+Long article titles stacked into three short lines on the edit index. Two things caused it together:
+`.tile h3` was capped at `max-width:22ch` — 279px inside a 375px tile — and the global
+`h1,h2,h3,h4` rule sets `text-wrap:balance`, which *evens* the lines rather than filling them, so
+the first line was deliberately kept short.
+
+Now `28ch` (355px) with `text-wrap:pretty`, which fills each line and only guards against a
+stranded last word. The budgeting title went from three lines to two; shorter titles are unaffected
+because they never reached the old cap.

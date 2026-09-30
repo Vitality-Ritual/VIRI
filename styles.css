@@ -294,7 +294,7 @@ strong{font-weight:500}
 .tile:hover .tile-media img{transform:scale(1.05)}
 .tile-meta{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid var(--line)}
 .tile-index{font-size:9.5px;color:var(--muted)}
-.tile h3{margin-top:15px;max-width:22ch}
+.tile h3{margin-top:15px;max-width:28ch;text-wrap:pretty}
 .tile>a>p:last-child{margin-top:10px;color:var(--muted);font-size:15px;max-width:36ch}
 
 /* ---------------------------------------------------------- testimonial */
