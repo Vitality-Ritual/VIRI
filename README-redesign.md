@@ -945,3 +945,16 @@ All seven outbound links were normalised to https — two were supplied as `http
 
 There is now an older article titled "Starting your running journey? Five ways to find your circle"
 (No. 03). Different piece, similar opening; worth knowing they will sit near each other in search.
+
+## New article: saving money post-grad (30 September 2026)
+
+"13 Ways I Save Money as a Post-Grad Girl Living on My Own" by Margaret Cole, 30 September 2026,
+filed under Mindset. No. 08, the newest. Cover is the desk-and-candles photograph.
+
+**One correction to the copy.** The title says 13 ways, the body has 13 numbered sections, but the
+intro read "Here are 15 small ways". Set to 13.
+
+Both this and the running essentials piece carry the same date. `allArticles()` sorts by date
+descending and JS sort is stable, so the tie falls back to array order — new entries go in at the
+top, which puts this at No. 08 and running essentials at No. 07. Worth knowing the ordering of
+same-day articles is positional, not alphabetical or by id.
