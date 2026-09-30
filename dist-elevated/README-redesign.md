@@ -1008,3 +1008,21 @@ natural 776x968, aspect identical, `filter:none`. The section fills the 820px ba
 
 Also: the budgeting standfirst is now "The small decisions I make to save money while still living
 my best life."
+
+## Article section headings fill their lines (30 September 2026)
+
+Headings 4, 7, 10 and 11 of the budgeting piece broke into two half-empty lines. Not a width
+problem — the headings already had the full 632px prose measure. The cause was the global
+`h1,h2,h3,h4{text-wrap:balance}` rule, which *evens* a two-line heading rather than filling the
+first.
+
+Measured on heading 4, line widths against a 632px measure:
+
+- `balance` — 348 / 350 (what it was doing)
+- `pretty` — 551 / 148
+- `normal` — 551 / 148
+
+`.article-prose h2,h3` now opt out with `text-wrap:pretty`, which fills the line and keeps the
+orphan protection. This is the third place `balance` has caused the same complaint — the tile
+headings and the detail `h1` were the other two — so it is worth remembering that the global rule
+applies to every heading on the site.
