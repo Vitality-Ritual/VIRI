@@ -806,7 +806,7 @@ dialog p{color:var(--muted)}
 .pola-page{position:relative;min-height:calc(100svh - var(--header));overflow:hidden;
   background:var(--cream);display:grid;place-items:center;isolation:isolate}
 .pola-field{position:absolute;inset:0;z-index:1}
-.pola{position:absolute;left:var(--l);top:var(--t);width:clamp(92px,13.5vw,186px);
+.pola{position:absolute;left:var(--l);top:var(--t);width:clamp(128px,22vw,300px);
   background:#fff;padding:7px 7px 26px;box-shadow:0 14px 32px rgba(59,50,42,.15);
   opacity:0;transform:translateY(16px) scale(.9) rotate(var(--r));
   animation:pola-in .62s cubic-bezier(.2,.7,.3,1) var(--d) forwards}
@@ -840,7 +840,7 @@ dialog p{color:var(--muted)}
   .pola-word span{opacity:1}
 }
 @media (max-width:700px){
-  .pola{width:clamp(78px,23vw,150px);padding:5px 5px 19px}
+  .pola{width:clamp(118px,38vw,220px);padding:6px 6px 22px}
 }
 
 /* ---- 4. film grain ----------------------------------------- */
