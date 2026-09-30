@@ -992,3 +992,19 @@ the first line was deliberately kept short.
 Now `28ch` (355px) with `text-wrap:pretty`, which fills each line and only guards against a
 stranded last word. The budgeting title went from three lines to two; shorter titles are unaffected
 because they never reached the old cap.
+
+## Sign-up contained rather than full bleed (30 September 2026)
+
+The photograph and form ran edge to edge, which read as spread out. The pair now sits in the same
+1320px measure the rest of the site uses, with the page's own `--gutter` either side — 54px of cream
+at a 1280 canvas — and the columns split `1fr 1fr` so the picture stops on the centre line (its
+right edge lands at 621 against a 640 midpoint). The form panel takes a 1px rule so the two halves
+read as one contained block.
+
+The no-crop rule still holds: `max-width` and `max-height` are both caps on an auto-sized image, so
+it shrinks whole to whichever runs out first. Measured at 1280x900 — rendered 567x707 against a
+natural 776x968, aspect identical, `filter:none`. The section fills the 820px band exactly. Under
+860px the padding and max-width are dropped so the picture still spans the full width.
+
+Also: the budgeting standfirst is now "The small decisions I make to save money while still living
+my best life."
