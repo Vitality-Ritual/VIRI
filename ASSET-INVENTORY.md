@@ -6,6 +6,14 @@ original `ASSET_SOURCES.json` (which only covers the first build).
 **39 catalogued files, of the 51 now in the folder. 24 referenced by the site, 15 retired but
 still present.**
 
+**30 September 2026.** `signup-viri.webp` is the sign-up photograph, copied byte-for-byte from
+what Margaret supplied — no re-encode, no crop, no grade. Six new files for the running
+essentials article: `run-essentials.jpg` (cover) and `gear-vest`, `gear-bottle`, `gear-shoe`,
+`gear-headphones`, `gear-gels`. The five gear shots are supplier product photography on white,
+shown on a cream panel with `mix-blend-mode:multiply` so the white drops out. Rights on those are
+the retailers', which is a different question from the lifestyle photography and needs settling
+separately before launch. `signup-news.jpg` and `studio-pair.jpg` are no longer displayed.
+
 **29 September 2026 (later).** `coat-journal.jpg` is the corporate burnout article's photograph,
 replacing its "Photo to come" placeholder. It is the supplied image with the "Jaśnie Plan" text
 removed from the notebook cover — masters in `project/Photos/CoatJournal-original.png` and

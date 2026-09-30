@@ -925,3 +925,23 @@ Three things could have cropped it silently, and all three are closed:
 
 Verified at 1280x860 and 375x812: rendered aspect matches the natural 776x968 to within 0.004,
 scale is uniform, `filter:none`, and the whole image sits inside its column.
+
+## New article: running essentials (30 September 2026)
+
+"Starting Your Running Journey? Here Are Our Top Essentials to Get You Started." by Margaret Cole,
+30 September 2026, filed under Movement. Dated newest, so it is No. 07 and leads the edit and the
+home page's three tiles. Cover is the autumn pavement photograph.
+
+Five product shots sit inline. They arrive as supplier photography on white, which pastes into an
+editorial page as five bright rectangles, so each one goes on a cream panel with a thin rule and
+`mix-blend-mode:multiply` — that drops the white into the panel and leaves the object sitting on the
+page. A small caption under each carries the name and price.
+
+The prose needed `h3` (the two water-carrier options sit under one heading) and a rule for the
+author's two section breaks. Headings that are themselves product links lose the inline underline,
+which would otherwise run under the whole heading.
+
+All seven outbound links were normalised to https — two were supplied as `http://`.
+
+There is now an older article titled "Starting your running journey? Five ways to find your circle"
+(No. 03). Different piece, similar opening; worth knowing they will sit near each other in search.
