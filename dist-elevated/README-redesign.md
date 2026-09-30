@@ -798,3 +798,25 @@ Removing the text took three attempts, and the failures are the useful part:
   donor's own structure visible. The fix is a proper field swap: fit a quadratic to the ring around
   the block (which the ink never touches) and another to the donor, then keep the donor's weave and
   subtract its lighting field while adding the target's. That is what makes the patch invisible.
+
+## Meet the founders: two letters (30 September 2026)
+
+The section was one joint letter signed "Margaret & Annabel" beside the photograph. It is now three
+columns — Margaret's letter, Annabel's, and the photograph — with the title spanning above them,
+since a title inside the first column no longer made sense once there were two letters.
+
+Margaret's letter is in, lightly edited for grammar and concision as asked: "whether it be" → "whether
+it was" and then folded into a dash list; "all my classmates were also just as into" lost its doubled
+comparison; "it was apparent that there was a disconnect" → "the disconnect ... was obvious"; "living
+in their own world ... often living parallel lifestyles" lost the repeated verb; "I wonder when she
+moved here?" became a real question; and the closing semicolon-plus-"so" became a full stop. It is
+also broken into four paragraphs, which one block of text would not survive in a column this narrow.
+
+Annabel's is a blank placeholder using the same dashed treatment as the photograph, sized to stretch
+to Margaret's letter height so the two signatures sit on one baseline.
+
+`align-items` went from `center` to `start`: with letters of different lengths, centring floats the
+shorter one. Three narrow columns also break earlier than the old two did, so at 1080px the letters
+pair up and the photograph goes full width, and at 820px everything stacks with the photograph first.
+
+The joint letter it replaced is in `archive/founders-joint-letter.md`.
