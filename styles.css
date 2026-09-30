@@ -818,7 +818,7 @@ dialog p{color:var(--muted)}
 }
 /* lifts the wordmark off the collage; matters more once there are photographs */
 .pola-page:before{content:'';position:absolute;inset:0;z-index:2;pointer-events:none;
-  background:radial-gradient(ellipse 58% 42% at 50% 47%,
+  background:radial-gradient(ellipse 58% 42% at 50% 50%,
     rgba(233,228,220,.94),rgba(233,228,220,.6) 58%,rgba(233,228,220,0) 80%)}
 .pola-join{position:relative;z-index:3;display:block;text-align:center;
   padding:clamp(14px,3vw,30px) clamp(18px,5vw,56px)}
@@ -826,12 +826,12 @@ dialog p{color:var(--muted)}
   text-transform:uppercase;font-size:clamp(3rem,11.5vw,8.5rem);line-height:.92;
   letter-spacing:.045em;color:var(--cocoa)}
 .pola-word span{display:inline-block;opacity:0;
-  animation:pola-type .42s ease-out calc(var(--i) * .72s) forwards}
+  animation:pola-type .42s ease-out calc(var(--i) * .34s) forwards}
 .pola-sp{display:inline-block;width:.34em}
 @keyframes pola-type{from{opacity:0}to{opacity:1}}
 .pola-join:hover .pola-word{color:var(--taupe-deep)}
-.pola-foot{position:relative;z-index:3;margin:0;text-align:center;font-size:12px;
-  letter-spacing:.06em;color:var(--muted)}
+.pola-foot{position:absolute;left:0;right:0;bottom:clamp(22px,4vw,44px);z-index:3;margin:0;
+  text-align:center;font-size:12px;letter-spacing:.06em;color:var(--muted)}
 .pola-foot a{border-bottom:1px solid var(--line-2)}
 /* the global reduced-motion rule kills every animation, and these start at
    opacity:0 - without this the page would simply be blank */
