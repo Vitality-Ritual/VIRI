@@ -808,14 +808,11 @@ dialog p{color:var(--muted)}
 .pola-field{position:absolute;inset:0;z-index:1}
 .pola{position:absolute;left:var(--l);top:var(--t);width:clamp(128px,22vw,300px);
   background:#fff;padding:7px 7px 26px;box-shadow:0 14px 32px rgba(59,50,42,.15);
-  opacity:0;transform:translateY(16px) scale(.9) rotate(var(--r));
-  animation:pola-in .62s cubic-bezier(.2,.7,.3,1) var(--d) forwards}
+  opacity:0;transform:rotate(var(--r));
+  animation:pola-in .08s linear var(--d) both}
 /* blank for now - photographs drop straight into .pola-shot */
-.pola-shot{display:block;aspect-ratio:1/1;background:var(--taupe-light)}
-@keyframes pola-in{
-  from{opacity:0;transform:translateY(16px) scale(.9) rotate(var(--r))}
-  to{opacity:1;transform:translateY(0) scale(1) rotate(var(--r))}
-}
+.pola-shot{display:block;aspect-ratio:4/5;background:var(--taupe-light)}
+@keyframes pola-in{from{opacity:0}to{opacity:1}}
 /* lifts the wordmark off the collage; matters more once there are photographs */
 .pola-page:before{content:'';position:absolute;inset:0;z-index:2;pointer-events:none;
   background:radial-gradient(ellipse 58% 42% at 50% 50%,

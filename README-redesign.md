@@ -845,6 +845,23 @@ array order made the frames sweep the perimeter clockwise, which read as a ring 
 than frames landing at random; the order now jumps across the screen on every beat, and the two
 pairs that share a beat are always far apart. A script check asserts it is still a permutation.
 
+### Entrance refinements
+
+The first pass eased each frame in over 0.62s with a drift and a fade, which read as soft. It is
+now a plain pop: opacity only, 0.08s linear, no scale, no drift, no shadow movement. An
+intermediate version slammed the frame down from 1.22 scale with the shadow collapsing underneath
+— that read as a bump behind the picture and came out.
+
+**A CSS trap worth recording.** The obvious way to express "just appear" is
+`animation:… .01s steps(1,end) … both`. It does not hold. Every animation reported
+`playState:"finished"` with the right `currentTime`, and the six shortest delays worked, but the
+four longest ones still computed `opacity:0` indefinitely — the fill silently failed to apply. An
+80ms linear fade is indistinguishable from an instant pop and is reliable, so that is what ships.
+
+Arrivals are one at a time, never two, evenly spaced so the last lands exactly on 3s (ten frames,
+a beat every 0.333s). The photo area is 4:5 rather than square, making each frame 258x316 at a
+1280 canvas.
+
 **The reduced-motion trap.** The site's global rule is `*,*:before,*:after{animation:none!important}`.
 Everything here starts at `opacity:0` and animates up, so under that rule the whole page would have
 rendered blank — a sign-up page that does not exist for anyone with the OS setting on. There is an
