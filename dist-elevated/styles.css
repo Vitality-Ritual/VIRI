@@ -798,6 +798,32 @@ dialog p{color:var(--muted)}
 .panel-d{display:block;margin-top:6px;
   font-size:13px;line-height:1.6;letter-spacing:.01em;color:rgba(255,255,255,.78)}
 
+/* ---- sign-up: photograph two thirds, form one third -------------------- */
+/* The picture is a true black-and-white, toned to a warm duotone in the file
+   rather than filtered in CSS - sepia() over grey gives a flat wash. See
+   project/tools/photo-recolour/duotone.rb. */
+.signup-split{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);
+  min-height:calc(100svh - var(--header));background:var(--cream)}
+.signup-split-shot{margin:0;position:relative;overflow:hidden;background:var(--taupe-light)}
+/* portrait picture in a landscape panel, so it crops hard: 52% keeps their
+   hands at the top and the mats at the bottom inside the frame */
+.signup-split-shot img{position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:center 52%}
+.signup-split-form{display:flex;align-items:center;justify-content:center;
+  padding:clamp(28px,3.4vw,60px);background:var(--cream-2)}
+.signup-split-inner{width:min(100%,330px)}
+.signup-split-inner h1{font-size:clamp(1.9rem,2.6vw,2.5rem);margin:0}
+.signup-split-lede{margin:14px 0 26px;color:var(--muted);font-size:15px}
+.signup-split-inner .button{width:100%;justify-content:center;margin-top:4px}
+.signup-split-inner .signup-foot{margin-top:22px;font-size:12px;letter-spacing:.04em;color:var(--muted)}
+.signup-split-inner .signup-foot a{border-bottom:1px solid var(--line-2)}
+@media (max-width:860px){
+  /* stacked, a two-thirds column means nothing; give the picture a band */
+  .signup-split{grid-template-columns:1fr;min-height:0}
+  .signup-split-shot{height:clamp(260px,58vw,420px)}
+  .signup-split-form{padding:clamp(34px,7vw,56px) var(--gutter) clamp(54px,9vw,80px)}
+}
+
 /* ---- sign-up landing: scattered polaroids ------------------------------ */
 /* The frames arrive a couple at a time over ~4.8s while JOIN NOW types in
    underneath them. Every position, rotation and delay is a custom property on
