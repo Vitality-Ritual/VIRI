@@ -873,3 +873,31 @@ wins.
 landing → names → the existing `#/join` steps. `bindSignup()` is now bound on `start`. If you would
 rather the landing go straight to `#/join`, that is a one-line change — `#/join`'s first step is
 already the name step, which is what `#/start` duplicates.
+
+## Sign-up photograph: "Cycle Syncing" retyped as "Join Now" (30 September 2026)
+
+The masthead was replaced by compositing, not by an image editor. There is no font rasterizer in
+this toolchain, so the wordmark is rendered on a canvas in the browser in Bodoni Moda italic — a
+Didone, closest of the site's faces to the original masthead — and POSTed as base64 to a small local
+receiver, which keeps ~40KB of image data out of the transcript. `tools/photo-recolour/warp.rb`
+then solves a homography from four corner correspondences and maps the rendered type onto each
+foreshortened quad, reading the type's darkness as ink coverage so the antialiasing comes free.
+
+The old lettering is removed first, and only the **ink** pixels are — newsprint is smooth and near
+white while the type is dark, so a threshold separates them, and the paper between the letters is
+never touched. Inpainting the whole band instead, as the first attempt did, left an obvious pale
+slab.
+
+**The bug worth recording.** `Warp.inside?` read `return false if sign && s != sign`. `sign` holds a
+boolean, so when the first edge gave a negative cross product `sign` was `false`, `&&`
+short-circuited, and the mismatch check never ran — the quad then accepted *every* point outside
+itself. It silently ate the bottom of "Daily News" on the main masthead, and looked like a bad
+measurement rather than a logic error. Fixed to `!sign.nil? && s != sign`.
+
+Two mastheads are retyped: the one she is holding and the top-left copy. The other four sit at
+40–60px, steeply rotated and soft; corner accuracy there is worse than the glyphs are wide, and a
+misaligned wordmark reads as a smudge, so those are cleanly removed and left blank — which is what
+a background prop looks like at that size anyway.
+
+Framing is `object-position:center 45%`, keeping the held newspaper and the floor copies both in
+frame, with the site's warm grade over the cool studio white.
