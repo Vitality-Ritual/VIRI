@@ -1080,3 +1080,20 @@ The bordered panel was already exactly the picture's width — both 567px. What 
 inside it: 330px, left-aligned, leaving 192px of dead panel beside it. The form now fills the column
 and the panel's side padding and border are gone, so the fields measure the same 567px as the
 photograph. The tonal panel stays as a background with room above and below.
+
+## The panel takes the picture's exact dimensions (1 October 2026)
+
+The two columns were already the same width — 567px each. The panel was 69px *taller*: it sat on
+`align-self:stretch`, so it filled the grid row from the top padding down, while the picture started
+193px from the top and ran 707px. It now carries the photograph's own `776/968` ratio with
+`align-self:end` and the same viewport cap the image has, so both boxes land at 567x707 from the same
+top edge. Measured at 1280x900: width, height and top offsets all differ by 0.
+
+`aspect-ratio` has to come back off when the grid stacks, or the panel would be forced into a 1.25:1
+column on a phone; the media query resets it to `auto` with `height:auto` and no cap. At 375px the
+panel is content-height (528px) and nothing overflows sideways.
+
+**The "Log in" link was invisible.** `.signup-foot a` was written for the tennis page's cocoa panel
+and set `color:var(--paper)` — near-white text on the cream panel. Scoped an override to
+`.signup-split-inner .signup-foot a` in ink with a `--line-2` underline, so the old page keeps its
+pale link and this one reads.
