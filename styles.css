@@ -851,7 +851,9 @@ dialog p{color:var(--muted)}
   max-height:calc(100svh - var(--header) - clamp(26px,3.4vw,56px))}
 .signup-split-inner{width:100%}
 .signup-split-inner h1{font-size:clamp(1.9rem,2.6vw,2.5rem);margin:0}
-.signup-split-lede{margin:14px 0 26px;color:var(--muted);font-size:15px}
+/* the lede is gone and the labels now live inside the inputs, so the form
+   supplies the space the standfirst used to put under the headline */
+.signup-split-inner form{margin-top:clamp(22px,2.4vw,32px)}
 .signup-split-inner .button{width:100%;justify-content:center;margin-top:4px}
 .signup-split-inner .signup-foot{margin-top:22px;font-size:12px;letter-spacing:.04em;color:var(--muted)}
 .signup-split-inner .signup-foot a{color:var(--ink);border-bottom:1px solid var(--line-2)}
@@ -1110,7 +1112,10 @@ body:after{
    different lengths and centring them would float the shorter one. */
 .founders-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,.8fr);
   gap:clamp(26px,3.4vw,54px);align-items:start}
-.founder-letter{display:flex;flex-direction:column;height:100%}
+/* each letter sits on its own sheet of paper, the house card idiom (.review-card),
+   so the two read as two letters laid on the cream rather than one wall of type */
+.founder-letter{display:flex;flex-direction:column;height:100%;background:var(--paper);
+  padding:clamp(24px,2.6vw,38px);box-shadow:0 14px 30px rgba(59,50,42,.07)}
 .founder-letter .prose{flex:1}
 .founders-cta{margin-top:clamp(30px,3.4vw,46px)}
 /* three columns get too narrow before the old two did: letters pair up, photo goes wide */
