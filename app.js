@@ -528,8 +528,11 @@ function aboutPage(){return `<section class="about-hero is-placeholder"><div cla
         <span class="founders-role">Margaret Cole &middot; Co-founder</span></p>
     </article>
     <article class="founder-letter">
-      <div class="letter-ph" role="img" aria-label="Annabel&rsquo;s letter, to come">
-        <span class="ph-cap">Annabel&rsquo;s letter<br>to come</span>
+      <div class="prose">
+        <p>I grew up in Colorado too, where exercise and friendship were often the same thing. Staying active never felt separate from being social &mdash; it simply was the social activity.</p>
+        <p>I was also a gymnast for almost a decade, which taught me that training is easier and far more rewarding with a team. The work felt lighter with others beside me, the hard days were shared, and I showed up knowing that people were counting on me. Motivation was built into the routine, and I never had to look far for it.</p>
+        <p>College worked much the same way. A big city does not. Most adults are absorbed in their own responsibilities, living in different neighborhoods and keeping different hours, so the routines that used to form without effort become much harder to find. Health and wellness are usually the first thing a full schedule pushes aside, even for people who care deeply.</p>
+        <p>I missed having a team, and I suspected many others did too. That is why we started VIRI &mdash; so that working out in company becomes as ordinary in a city as it was for me growing up. I have seen the difference between training alone and training together, and most people would choose the second if it were easier to find.</p>
       </div>
       <p class="founders-sign"><span class="founder-signature">Annabel</span>
         <span class="founders-role">Annabel Green &middot; Co-founder</span></p>
