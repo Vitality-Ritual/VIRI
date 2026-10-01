@@ -1149,3 +1149,33 @@ longer counts it. The lede was also carrying the space under the headline with i
 margin; that job moves to `.signup-split-inner form{margin-top:clamp(22px,2.4vw,32px)}`, which keeps
 31px of air below "Sign up now". The panel still measures the photograph exactly: 567x707, all three
 offsets 0.
+
+## "Connect with us" becomes a real contact form (1 October 2026)
+
+The footer link and the About CTA both said "Connect with us" and both pointed at `#/connect`, which
+held two founder cards whose Email and LinkedIn buttons opened a modal admitting no address had been
+supplied. Both now read "Contact us" and the page is a form: first name, last name, email, and an
+inquiry box, posting to the VIRI inbox and landing on `#/thanks`.
+
+**A static site cannot send mail**, so the form posts to FormSubmit, which relays a JSON body to one
+address with no backend and no account. That address is a single constant, `CONTACT_EMAIL`, at the
+head of the contact block; filling it in is the whole switch-on. The VIRI address does not exist
+yet, so it is empty, and while it is empty the page says so in the site's own `note()` voice — on
+the form *and* on the thank-you page, because "Your note has been sent" would otherwise be a lie
+told to a real visitor on a live domain. Both notices disappear on their own the moment the constant
+has a value.
+
+Validation runs before any of that: both names, an address matching `[^\s@]+@[^\s@]+\.[^\s@]{2,}`,
+and a non-empty message. A failed POST keeps the visitor on the form with their text intact rather
+than sending them to a thank-you page for a note that did not go; only a 2xx — or the unconfigured
+case — advances the route.
+
+The fields follow the sign-up page: placeholders inside the boxes with `.visually-hidden` labels
+still carrying `for`/`id`, so autofill and screen readers keep working. The two names share a row
+down to 560px. `contact-info` and its modal are deleted along with `.contact-grid`,
+`.contact-actions` and `.founder-monogram`; `.contact-card` stays, because the archived profile page
+still uses it.
+
+**Still pointing at the wrong place:** the footer's TikTok icon links to `#/connect`, which was a
+reasonable placeholder when that page was "here is how to reach us" and is not one now that it is an
+inquiry form. It needs the real TikTok URL.
