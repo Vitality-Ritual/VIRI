@@ -1097,3 +1097,23 @@ panel is content-height (528px) and nothing overflows sideways.
 and set `color:var(--paper)` — near-white text on the cream panel. Scoped an override to
 `.signup-split-inner .signup-foot a` in ink with a `--line-2` underline, so the old page keeps its
 pale link and this one reads.
+
+## Annabel's letter replaces the placeholder (1 October 2026)
+
+The dashed `.letter-ph` box is gone and so is its CSS — it was the only thing using that class. Her
+letter is now a plain `.prose` block, identical in structure to Margaret's, so `.founder-letter`'s
+`flex:1` on the prose keeps both signatures on the same baseline.
+
+**The draft was about 290 words against Margaret's 204, and the overlap was most of the difference.**
+Three things were already said in the left-hand column: growing up in Colorado and finding friends
+through sport, the whole college paragraph (Margaret covers it in one clause — "The pattern continued
+in college"), and the closing promise to connect you with people nearby keeping the same routines.
+Those came out. What stayed is the material only Annabel has — a decade of gymnastics and what a team
+does for motivation — kept close to whole, plus the part of her city observation that is hers rather
+than Margaret's: different neighbourhoods, different hours, and wellness being the first thing a full
+schedule drops. Her opening now says "Colorado too", which reads as a shared fact rather than a
+repeated one.
+
+The result is 212 words to Margaret's 204, and at 1280 the two columns render at exactly the same
+height — 738px each, prose difference 0, signatures on the same pixel. Stacked at 375 both are 335px
+wide with the photograph ordered first.

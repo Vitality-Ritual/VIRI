@@ -1112,9 +1112,6 @@ body:after{
   gap:clamp(26px,3.4vw,54px);align-items:start}
 .founder-letter{display:flex;flex-direction:column;height:100%}
 .founder-letter .prose{flex:1}
-/* the blank Annabel is waiting to fill - same dashed treatment as the photo */
-.letter-ph{flex:1;min-height:clamp(240px,26vw,380px);display:flex;align-items:center;justify-content:center;
-  text-align:center;border:1px dashed rgba(59,50,42,.42);background:var(--cream-2);color:rgba(59,50,42,.6)}
 .founders-cta{margin-top:clamp(30px,3.4vw,46px)}
 /* three columns get too narrow before the old two did: letters pair up, photo goes wide */
 @media (max-width:1080px){
@@ -1140,7 +1137,6 @@ body:after{
   .philosophy-media{min-height:clamp(220px,52vw,340px)}
   .founders-grid{grid-template-columns:1fr;gap:26px}
   .founders-photo{order:-1;aspect-ratio:3/2}
-  .letter-ph{min-height:200px}
   .f-serif{padding-left:.4em}
 }
 
