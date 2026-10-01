@@ -555,12 +555,11 @@ function signupPage(){return `<section class="signup-split">
     <div class="signup-split-inner">
       <p class="eyebrow">Join VIRI</p>
       <h1>Sign up now</h1>
-      <p class="signup-split-lede">Start with your name. The rest takes a minute.</p>
       <form id="signup-form" novalidate>
-        <div class="field"><label for="su-first">First name</label>
-          <input id="su-first" name="first" autocomplete="given-name" maxlength="40"></div>
-        <div class="field"><label for="su-last">Last name</label>
-          <input id="su-last" name="last" autocomplete="family-name" maxlength="40"></div>
+        <div class="field"><label class="visually-hidden" for="su-first">First name</label>
+          <input id="su-first" name="first" placeholder="First name" autocomplete="given-name" maxlength="40"></div>
+        <div class="field"><label class="visually-hidden" for="su-last">Last name</label>
+          <input id="su-last" name="last" placeholder="Last name" autocomplete="family-name" maxlength="40"></div>
         <p id="su-error" class="field-error" role="alert"></p>
         <button class="button" type="submit">Go ${arrow}</button>
       </form>

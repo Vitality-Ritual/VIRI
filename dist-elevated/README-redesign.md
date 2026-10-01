@@ -1117,3 +1117,35 @@ repeated one.
 The result is 212 words to Margaret's 204, and at 1280 the two columns render at exactly the same
 height — 738px each, prose difference 0, signatures on the same pixel. Stacked at 375 both are 335px
 wide with the photograph ordered first.
+
+## The letters get their own paper (1 October 2026)
+
+Two columns of unboxed prose on the cream read as one wall of type. Each letter now sits on
+`var(--paper)` with `clamp(24px,2.6vw,38px)` of padding and a soft `0 14px 30px rgba(59,50,42,.07)`
+shadow — the house card idiom from `.review-card`, which is paper on cream with the shadow only on
+hover. A permanent one is right here because a letter is an object lying on a surface, not a tile
+that responds to a cursor.
+
+The grid's `align-items:start` leaves the row content-sized, but `height:100%` on `.founder-letter`
+still resolves against the row, so both sheets come out at exactly the same height and the two
+signatures stay on one baseline — 388x911 each at 1280.
+
+**The padding costs measure.** The column is 388px and the paragraphs were running at 345px
+(`max-width:46ch` was binding). Inside the card the measure is 321px, so `46ch` no longer binds and
+the lines fill the box. That is about 44 characters — still comfortable — but it makes each card
+257px taller than the unboxed version, which widens the gap below the photograph placeholder. Left
+alone: the placeholder sits at the top of its column and the space below reads as margin, and the
+column is sized for a real portrait that has not been supplied yet.
+
+## Sign-up fields label themselves (1 October 2026)
+
+"Start with your name. The rest takes a minute." is deleted, and the two micro-labels moved inside
+the inputs as placeholders. The `<label>` elements stay, carrying `.visually-hidden`, so the
+`for`/`id` pairing still feeds screen readers and browser autofill — a bare `placeholder` is not an
+accessible name and would also have broken `autocomplete="given-name"` heuristics.
+
+`.visually-hidden` is `position:absolute`, so it stops being a flex item and `.field`'s `9px` gap no
+longer counts it. The lede was also carrying the space under the headline with its `0 0 26px`
+margin; that job moves to `.signup-split-inner form{margin-top:clamp(22px,2.4vw,32px)}`, which keeps
+31px of air below "Sign up now". The panel still measures the photograph exactly: 567x707, all three
+offsets 0.
