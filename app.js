@@ -663,7 +663,7 @@ const BIO_EXAMPLES=[
 ];
 const JOIN_STEPS=[
   {key:'name',type:'text',q:'What should we call you?',hint:'However you introduce yourself in class.',placeholder:'First and last name',autocomplete:'name',required:true},
-  {key:'email',type:'email',q:'Where can we reach you?',hint:'Only used to find this profile again in this browser. Nothing is sent.',placeholder:'you@example.com',autocomplete:'email',required:true},
+  {key:'email',type:'account',q:'Where can we reach you?',hint:'Your email is how you sign back in. It is never shown to other members.',required:true},
   {type:'training',q:'How you train.',hint:'All three are optional, and nothing here is locked in.'},
   {type:'location',q:'Where do you train most?',hint:'This is how we show you the people and studios nearby.'},
   {type:'personal',q:'A little more about you.',hint:'All optional, and all of it helps us put you next to people you would actually get on with.'},
@@ -676,7 +676,7 @@ const YEAR_NOW=new Date().getFullYear();
 const BIRTH_YEARS=Array.from({length:75},(_,i)=>YEAR_NOW-16-i);
 const GRAD_YEARS=Array.from({length:77},(_,i)=>YEAR_NOW+6-i);
 const ageOf=y=>y?YEAR_NOW-Number(y):null;
-let joinStep=0, joinData={name:'',email:'',forms:[],times:[],studios:[],region:'',city:'',
+let joinStep=0, joinData={name:'',email:'',password:'',forms:[],times:[],studios:[],region:'',city:'',
   birthYear:'',college:'',collegeYear:'',industry:'',photo:'',bio:''};
 const checkGrid=(name,options,chosen,cols='')=>`<div class="check-grid${cols}">${options.map(o=>
   `<label class="check-box"><input type="checkbox" name="${name}" value="${escapeHTML(o)}"${chosen.includes(o)?' checked':''}><span>${escapeHTML(o)}</span></label>`).join('')}</div>`;
@@ -694,7 +694,13 @@ function joinControl(s){
         `<option${joinData.region===r?' selected':''}>${escapeHTML(r)}</option>`).join('')}</select></div>
     <div class="field"><label for="join-city">Your primary city <span class="field-optional">Optional</span></label>
       <input id="join-city" name="city" placeholder="Washington" autocomplete="address-level2" maxlength="60" value="${escapeHTML(joinData.city||'')}"></div>`;
-if(s.type==='personal')return `
+if(s.type==='account')return `
+    <div class="field"><label for="join-input">Email address</label>
+      <input id="join-input" name="email" type="email" autocomplete="email" placeholder="you@example.com" value="${escapeHTML(joinData.email||'')}"></div>
+    <div class="field"><label for="join-pass">Choose a password</label>
+      <input id="join-pass" name="password" type="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" value="${escapeHTML(joinData.password||'')}">
+      <p class="field-eg">Eight characters or more. You can also sign in with Google once that is switched on.</p></div>`;
+  if(s.type==='personal')return `
     <div class="field"><label for="join-born">Your age <span class="field-optional">Optional</span></label>
       <select id="join-born" name="birthYear"><option value="">Prefer not to say</option>${BIRTH_YEARS.map(y=>
         `<option value="${y}"${joinData.birthYear==String(y)?' selected':''}>${YEAR_NOW-y} &mdash; born ${y}</option>`).join('')}</select>
@@ -737,7 +743,9 @@ if(s.type==='details')return `
 }
 /* the header icon and the menu's "Your circle" group send you to sign-up
    until a profile exists on this device, and to the profile once it does */
-const signedIn=()=>!!state.profile&&!state.loggedOut;
+/* A real session decides this now, not a local flag: authUser comes from
+   Supabase and state.profile is only filled once that exists. */
+const signedIn=()=>!!(typeof authUser!=='undefined'&&authUser)&&!!state.profile;
 /* assigning the hash it already holds fires no hashchange, so a route that
    sends you where you already are has to re-render by hand */
 const goTo=h=>{if(location.hash===h)render();else location.hash=h;};
@@ -948,7 +956,7 @@ function bindJoin(){
     }));
   });
 bindPhoto();
-  f.addEventListener('submit',e=>{
+  f.addEventListener('submit',async e=>{
     e.preventDefault();
     const s=JOIN_STEPS[joinStep], err=$('#join-error'), fd=new FormData(f);
     const picked=g=>[...f.querySelectorAll(`input[name="${g}"]:checked`)].map(i=>i.value);
@@ -960,11 +968,26 @@ bindPhoto();
       joinData.collegeYear=went?String(fd.get('collegeYear')||''):'';
       joinData.industry=String(fd.get('industry')||'').trim();}
     else if(s.type==='details'){joinData.bio=String(fd.get('bio')||'').trim();photoCommit();}
+    else if(s.type==='account'){joinData.email=String(fd.get('email')||'').trim();
+      joinData.password=String(fd.get('password')||'');}
     else joinData[s.key]=String(fd.get(s.key)||'').trim();
     if(s.required&&!joinData[s.key]){err.textContent=s.key==='email'?'Please enter an email address.':'Please enter your name.';return;}
-    if(s.key==='email'&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(joinData.email)){err.textContent='Please enter a valid email address.';return;}
+    if(s.type==='account'){
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(joinData.email)){err.textContent='Please enter a valid email address.';return;}
+      if(joinData.password.length<8){err.textContent='Please choose a password of at least 8 characters.';return;}
+    }
     err.textContent='';
     if(joinStep<JOIN_STEPS.length-1){joinStep++;render(false);return;}
+    const btn=f.querySelector('button[type=submit]'), label=btn.innerHTML;
+    btn.disabled=true; btn.textContent='Creating\u2026';
+    const res=await dbSignUp(joinData.email,joinData.password,dbProfileFields(joinData));
+    btn.disabled=false; btn.innerHTML=label;
+    if(res.error){err.textContent=res.error.message;return;}
+    /* the studios picked at sign-up are saved once the address is confirmed */
+    pendingStudios=studios.filter(x=>joinData.studios.includes(x.name)).map(x=>x.id);
+    try{localStorage.setItem('viri-pending-studios',JSON.stringify(pendingStudios));
+      if(joinData.photo)localStorage.setItem('viri-pending-photo',joinData.photo);}catch(e){}
+    joinStep=0; goTo('#/check-email'); return;
     const forms=joinData.forms.filter(x=>x!==JOIN_ANY.forms);
     state.profile={name:joinData.name,email:joinData.email.toLowerCase(),
       area:joinData.city||joinData.region||'Washington, DC',region:joinData.region,city:joinData.city,
@@ -1065,6 +1088,24 @@ function sessionCard(s,by){
     </div>
   </article>`;
 }
+/* Local state updates at once so the page stays quick; the server write
+   follows. If it fails, say so rather than letting someone believe something
+   was saved that was not. */
+function dbPush(p,what){
+  Promise.resolve(p).then(r=>{if(r&&r.error)toast(`Saved on this device, but ${what} did not reach the server.`);})
+    .catch(()=>toast(`Saved on this device, but ${what} did not reach the server.`));
+}
+let pendingStudios=[];
+/* Sign-up no longer ends on the profile: with email confirmation on, the
+   account does not exist as a usable thing until the link is clicked. Saying
+   so plainly beats dropping someone on an empty profile that does not work. */
+function checkEmailPage(){return `<div class="wrap handoff"><div class="handoff-card thanks-card">
+  <p class="eyebrow">Almost there</p>
+  <h1>Check your email.</h1>
+  <p>We have sent a link to ${escapeHTML(joinData.email||'your address')}. Open it and your profile is ready.</p>
+  <p class="small" style="margin-top:16px">Your account is not active until that address is confirmed, so nothing happens until you do. If it has not arrived in a few minutes, look in spam.</p>
+  <div class="thanks-actions">${button('Back to VIRI','#/','small outline')}</div>
+</div></div>`;}
 let msgThread=null;
 /* ---- messages ----
    No message is ever sent from here; the threads are drawn from the people you
@@ -1171,9 +1212,9 @@ function profilePage(){
           <button class="button small outline" data-action="share-profile">Share</button>
         </div>
         <div class="pf-stats">
-          <span><b>${list.length}</b> sessions</span>
-          <button class="stat-open" data-action="show-friends"><b>${state.connections.length}</b> friends</button>
-          <span><b>${saved.length}</b> studios</span>
+          <span><b>${list.length}</b> session${list.length===1?'':'s'}</span>
+          <button class="stat-open" data-action="show-friends"><b>${state.connections.length}</b> friend${state.connections.length===1?'':'s'}</button>
+          <span><b>${saved.length}</b> studio${saved.length===1?'':'s'}</span>
         </div>
         <div class="pf-bio">
           ${p.bio?`<p>${escapeHTML(p.bio)}</p>`:''}
@@ -1364,8 +1405,24 @@ function findPage(){
     </div>
   </div>`;
 }
-function authPage(){return `<section class="auth-layout"><div class="auth-image"><img src="${A}studio-entry.jpg" alt="Two women arriving at the studio together"><h2>A new ritual.<br>A new circle.<br>A little more you.</h2></div><div class="auth-form"><p class="eyebrow">Welcome back</p><h1>Back to your circle.</h1><p>Open the profile saved on this device.</p>${note('This is a local demo login. No password or email is sent.')}<form id="auth-form"><div class="field"><label for="auth-email">Email address</label><input id="auth-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required></div><p id="auth-error" class="field-error" role="alert"></p><button class="button" type="submit" style="margin-top:18px">Open my profile</button></form><p class="small">New here? <a href="#/signup">Join VIRI</a></p></div></section>`;}
-function bindAuth(){$('#auth-form')?.addEventListener('submit',e=>{e.preventDefault();const email=String(new FormData(e.target).get('email')).trim().toLowerCase();if(!state.profile||state.profile.email!==email){$('#auth-error').textContent='No profile with that email is saved in this browser. Create a demo profile to begin.';return;}state.loggedOut=false;save();toast('Welcome back to your circle.');goTo('#/profile');});}
+function authPage(){return `<section class="auth-layout"><div class="auth-image"><img src="${A}studio-entry.jpg" alt="Two women arriving at the studio together"><h2>A new ritual.<br>A new circle.<br>A little more you.</h2></div><div class="auth-form"><p class="eyebrow">Welcome back</p><h1>Back to your circle.</h1><p>Sign in to your VIRI account.</p><form id="auth-form"><div class="field"><label for="auth-email">Email address</label><input id="auth-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required></div><div class="field"><label for="auth-pass">Password</label><input id="auth-pass" name="password" type="password" autocomplete="current-password" required></div><p id="auth-error" class="field-error" role="alert"></p><button class="button" type="submit" style="margin-top:18px">Open my profile</button></form><p class="small">New here? <a href="#/signup">Join VIRI</a></p></div></section>`;}
+function bindAuth(){$('#auth-form')?.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const fd=new FormData(e.target), err=$('#auth-error');
+  const email=String(fd.get('email')||'').trim().toLowerCase(), pass=String(fd.get('password')||'');
+  if(!email||!pass){err.textContent='Enter your email and password.';return;}
+  const btn=e.target.querySelector('button[type=submit]'), label=btn.innerHTML;
+  btn.disabled=true; btn.textContent='Signing in\u2026';
+  const res=await dbSignIn(email,pass);
+  btn.disabled=false; btn.innerHTML=label;
+  /* Supabase says "Invalid login credentials" for a wrong password AND for an
+     unconfirmed address, which sends people hunting for a typo that is not
+     there. Name the likelier cause. */
+  if(res.error){err.textContent=/invalid login/i.test(res.error.message)
+    ? 'That email and password did not match. If you have just signed up, open the confirmation link first.'
+    : res.error.message; return;}
+  toast('Welcome back to your circle.'); goTo('#/profile');
+});}
 
 /* ===================== booking hand-off ===================== */
 function bookPage(id){
@@ -1482,6 +1539,7 @@ function snapshotPlan(c){
   const v=exVenue(c.venue);
   state.plans=[...state.plans,{id:c.id,title:c.title,cat:c.cat,dur:c.dur,start:c.start,
     place:[v&&v.brand,c.area].filter(Boolean).join(' · '),going:(c.going||[]).slice(0,8)}];
+  if(typeof dbAddPlan==='function')dbPush(dbAddPlan(state.plans[state.plans.length-1]),'your plan');
 }
 const planEnd=p=>p.start+((p.dur||45)*60000);
 const pendingPlans=()=>(state.plans||[])
@@ -1512,12 +1570,17 @@ function logAttended(id){
     description:'',date:new Date(p.start).toISOString(),
     withIds:[],went:Math.max(1,(p.going||[]).length),fromPlan:p.id});
   state.logged=[...(state.logged||[]),id];
+  if(typeof dbAddSession==='function'){
+    dbPush(dbAddSession(state.posts[state.posts.length-1]),'that session');
+    dbPush(dbAnswerPlan(id),'the answer');
+  }
   save();closeModal();render(false);
   toast('Logged. You can add a photo or tag people any time.');
 }
 function skipAttended(id){
   state.logged=[...(state.logged||[]),id];
   state.joined=state.joined.filter(x=>x!==id);
+  if(typeof dbAnswerPlan==='function')dbPush(dbAnswerPlan(id),'the answer');
   save();closeModal();render(false);toast('Left off your sessions.');
 }
 /* ---- photos on a post ----
@@ -1596,6 +1659,18 @@ function postActivity(pre){
          went:1+withIds.length,date:new Date().toISOString(),
          fromPlan:pre?pre.id:null});
        if(pre)state.logged=[...(state.logged||[]),pre.id];
+       if(typeof dbAddSession==='function'){
+         /* upload first: the row should hold a path, not a megabyte of image */
+         const post=state.posts[state.posts.length-1];
+         dbPush((async()=>{
+           if(postPhoto){const path=await dbUploadPhoto(postPhoto,'session');
+             if(path)post.photo=path;}
+           const r=await dbAddSession(post);
+           if(post.photo&&!/^data:/.test(post.photo))post.photo=await dbPhotoUrl(post.photo);
+           render(false); return r;
+         })(),'that session');
+         if(pre)dbPush(dbAnswerPlan(pre.id),'the answer');
+       }
        save();closeModal();render(false);toast('Session added to your profile.');
      });
    });
@@ -1675,7 +1750,7 @@ function initPageMotion(){
   revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('is-revealed');revealObserver.unobserve(entry.target);}}),{threshold:.08,rootMargin:'0px 0px -30px 0px'});
   targets.forEach(el=>{el.classList.add('will-reveal');revealObserver.observe(el);});
 }
-function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':if(signedIn()){location.replace('#/feed');return;}html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'profile':html=profilePage();break;case 'feed':html=feedPage();break;case 'find':html=findPage();break;case 'messages':html=messagesPage();break;case 'settings':html=settingsPage();break;case 'setup':html=setupPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=legalPage(true);break;case 'terms':html=legalPage(false);break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',profile:'Your circle',feed:'Feed',find:'Find your people',messages:'Messages',settings:'Settings',setup:'Your profile',book:'Book this class',privacy:'Your privacy',terms:'Preview terms'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#auth-form'))bindAuth();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='find')$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();toast('Search runs over the sample roster in this preview.');});if(path==='join')bindJoin();if(path==='setup')bindSetup();
+function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':if(signedIn()){location.replace('#/feed');return;}html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'check-email':html=checkEmailPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'profile':html=profilePage();break;case 'feed':html=feedPage();break;case 'find':html=findPage();break;case 'messages':html=messagesPage();break;case 'settings':html=settingsPage();break;case 'setup':html=setupPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=legalPage(true);break;case 'terms':html=legalPage(false);break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you','check-email':'Check your email',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',profile:'Your circle',feed:'Feed',find:'Find your people',messages:'Messages',settings:'Settings',setup:'Your profile',book:'Book this class',privacy:'Your privacy',terms:'Preview terms'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#auth-form'))bindAuth();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='find')$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();toast('Search runs over the sample roster in this preview.');});if(path==='join')bindJoin();if(path==='setup')bindSetup();
   $('#subscribe-form')?.addEventListener('submit',e=>{e.preventDefault();
     toast('Saved on this device only \u2014 the preview does not send email.');e.target.reset();});if(path==='explore'){$('#ex-search').addEventListener('input',e=>{ex.query=e.target.value;exRefresh();});$('#ex-time').addEventListener('change',e=>{ex.time=e.target.value;exRefresh();});exBindMap();}}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-action]');if(!t)return;const {action,id,index,category,view,kind,name,channel}=t.dataset;switch(action){case 'video-toggle':{const v=$('#'+(t.dataset.video||'about-video'));if(v.paused)v.play().catch(()=>toast('Video playback is unavailable in this browser.'));else v.pause();break;}case 'close-modal':closeModal();break;case 'join-back':joinStep=Math.max(0,joinStep-1);render(false);break;case 'studio-prev':studioIndex=Math.max(0,studioIndex-1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'studio-next':studioIndex=Math.min(STUDIO_LAST(),studioIndex+1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'ex-city':ex={...ex,city:t.dataset.id,venue:null,cls:null};render(false);break;
@@ -1693,7 +1768,7 @@ case 'book-new':bookChoose(t.dataset.id,'new');break;
 case 'book-plan':bookChoose(t.dataset.id,'plan');break;
 case 'ex-zoom':exZoom(t.dataset.dir);break;
 case 'ex-reset':ex={...ex,cat:'All',time:'All',members:false,query:'',venue:null,cls:null};render(false);break;
-case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':state.saved=state.saved.includes(id)?state.saved.filter(x=>x!==id):[...state.saved,id];save();render(false);toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':pendingPlans().length?attendModal():postActivity();break;case 'post-new':closeModal();postActivity();break;case 'attend-yes':logAttended(t.dataset.id);break;case 'attend-no':skipAttended(t.dataset.id);break;case 'finish-next':{const n=(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start)[0];if(n){n.start=Date.now()-(n.dur+5)*60000;save();render(false);toast('Moved into the past. The + now has something to ask you.');}break;}case 'attend-more':{const p=takePlan(t.dataset.id);closeModal();postActivity(p);break;}case 'show-friends':friendsModal();break;case 'msg-open':msgThread=t.dataset.id;render(false);break;case 'log-out':state.loggedOut=true;save();$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Logged out. Your profile stays on this device until you clear the preview.');location.hash='#/';render(false);break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':toast('Added to your plan. In the live product this books you alongside them.');break;case 'session-talk':toast('Comments are part of this design. Writing one is not wired up in the preview yet.');break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':t.classList.toggle('is-on');break;case 'connect-sample':state.connections=state.connections.includes('alex')?[]:['alex'];save();render(false);toast(state.connections.length?'Sample connection added to your preview.':'Sample connection removed.');break;case 'edit-profile':openModal('Make your profile yours',`<form id="edit-form"><div class="field"><label for="edit-name">Your name</label><input id="edit-name" name="name" value="${escapeHTML(state.profile?.name)}" required maxlength="60"></div><div class="field"><label for="edit-area">Your neighborhood</label><input id="edit-area" name="area" value="${escapeHTML(state.profile?.area)}" required maxlength="70"></div><div class="dialog-actions"><button class="button small" type="submit">Save profile</button></div></form>`,()=>$('#edit-form').addEventListener('submit',ev=>{ev.preventDefault();const f=Object.fromEntries(new FormData(ev.target));if(!f.name.trim()||!f.area.trim())return;state.profile={...state.profile,name:f.name.trim(),area:f.area.trim()};save();closeModal();render(false);toast('Profile updated.');}));break;case 'clear-preview':openModal('Clear your preview?',`<p class="dialog-copy">This removes your demo profile, plans, posts, connections, and saved studios from this browser.</p><div class="dialog-actions"><button class="button outline small" data-action="close-modal">Keep my preview</button><button class="button small" data-action="confirm-clear">Clear preview</button></div>`);break;case 'confirm-clear':state={profile:null,loggedOut:false,plans:[],logged:[],joined:[],saved:[],created:[],posts:[],connections:[]};save();closeModal();render(false);toast('Your preview data has been cleared.');break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
+case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':{const nowOn=!state.saved.includes(id);state.saved=nowOn?[...state.saved,id]:state.saved.filter(x=>x!==id);if(typeof dbSetStudio==='function')dbPush(dbSetStudio(id,nowOn),'that studio');save();render(false);}toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':pendingPlans().length?attendModal():postActivity();break;case 'post-new':closeModal();postActivity();break;case 'attend-yes':logAttended(t.dataset.id);break;case 'attend-no':skipAttended(t.dataset.id);break;case 'finish-next':{const n=(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start)[0];if(n){n.start=Date.now()-(n.dur+5)*60000;save();render(false);toast('Moved into the past. The + now has something to ask you.');}break;}case 'attend-more':{const p=takePlan(t.dataset.id);closeModal();postActivity(p);break;}case 'show-friends':friendsModal();break;case 'msg-open':msgThread=t.dataset.id;render(false);break;case 'log-out':dbSignOut().then(()=>{$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Signed out.');location.hash='#/';render(false);});break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':toast('Added to your plan. In the live product this books you alongside them.');break;case 'session-talk':toast('Comments are part of this design. Writing one is not wired up in the preview yet.');break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':t.classList.toggle('is-on');break;case 'connect-sample':state.connections=state.connections.includes('alex')?[]:['alex'];save();render(false);toast(state.connections.length?'Sample connection added to your preview.':'Sample connection removed.');break;case 'edit-profile':openModal('Make your profile yours',`<form id="edit-form"><div class="field"><label for="edit-name">Your name</label><input id="edit-name" name="name" value="${escapeHTML(state.profile?.name)}" required maxlength="60"></div><div class="field"><label for="edit-area">Your neighborhood</label><input id="edit-area" name="area" value="${escapeHTML(state.profile?.area)}" required maxlength="70"></div><div class="field"><label for="edit-photo">Profile photo <span class="field-optional">Optional</span></label><div class="photo-drop" id="edit-drop" data-has="0"><input id="edit-photo" type="file" accept="image/*" class="visually-hidden"><div class="photo-empty"><p class="photo-lede">Drag a photo here, or <button type="button" class="plain-link" id="edit-pick">choose a file</button>.</p></div><div class="photo-editor"><figure class="post-shot"><img id="edit-preview" alt="Your photo"></figure><p class="photo-swap"><button type="button" class="plain-link" id="edit-repick">Choose another</button></p></div></div></div><p id="edit-error" class="field-error" role="alert"></p><div class="dialog-actions"><button class="button small" type="submit">Save profile</button></div></form>`,()=>{let newPhoto='';const drop=$('#edit-drop'),file=$('#edit-photo');const take=async f=>{const d=await shrinkImage(f,640);if(!d){$('#edit-error').textContent='That file could not be read as an image.';return;}newPhoto=d;$('#edit-preview').src=d;drop.dataset.has='1';};$('#edit-pick')?.addEventListener('click',()=>file.click());$('#edit-repick')?.addEventListener('click',()=>file.click());file.addEventListener('change',()=>{if(file.files?.[0])take(file.files[0]);});['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('is-over');}));['dragleave','dragend'].forEach(t=>drop.addEventListener(t,e=>{if(t==='dragleave'&&drop.contains(e.relatedTarget))return;drop.classList.remove('is-over');}));drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('is-over');const f=e.dataTransfer?.files?.[0];if(f)take(f);});$('#edit-form').addEventListener('submit',async ev=>{ev.preventDefault();const fd=Object.fromEntries(new FormData(ev.target));if(!fd.name.trim()||!fd.area.trim())return;const btn=ev.target.querySelector('button[type=submit]'),label=btn.innerHTML;btn.disabled=true;btn.textContent='Saving\u2026';state.profile={...state.profile,name:fd.name.trim(),area:fd.area.trim()};if(typeof dbSaveProfileEdits==='function')await dbSaveProfileEdits({name:fd.name.trim(),area:fd.area.trim()});if(newPhoto&&typeof dbSetAvatar==='function'){const r=await dbSetAvatar(newPhoto);if(r.error){btn.disabled=false;btn.innerHTML=label;$('#edit-error').textContent=r.error.message;return;}}save();closeModal();render(false);toast('Profile updated.');});});break;case 'clear-preview':openModal('Clear your preview?',`<p class="dialog-copy">This removes your demo profile, plans, posts, connections, and saved studios from this browser.</p><div class="dialog-actions"><button class="button outline small" data-action="close-modal">Keep my preview</button><button class="button small" data-action="confirm-clear">Clear preview</button></div>`);break;case 'confirm-clear':state={profile:null,loggedOut:false,plans:[],logged:[],joined:[],saved:[],created:[],posts:[],connections:[]};save();closeModal();render(false);toast('Your preview data has been cleared.');break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
 $('#menu-button').addEventListener('click',()=>{const open=$('#menu-panel').hidden;$('#menu-panel').hidden=!open;$('#menu-button').setAttribute('aria-expanded',String(open));});
 bindAccountMenu();
 document.addEventListener('click',e=>{if(!e.target.closest('.site-header')){$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');}});
@@ -1701,3 +1776,6 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('#menu-panel').hi
 window.addEventListener('hashchange',()=>{if($('#modal').open)closeModal();render();});
 initWordmark();
 render(false);
+/* The first render happens before the server answers, so it draws the
+   signed-out site; this redraws once the session is known. */
+if(typeof dbBoot==='function')dbBoot().then(()=>render(false)).catch(()=>{});
