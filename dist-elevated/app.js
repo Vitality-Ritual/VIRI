@@ -726,6 +726,20 @@ function syncAccountLinks(){
       <p class="menu-label">Account</p><button class="plain-link" data-action="log-out">Log out</button>`:'';
     if(!on){panel.hidden=true;icon?.setAttribute('aria-expanded','false');}
   }
+  const bar=$('#tabbar');
+  if(bar){
+    bar.hidden=!on;
+    if(on){
+      const here=(location.hash.replace(/^#\/?/,'')||'').split('/')[0];
+      const ic={home:'<path d="M3 10.5 12 3l9 7.5V21H3V10.5Z"/>',
+        find:'<circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/>',
+        log:'<rect x="3" y="3" width="18" height="18"/><path d="M12 8v8M8 12h8"/>'};
+      const tab=(href,key,label)=>`<a href="${href}" aria-label="${label}"${here===key?' aria-current="page"':''}><svg viewBox="0 0 24 24" aria-hidden="true">${ic[key]}</svg></a>`;
+      bar.innerHTML=tab('#/feed','home','Home')+tab('#/find','find','Find people')
+        +`<a href="#/profile" aria-label="Log a session" data-action="post-activity"><svg viewBox="0 0 24 24" aria-hidden="true">${ic.log}</svg></a>`
+        +`<a href="#/profile" aria-label="Your profile"${here==='profile'?' aria-current="page"':''}><span class="tab-av">${avatarFor(state.profile)}</span></a>`;
+    } else bar.innerHTML='';
+  }
   /* the feed and the finder only mean anything with a profile behind them */
   const nav=$('.nav-left');
   if(nav){

@@ -1403,3 +1403,23 @@ re-renders by hand when the hash is unchanged, and the four places that send you
 already be on now use it.
 
 17 routes, no console errors. The panel fits a 375px screen (12px to 363px).
+
+## The phone: the gutter I deleted, and a bar under the thumb (2 October 2026)
+
+**The content ran to the edge of the screen on a phone, and it was my shorthand that did it.**
+`.wrap` carries the site's gutter as `padding:0 var(--gutter)`. I wrote `.pf{padding:<top> 0 <bottom>}`
+and the same on `.feed-wrap`, and a `padding` shorthand sets all four sides — so the horizontal `0`
+overwrote the gutter and both pages sat flush against the glass at 375px. `.find` was fine because it
+only ever set `padding-bottom`, which is why Find measured 335px wide while the profile and the feed
+measured 375px. Both are `padding-block` now; all three pages start 20px in.
+
+**Signed in on a phone, the four things you do are now under your thumb.** A fixed bottom bar —
+Home, Find people, Log a session, your avatar — appears only below 760px and only when `signedIn()`.
+It disappears on log out and its markup is cleared with it, so there is nothing to tab into. The
+current route carries `aria-current`, the icon buttons carry `aria-label`, and the bar respects
+`env(safe-area-inset-bottom)` so it clears the home indicator on a notched phone. The footer gains
+matching bottom padding (via `body:has(...)`) only while the bar is showing, so nothing hides behind
+it.
+
+Desktop is untouched: the bar is `display:none` above 760px and those destinations stay in the top
+nav.
