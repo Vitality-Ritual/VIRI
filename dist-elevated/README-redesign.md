@@ -1179,3 +1179,31 @@ still uses it.
 **Still pointing at the wrong place:** the footer's TikTok icon links to `#/connect`, which was a
 reasonable placeholder when that page was "here is how to reach us" and is not one now that it is an
 inquiry form. It needs the real TikTok URL.
+
+## "It's Time to Stop Acting Like Being Busy is a Personality Trait" (2 October 2026)
+
+Margaret's fifth piece, dated 2 October, which makes it No. 05 and the lead tile on the edit and the
+home rail. Cover is the desk photograph, 736x1104, dropped in as `busy-desk.webp` with the master
+alongside the others in `project/Photos`.
+
+**The italics are inferred, not read.** The draft arrived as plain text, so the emphasis came through
+as nothing at all. Four passages are set in `<em>`, all the same kind of sentence — a thought
+addressed to the writer herself rather than to the reader: "I can't believe they're complaining…",
+"if someone were to look at my calendar…", "did my time this week actually reflect my defined
+priorities?", and the closing "would my boss, my CEO, or the humble director…". That is a consistent
+rule rather than a guess per sentence, but it is still a rule I chose; a screenshot of the original
+would settle it.
+
+The lone em dash on its own line between the story and the advice is the author's section break. It
+uses `.prose-break`, which the running-essentials piece already established as a hairline above the
+paragraph that follows, so it is a `<p class="prose-break">` and not an `<hr>`.
+
+**The headline took three lines, not two, and the reason is worth recording.** I measured the two
+intended breaks in a canvas and got 504 and 579 against a 585px column — both fitting, comfortably
+enough. They rendered on four lines. `.article-head > h1` is `text-transform:uppercase`, and the
+canvas was measuring the mixed-case string: the uppercase setting is about 20% wider, so the real
+widths were 602 and 726 and both lines overflowed. Measuring `s.toUpperCase()` instead gives breaks
+that hold: "It's Time to Stop" / "Acting Like Being Busy" / "is a Personality Trait", at 344, 486 and
+488 in 585. Lines two and three come out within 2px of each other, which is why that split was
+picked over the alternatives. Verified at 1280, 1440 and 375; the figure stays top-aligned with the
+headline at all three.
