@@ -733,9 +733,18 @@ function syncAccountLinks(){
   const left=$('.nav-left'), right=$('.nav-right'),
         icon=$('#account-button'), panel=$('#account-panel'),
         card=$('#account-card'), menu=$('#menu-panel');
+  /* signed in the brand moves to the left and becomes the way back to the
+     feed, so Feed stops being a separate word; what is left beside it is
+     the two places you go, with the account and the burger on the right */
+  const brand=$('.wordmark');
+  if(brand){brand.setAttribute('href',on?'#/feed':'#/');
+    brand.setAttribute('aria-label',on?'VIRI \u2014 your feed':'VIRI \u2014 Vitality Ritual, home');}
+  $('.site-header')?.classList.toggle('is-in',on);
+  const make=$('#create-button');
+  if(make)make.hidden=!on;
   if(left)left.innerHTML=on
-    ? navItem('#/feed','Feed',here==='feed')+navItem('#/explore','Explore',here==='explore')
-      +navItem('#/messages','Messages',here==='messages')+navItem('#/profile','My profile',here==='profile')
+    ? navItem('#/explore','Explore',here==='explore')
+      +navItem('#/messages','Messages',here==='messages')
     : HEADER_OUT.left;
   /* About is in the burger once signed in, so the lone right-hand link goes */
   if(right){right.innerHTML=on?'':HEADER_OUT.right;right.hidden=on;}
@@ -752,8 +761,8 @@ function syncAccountLinks(){
   if(card)card.innerHTML=on
     ? `<p class="menu-label">${escapeHTML(state.profile.name)}</p>`
       +'<a href="#/profile">My profile</a>'
-      +'<button class="plain-link" data-action="log-out">Log out</button>'
       +'<a href="#/settings">Settings</a>'
+      +'<button class="plain-link" data-action="log-out">Log out</button>'
     : '';
   if(panel&&!on){panel.hidden=true;icon?.setAttribute('aria-expanded','false');}
   /* the phone carries the same four destinations as the signed-in top nav */
@@ -763,10 +772,12 @@ function syncAccountLinks(){
     if(on){
       const ic={feed:'<path d="M3 10.5 12 3l9 7.5V21H3V10.5Z"/>',
         explore:'<circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/>',
-        messages:'<path d="M21 12a8 8 0 0 1-8 8H5l-2 2V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z"/>'};
+        messages:'<path d="M21 12a8 8 0 0 1-8 8H5l-2 2V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z"/>',
+        create:'<rect x="3" y="3" width="18" height="18"/><path d="M12 8v8M8 12h8"/>'};
       const tab=(href,key,label)=>`<a href="${href}" aria-label="${label}"${here===key?' aria-current="page"':''}><svg viewBox="0 0 24 24" aria-hidden="true">${ic[key]}</svg></a>`;
       bar.innerHTML=tab('#/feed','feed','Feed')+tab('#/explore','explore','Explore')
         +tab('#/messages','messages','Messages')
+        +`<button class="tab-make" data-action="post-activity" aria-label="Log a session"><svg viewBox="0 0 24 24" aria-hidden="true">${ic.create}</svg></button>`
         +`<a href="#/profile" aria-label="My profile"${here==='profile'?' aria-current="page"':''}><span class="tab-av">${avatarFor(state.profile)}</span></a>`;
     } else bar.innerHTML='';
   }

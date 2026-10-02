@@ -1459,3 +1459,38 @@ clear preview data) in one place.
 **Worth deciding now:** the signed-in nav points Explore at `#/explore`, the city class browser, and
 `#/find` — the people-first page built yesterday — is no longer in any nav. It is reachable from the
 feed and profile rails. Those two pages overlap and one of them should probably absorb the other.
+
+## The brand moves left, and a Create button (2 October 2026)
+
+**Signed in, the masthead stops being a centred wordmark with wings.** VIRI sits first, on the left,
+and is the link back to your feed — so "Feed" stops needing to be a separate word. Beside it are the
+two places you go, Explore and Messages. The right edge holds Create, your account, and the burger.
+
+A bug this introduced and what caused it: the DOM order is nav, wordmark, end. Grid auto-placement
+only moves *forward*, so putting the wordmark in column 1 after the nav had taken column 2 pushed it
+onto a second row — the links rendered above the brand. Every item in the signed-in masthead now
+states `grid-row:1` outright.
+
+**The burger used to be a mobile overflow**, appearing only below 980px. Signed in it is where
+Studios, Read and About live, so it shows at every width.
+
+**Create is a `+` between Messages and My profile**, in the header tools and again in the phone bar
+(Feed, Explore, Messages, Create, My profile). Both open the Log a session dialog. The header's
+copy is hidden below 760px, where the bar already carries it.
+
+**The account menu is My profile, Settings, Log out.** You listed Log out second; I moved it last
+because a destructive-ish action sitting between two navigation items is easy to hit by accident. Say
+the word and I will put it back where you had it.
+
+**Logged out, the header is untouched** — Explore, Studios, Read on the left, About on the right, the
+person icon and the burger. `HEADER_OUT` restores that markup verbatim. For the record, the original
+header in the first commit also carried a **Join** link beside About, making it 3 left and 2 right;
+that link went on 29 September when you asked for Join and the profile icon to become one control. I
+have not put it back, because doing so would undo that. Say so and it returns.
+
+**A rail row could not fit in 320px** — a 54px avatar, two lines of copy and a button in one row
+squashed the avatar to a sliver. The button drops to its own line, the avatar is 38px, and the
+matching reason is dropped since the rail's own heading already says these are people in your
+classes.
+
+18 routes, no console errors, signed in and out, 1280 and 375.
