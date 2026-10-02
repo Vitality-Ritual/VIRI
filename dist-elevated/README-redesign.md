@@ -1305,3 +1305,53 @@ rewards among the illustrative things were trimmed rather than archived, being d
 preview rather than the feature.
 
 15 routes, no console errors. 1280 and 375.
+
+## Sessions, a feed of people, and search as the way in (2 October 2026)
+
+The mockup is now the site. Three pages changed or arrived.
+
+**The profile is sessions, one at a time.** The three-column Strava layout — left panel, centre feed,
+right rail — is gone. The page is a profile header (avatar, name, three stats, bio, chips), a
+left-aligned tab row, and a single column of sessions.
+
+A session leads with the activity: date and place in small caps, the title in the display face, then
+a strip of figures above and below a rule — distance where there is one, length, activity, how many
+went, and how many of those were new to you. The note and any photograph come *after* that. That
+ordering is the whole point: an Instagram grid made a photo-less post look like a hole, and a
+session without a picture now reads as a session. One of the three on the page has no photograph at
+all and nothing about it looks unfinished.
+
+Tabs are Sessions / Saved studios / Going to, left-aligned with a single hairline under the active
+one rather than the centred full-width bar a photo app uses. `profileTab` is module state, so
+switching does not re-fetch or lose scroll.
+
+**While you have logged nothing, three sample sessions stand in**, labelled as such above the list.
+Your own posts replace them entirely the moment there is one — the page never mixes the two. The
+post dialog now also asks for the activity and the place, because a session with no figures is just
+a paragraph.
+
+**Home (`#/feed`) is other people.** Same session block with an author line on top, plus one column
+Strava does not have: *You know — 3 of them*. Comments stay visible on the card.
+
+**Search (`#/find`) is the product's actual job.** Two questions. The top half is who is in a class
+with you, and the match is a real overlap rather than a guess: if the class is in `state.joined` and
+the person is in its `going` list, the row says "Both booked" and names the class. With nothing
+booked it falls back to classes your own sign-up answers say you would attend, the heading changes
+to "In classes you would go to", and the row says "Also goes" — the page never claims a shared
+booking it cannot show. The fallback also caps at two people per class, because taking everyone from
+the first match produced four strangers who all shared one 12:10 slot. The bottom half is classes
+sorted by who is in them, not by the class. The rail says plainly what you are matched on and links
+to where you change it.
+
+**Nav.** `syncAccountLinks()` adds Home and Search to the front of the left nav once a profile
+exists, and removes them when it does not. Logged out, the feed and the finder still render — they
+are discovery — but the profile falls back to the login page as before.
+
+17 routes, no console errors, logged in and logged out. 1280 and 375; the two rails drop under their
+columns at 980 and the session figures rewrap at 760.
+
+**Not done, and worth deciding:** `#/explore` still exists and now overlaps `#/find` — Explore is
+city-wide class discovery with a map, Find is people-first matching. They should probably be one
+page. I left Explore alone rather than delete a large working feature unasked. The old
+`.profile-grid`, `.profile-panel`, `.feed-card` and `.upcoming-row` rules are also now unused but
+still in `styles.css`, since `archive/profile-page.md` describes them.
