@@ -282,17 +282,6 @@ async function dbClaimPendingStudios(){
    members on a product where people meet strangers. */
 const PHOTO_TTL = 60 * 60 * 24 * 7;
 
-/* list() on a bucket that does not exist returns an empty array, not an error,
-   so "no objects" and "no bucket" look the same. Asking for the bucket itself
-   is the only reliable test — this cost us a silent failure once already. */
-async function dbBucketExists(){
-  const c = db(); if (!c) return false;
-  const { error } = await c.storage.from('photos').list('', { limit: 1 });
-  if (error) return false;
-  const probe = await c.storage.from('photos').createSignedUrl('__probe__', 10);
-  return !/bucket not found/i.test(probe.error?.message || '');
-}
-
 async function dbUploadPhoto(dataUrl, kind){
   const c = db();
   if (!c || !authUser || !dataUrl || !/^data:/.test(dataUrl)) return null;
@@ -302,6 +291,10 @@ async function dbUploadPhoto(dataUrl, kind){
   const path = `${authUser.id}/${kind}-${Date.now()}.jpg`;
   const { error } = await c.storage.from('photos')
     .upload(path, blob, { contentType: 'image/jpeg', upsert: true });
+  /* The bucket name is case sensitive, and nothing here can check it ahead of
+     time: storage.buckets is hidden by RLS, so getBucket() reports a bucket
+     that exists as missing, and list() reports one that does not as empty.
+     Attempting the upload is the only real test, so trust its message. */
   if (error) { console.warn('photo upload failed:', error.message); return null; }
   return path;
 }
