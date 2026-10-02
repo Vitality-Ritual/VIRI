@@ -498,8 +498,19 @@ input::placeholder,textarea::placeholder{color:#a0968a}
 .profile-panel h2{text-align:center;font-size:23px}
 .profile-panel .location{text-align:center;margin-top:8px;font-size:9.5px;color:var(--muted)}
 .profile-stats{display:grid;grid-template-columns:repeat(3,1fr);text-align:center;gap:10px;margin:24px 0;padding:22px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+/* Friends is a control now, so it has to shed the button chrome and keep the
+   other two stats' alignment exactly */
+.stat-open{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:center}
+.stat-open span{transition:color .2s}
+.stat-open:hover span,.stat-open:focus-visible span{color:var(--cocoa)}
+.friend-list{list-style:none;margin:0;padding:0}
+.friend-list li{display:flex;flex-direction:column;gap:3px;padding:13px 0;border-bottom:1px solid var(--line)}
+.friend-list li:last-child{border-bottom:0}
+.friend-list strong{font-family:var(--display);font-weight:400;font-size:17px;color:var(--cocoa)}
 .profile-stats strong{display:block;font-family:var(--display);font-size:26px;font-weight:400}
-.profile-stats span{font-size:9px;letter-spacing:.16em;color:var(--muted)}
+/* these labels wrap ("Requests sent"), and the body line-height left a gap
+   between the two words wide enough to read as two separate stats */
+.profile-stats span{font-size:9px;letter-spacing:.16em;color:var(--muted);line-height:1.25;display:block}
 .profile-panel h3,.profile-content>h2,.profile-aside>h2{font-family:var(--body);font-size:9.5px;text-transform:uppercase;letter-spacing:.22em;color:var(--muted)}
 .profile-panel h3{margin:26px 0 14px}
 .profile-content>h2,.profile-aside>h2{margin-bottom:22px;padding-bottom:14px;border-bottom:1px solid var(--line)}
@@ -1166,18 +1177,32 @@ body:after{
 /* optional fields say so, rather than letting people guess from the absence
    of an error - the city and both personal details never block the step */
 .field-optional{margin-left:8px;letter-spacing:.14em;color:var(--line-2)}
-.field-eg{margin:9px 0 0;font-size:12.5px;line-height:1.55;color:var(--muted)}
+.field-eg{margin:10px 0 0;font-size:12.5px;line-height:1.6;color:var(--muted)}
+.field-eg p{margin:0}
+.field-eg ul{margin:5px 0 0;padding-left:1.1em;list-style:disc}
+.field-eg li{margin:0 0 2px}
 .join-field .field{margin-bottom:20px}
 .join-field .field:last-of-type{margin-bottom:0}
 .join-field textarea{min-height:92px;font-size:15.5px}
-.photo-pick{display:flex;align-items:center;gap:16px}
-.photo-preview{width:72px;height:72px;flex:none;display:grid;place-items:center;overflow:hidden;
-  border-radius:50%;background:var(--cream-2);border:1px solid var(--line);
-  font-family:var(--display);font-size:19px;letter-spacing:.06em;color:var(--taupe-deep)}
-.photo-preview img{width:100%;height:100%;object-fit:cover}
-.photo-pick input[type=file]{font-family:var(--body);font-size:12.5px;color:var(--muted);
-  background:none;border:0;padding:0;max-width:100%}
-.photo-note{margin:8px 0 0;font-size:12px;line-height:1.5;color:var(--muted)}
+/* the picker is one target: a dashed well you can drop onto or click through */
+.photo-drop{border:1px dashed var(--line-2);background:var(--cream-2);padding:clamp(16px,2vw,22px)}
+.photo-drop.is-over{border-color:var(--cocoa);background:var(--paper)}
+.photo-lede{margin:0;font-size:14px;line-height:1.6;color:var(--muted);text-align:center}
+.photo-drop[data-has="1"] .photo-empty,.photo-drop[data-has="0"] .photo-editor{display:none}
+.photo-editor{display:flex;gap:clamp(16px,2.4vw,26px);align-items:center;flex-wrap:wrap}
+/* the canvas is the preview AND the file, so what is framed here is what saves */
+.photo-stage{position:relative;width:148px;height:148px;flex:none;overflow:hidden}
+.photo-stage canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
+.photo-stage canvas.is-dragging{cursor:grabbing}
+/* the avatar is round, so the round part is the part that is not dimmed */
+.photo-ring{position:absolute;inset:0;border-radius:50%;pointer-events:none;
+  box-shadow:0 0 0 999px rgba(241,237,230,.78);outline:1px solid var(--line-2);outline-offset:-1px}
+.photo-tools{flex:1;min-width:190px;display:flex;flex-direction:column;gap:7px}
+.photo-tools label{font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.photo-tools input[type=range]{width:100%;accent-color:var(--taupe);background:none;border:0;padding:0}
+.photo-hint{margin:0;font-size:12px;line-height:1.5;color:var(--muted)}
+.photo-swap{display:flex;gap:16px;margin:4px 0 0}
+.photo-swap .plain-link{font-size:12px}
 .join-later{margin:18px 0 0;font-size:13px;line-height:1.6;color:var(--muted)}
 .profile-bio{margin:10px 0 0;font-size:14px;line-height:1.6;color:var(--muted)}
 .profile-avatar img{width:100%;height:100%;object-fit:cover;display:block}
