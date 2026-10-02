@@ -26,7 +26,7 @@ const seedEvents = [
   {id:'e5',title:'Meet me at the barre',category:'Barre',studio:'purebarre',img:null,area:'Capitol Hill',place:'Capitol Hill, Washington, DC',date:dateOffset(4,18),duration:50,people:5,host:'The evening circle',lat:38.8868,lon:-76.9960},
   {id:'e6',title:'A stronger kind of morning',category:'Strength',studio:'solidcore',img:null,area:'Logan Circle',place:'Logan Circle, Washington, DC',date:dateOffset(5,8),duration:50,people:7,host:'Weekend movement',lat:38.9097,lon:-77.0298}
 ];
-const defaultState={profile:null,loggedOut:false,joined:[],saved:[],created:[],posts:[],connections:[],requests:[],drafts:[]};
+const defaultState={profile:null,loggedOut:false,plans:[],logged:[],joined:[],saved:[],created:[],posts:[],connections:[],requests:[],drafts:[]};
 let state;
 try {state={...defaultState,...JSON.parse(localStorage.getItem('viri-preview')||'{}')};}catch {state={...defaultState};}
 function save(){try{localStorage.setItem('viri-preview',JSON.stringify(state));}catch{toast('This browser cannot save changes. Your preview still works for this visit.');}}
@@ -500,7 +500,7 @@ function exConnect(id){
 
 
 function eventDetails(id){const e=allEvents().find(x=>x.id===id);if(!e)return;const s=studios.find(s=>s.id===e.studio);openModal(escapeHTML(e.title),`<p class="eyebrow">${escapeHTML(e.category)} · ${e.type==='club'?'Community club':'Group activity'}</p><p class="dialog-copy">${prettyDate(e.date)} at ${prettyTime(e.date)}<br>${e.duration} minutes · ${escapeHTML(e.place)}</p>${e.description?`<p style="margin-top:20px">${escapeHTML(e.description)}</p>`:''}<div class="notice-box small">${e.custom?'This activity was created in your local preview. It has not been posted to a live network.':'Example activity and approximate location. This is not a real class schedule or a confirmed booking.'}</div>${s?`<p>Interested in ${s.name}? Check its official site for actual locations, schedules, and booking.</p><p style="margin-top:10px"><a class="text-link" href="${s.url}" target="_blank" rel="noopener">Visit ${s.name} ${arrow}</a></p>`:''}<div class="dialog-actions"><button class="button outline small" data-action="show-map" data-id="${e.id}">Show on map</button><button class="button small" data-action="join-event" data-id="${e.id}">${state.joined.includes(e.id)?'Leave activity':'Join activity'}</button></div>`);}
-function toggleJoin(id){const known=allEvents().some(e=>e.id===id)||(typeof exClasses==='function'&&exClasses().some(c=>c.id===id));if(!known)return;const joined=state.joined.includes(id);state.joined=joined?state.joined.filter(x=>x!==id):[...state.joined,id];save();if($('#modal').open)closeModal();render(false);toast(joined?'Removed from your plans.':'Added to your plans. This preview does not make a booking.');}
+function toggleJoin(id){const known=allEvents().some(e=>e.id===id)||(typeof exClasses==='function'&&exClasses().some(c=>c.id===id));if(!known)return;const joined=state.joined.includes(id);state.joined=joined?state.joined.filter(x=>x!==id):[...state.joined,id];if(!joined&&typeof exClasses==='function')snapshotPlan(exClasses().find(c=>c.id===id));save();if($('#modal').open)closeModal();render(false);toast(joined?'Removed from your plans.':'Added to your plans. This preview does not make a booking.');}
 function studiosPage(id){if(id){const s=studios.find(s=>s.id===id);if(!s)return notFound();return `<section class="page-head"><div class="wrap"><a class="text-link" href="#/studios">${arrowLeft} All studios</a><p class="eyebrow" style="margin-top:28px">${s.category}</p><h1>${s.name}</h1></div></section><div class="wrap studio-detail"><img src="${A+studioPhoto(s)}" alt="A studio space of the kind ${s.name} runs"><div class="studio-description"><h2>${s.intro}</h2><p>${s.description}</p><div class="studio-facts"><div><span class="small">The movement</span><br>${s.focus}</div></div><p class="small"><strong>Before you go</strong><br>${s.bring} Locations, formats, and amenities vary; confirm with the studio.</p><div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:20px"><a class="button" href="${s.url}" target="_blank" rel="noopener">Visit studio website ${arrow}</a><button class="button outline" data-action="save-studio" data-id="${s.id}" aria-pressed="${state.saved.includes(s.id)}">${state.saved.includes(s.id)?'Saved ✓':'Save studio'}</button></div></div></div><div class="wrap">${note('Studio listings are for discovery. VIRI has no booking integration or confirmed partnership with these brands.')}<div class="community-banner"><div><h3>Find someone to go with.</h3><p>Explore shared plans and people who enjoy ${s.category.toLowerCase()}.</p></div><a href="#/explore" class="button" data-action="studio-explore" data-category="${s.category}">Explore ${s.category.toLowerCase()} ${arrow}</a></div></div>`;}return `<section class="page-head"><div class="wrap"><p class="eyebrow">Discover a new ritual</p><h1>A studio for every kind of you.</h1><p>Add your favorite places to move, then find your people.</p></div></section><section class="wrap" style="padding-bottom:80px"><div class="explore-grid">${studios.map(studioCard).join('')}</div></section>`;}
 const phMark=()=>`<svg viewBox="0 0 48 40" aria-hidden="true"><rect x="1" y="1" width="46" height="38" rx="1"/><circle cx="16" cy="14" r="4.2"/><path d="M4 33l12-11 8 7 7-6 13 11"/></svg>`;
 function aboutPage(){return `<section class="about-hero is-placeholder"><div class="about-hero-ph" aria-hidden="true"><span class="ph-mark">${phMark()}</span><span class="ph-cap">Hero photograph<br>to come</span></div><div class="wrap"><p class="eyebrow">Vitality Ritual</p><h1>Build Community<br>Around What<br>Moves You.</h1>${button('join now','#/signup','light')}</div></section><section class="section"><div class="wrap about-story"><h2>Make a big city<br>feel a little smaller.</h2><div class="prose"><p>VIRI is a social network for people who want to live actively and connect locally. Build your own circle by discovering people in your area who share your interests, attend the same studios, take similar classes, follow similar routines, or have similar schedules.</p><p>Whether it’s finding a Pilates or yoga class, a new weight lifting buddy, or a partner to train for your next marathon with, VIRI helps you connect with people outside your existing network from across your city. Meet new people, build your community, and create your own corner of the city.</p></div></div></section>
@@ -741,7 +741,10 @@ function syncAccountLinks(){
     brand.setAttribute('aria-label',on?'VIRI \u2014 your feed':'VIRI \u2014 Vitality Ritual, home');}
   $('.site-header')?.classList.toggle('is-in',on);
   const make=$('#create-button');
-  if(make)make.hidden=!on;
+  const waiting=on?pendingPlans().length:0;
+  if(make){make.hidden=!on;
+    make.dataset.badge=waiting||'';
+    make.setAttribute('aria-label',waiting?`Log a session \u2014 ${waiting} class${waiting===1?'':'es'} to confirm`:'Log a session');}
   if(left)left.innerHTML=on
     ? navItem('#/explore','Explore',here==='explore')
       +navItem('#/messages','Messages',here==='messages')
@@ -777,7 +780,7 @@ function syncAccountLinks(){
       const tab=(href,key,label)=>`<a href="${href}" aria-label="${label}"${here===key?' aria-current="page"':''}><svg viewBox="0 0 24 24" aria-hidden="true">${ic[key]}</svg></a>`;
       bar.innerHTML=tab('#/feed','feed','Feed')+tab('#/explore','explore','Explore')
         +tab('#/messages','messages','Messages')
-        +`<button class="tab-make" data-action="post-activity" aria-label="Log a session"><svg viewBox="0 0 24 24" aria-hidden="true">${ic.create}</svg></button>`
+        +`<button class="tab-make" data-action="post-activity" data-badge="${waiting||''}" aria-label="${waiting?`Log a session, ${waiting} to confirm`:'Log a session'}"><svg viewBox="0 0 24 24" aria-hidden="true">${ic.create}</svg></button>`
         +`<a href="#/profile" aria-label="My profile"${here==='profile'?' aria-current="page"':''}><span class="tab-av">${avatarFor(state.profile)}</span></a>`;
     } else bar.innerHTML='';
   }
@@ -982,9 +985,13 @@ const SAMPLE_SESSIONS=[
 /* your own posts first; the samples stand in only while you have none, so the
    shape of the page is visible before you have logged anything */
 const mySessions=()=>state.posts.length
-  ? state.posts.slice().reverse().map(p=>({title:p.title,cat:p.activity||'',place:p.place||'',
-      dur:Number(p.duration)||0,went:1,ago:prettyDate(p.date),note:p.description||'',
-      withIds:[],withLine:'',comments:0}))
+  ? state.posts.slice().reverse().map(p=>{
+      const tags=(p.withIds||[]).map(id=>exPerson(id)).filter(Boolean);
+      return {title:p.title,cat:p.activity||'',place:p.place||'',
+        dur:Number(p.duration)||0,went:p.went||1+tags.length,
+        ago:prettyDate(p.date),note:p.description||'',img:p.photo||'',
+        withIds:tags.map(x=>x.id),
+        withLine:tags.map(x=>x.name.split(' ')[0]).join(', '),comments:0};})
   : SAMPLE_SESSIONS;
 const avatarFor=p=>p&&p.photo
   ? `<img src="${p.photo}" alt="">`
@@ -1015,7 +1022,7 @@ function sessionCard(s,by){
     <h3 class="session-title">${escapeHTML(s.title)}</h3>
     ${sessionStats(s)}
     ${s.note?`<p class="session-note">${escapeHTML(s.note)}</p>`:''}
-    ${s.img?`<figure class="session-shot"><img src="${A+s.img}" alt="" loading="lazy"></figure>`:''}
+    ${s.img?`<figure class="session-shot"><img src="${/^data:/.test(s.img)?s.img:A+s.img}" alt="" loading="lazy"></figure>`:''}
     <div class="session-foot">
       ${s.withLine?`${whoStack(s.withIds)}<span class="small">with ${escapeHTML(s.withLine)}</span>`:''}
       <button class="button small" data-action="session-join">Join ${by?'them':'me'} next time</button>
@@ -1091,6 +1098,13 @@ function settingsPage(){
       ${row('Times',(p.times||[]).length?p.times.map(c=>`<span class="tag">${escapeHTML(c)}</span>`).join(''):'<span class="small">None chosen</span>')}
       ${row('Studios saved',String((state.saved||[]).length))}
       <a class="button small outline" href="#/find">See who that matches</a>
+    </section>
+    <section class="set-block">
+      <h2>Preview</h2>
+      <p class="set-note">The &ldquo;did you go?&rdquo; prompt waits for a class on your plan to actually finish. This moves your next one into the past so you can see it now.</p>
+      ${(state.plans||[]).some(x=>x.start>Date.now())
+        ? '<button class="button small outline" data-action="finish-next">Mark my next class as finished</button>'
+        : '<p class="small">Nothing upcoming on your plan. Add a class from Explore first.</p>'}
     </section>
     <section class="set-block">
       <h2>This device</h2>
@@ -1348,7 +1362,8 @@ function bookPage(id){
 function bookChoose(id,kind){
   const c=(typeof exClasses==='function'?exClasses():[]).find(x=>x.id===id);
   if(!c)return;
-  if(!state.joined.includes(c.id)){state.joined=[...state.joined,c.id];save();}
+  if(!state.joined.includes(c.id)){state.joined=[...state.joined,c.id];}
+  snapshotPlan(c);save();
   const v=exVenue(c.venue);
   const copy=kind==='existing'
     ? `In the live product this would open ${v.brand}'s booking page with the class preselected. Added to your plan here.`
@@ -1411,7 +1426,137 @@ function bindSetup(){
 function eventCard(e){const joined=state.joined.includes(e.id);return `<article class="event-card">${e.img
   ?`<img src="${A+e.img}" alt="${escapeHTML(e.category)} community activity" loading="lazy">`
   :`<span class="card-ph" role="img" aria-label="Photograph to come"><span class="ph-mark">${phMark()}</span><span class="ph-cap">Photo<br>to come</span></span>`}<div class="event-info"><p class="event-meta">${escapeHTML(e.category)} · ${escapeHTML(e.area)}</p><h3>${escapeHTML(e.title)}</h3><p>${prettyDate(e.date)} · ${prettyTime(e.date)} · ${e.duration} min</p><p class="small">${escapeHTML(e.host)}</p><div class="event-bottom"><span class="small">${e.people+(joined?1:0)} ${e.type==='club'?'members':'people going'}</span><button class="button small ${joined?'outline':''}" data-action="join-event" data-id="${e.id}" aria-pressed="${joined}">${joined?'Joined ✓':e.type==='club'?'Join club':'Join activity'}</button></div><button class="plain-link small" style="margin-top:13px" data-action="event-details" data-id="${e.id}">View details & location</button></div></article>`;}
-function postActivity(){openModal('Log a session',`<p class="small" style="margin-bottom:20px">Post to your local preview feed.</p><form id="post-form"><div class="field"><label for="post-title">Name this session</label><input id="post-title" name="title" required maxlength="70" placeholder="A lunchtime walk with a friend"></div><div class="field"><label for="post-activity">Activity</label><input id="post-activity" name="activity" maxlength="40" placeholder="Pilates" list="post-cats"><datalist id="post-cats">${JOIN_FORMS.filter(x=>x!==JOIN_ANY.forms&&x!=='Other').map(c=>`<option>${escapeHTML(c)}</option>`).join('')}</datalist></div><div class="field"><label for="post-place">Where</label><input id="post-place" name="place" maxlength="60" placeholder="Club Pilates Dupont"></div><div class="field"><label for="post-duration">Minutes</label><input id="post-duration" name="duration" type="number" min="1" max="1440" value="45" required></div><div class="field"><label for="post-description">How was it?</label><textarea id="post-description" name="description" maxlength="400" placeholder="Share a little about your ritual."></textarea></div><div class="dialog-actions"><button class="button small" type="submit">Post activity</button></div></form>`,()=>$('#post-form').addEventListener('submit',e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));if(!f.title.trim())return;state.posts.push({...f,title:f.title.trim(),duration:Number(f.duration),date:new Date().toISOString()});save();closeModal();render(false);toast('Activity added to your feed.');}));}
+/* ===================== did you go? =====================
+   exClasses() is rebuilt on every load and only ever holds the NEXT seven days,
+   so a class drops out of it the moment it starts. state.joined held ids alone,
+   which meant that an hour after your class there was nothing left to ask you
+   about. A plan is a record now: enough of the class is copied at the moment you
+   add it that the prompt can be built from memory, not from a lookup. */
+function snapshotPlan(c){
+  if(!c)return;
+  state.plans=state.plans||[];
+  if(state.plans.some(p=>p.id===c.id))return;
+  const v=exVenue(c.venue);
+  state.plans=[...state.plans,{id:c.id,title:c.title,cat:c.cat,dur:c.dur,start:c.start,
+    place:[v&&v.brand,c.area].filter(Boolean).join(' · '),going:(c.going||[]).slice(0,8)}];
+}
+const planEnd=p=>p.start+((p.dur||45)*60000);
+const pendingPlans=()=>(state.plans||[])
+  .filter(p=>planEnd(p)<Date.now()&&!(state.logged||[]).includes(p.id))
+  .sort((a,b)=>a.start-b.start);
+function attendModal(){
+  const list=pendingPlans();
+  if(!list.length)return postActivity();
+  openModal(list.length===1?'Did you go?':'Did you go to these?',
+    `<p class="dialog-copy">${list.length===1?'This was on your plan.':'These were on your plan.'} Logging takes one tap &mdash; everything is already known.</p>
+     <div class="attend-list">${list.map(p=>`<div class="attend-row">
+       <div class="attend-what"><b>${escapeHTML(p.title)}</b>
+         <span class="small">${prettyDate(p.start)} ${prettyTime(p.start)} &middot; ${escapeHTML(p.place)} &middot; ${p.dur} min</span></div>
+       <div class="attend-acts">
+         <button class="button small" data-action="attend-yes" data-id="${escapeHTML(p.id)}">I went</button>
+         <button class="plain-link" data-action="attend-more" data-id="${escapeHTML(p.id)}">Add a photo</button>
+         <button class="plain-link" data-action="attend-no" data-id="${escapeHTML(p.id)}">I did not</button>
+       </div></div>`).join('')}</div>
+     <div class="dialog-actions">
+       <button class="button small outline" data-action="post-new">Log something else</button>
+       <button class="button small outline" data-action="close-modal">Not now</button>
+     </div>`);
+}
+const takePlan=id=>(state.plans||[]).find(p=>p.id===id);
+function logAttended(id){
+  const p=takePlan(id); if(!p)return;
+  state.posts.push({title:p.title,activity:p.cat,place:p.place,duration:p.dur,
+    description:'',date:new Date(p.start).toISOString(),
+    withIds:[],went:Math.max(1,(p.going||[]).length),fromPlan:p.id});
+  state.logged=[...(state.logged||[]),id];
+  save();closeModal();render(false);
+  toast('Logged. You can add a photo or tag people any time.');
+}
+function skipAttended(id){
+  state.logged=[...(state.logged||[]),id];
+  state.joined=state.joined.filter(x=>x!==id);
+  save();closeModal();render(false);toast('Left off your sessions.');
+}
+/* ---- photos on a post ----
+   One picture per session, scaled to 900px and stored as a data URL. The whole
+   of localStorage is about 5MB, so a full-size phone photo would fill it on its
+   own; this keeps one at roughly a quarter of a megabyte. */
+let postPhoto='';
+function shrinkImage(file,maxW=900){return new Promise(res=>{
+  if(!file||!/^image\//.test(file.type))return res('');
+  const fr=new FileReader();
+  fr.onload=()=>{const img=new Image();
+    img.onload=()=>{const k=Math.min(1,maxW/img.width);
+      const c=document.createElement('canvas');
+      c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      res(c.toDataURL('image/jpeg',.75));};
+    img.onerror=()=>res('');img.src=fr.result;};
+  fr.onerror=()=>res('');fr.readAsDataURL(file);});}
+function postActivity(pre){
+  postPhoto='';
+  const friends=(state.connections||[]).map(id=>exPerson(id)).filter(Boolean);
+  const v=(x)=>escapeHTML(x||'');
+  openModal(pre?'Log this session':'Log a session',
+   `<p class="small" style="margin-bottom:20px">${pre?'Everything from your plan is filled in. Change anything you like.':'Post to your local preview feed.'}</p>
+    <form id="post-form">
+      <div class="field"><label for="post-title">Name this session</label>
+        <input id="post-title" name="title" required maxlength="70" value="${v(pre&&pre.title)}" placeholder="A lunchtime walk with a friend"></div>
+      <div class="field"><label for="post-activity">Activity</label>
+        <input id="post-activity" name="activity" maxlength="40" value="${v(pre&&pre.cat)}" placeholder="Pilates" list="post-cats">
+        <datalist id="post-cats">${JOIN_FORMS.filter(x=>x!==JOIN_ANY.forms&&x!=='Other').map(c=>`<option>${escapeHTML(c)}</option>`).join('')}</datalist></div>
+      <div class="field"><label for="post-place">Where</label>
+        <input id="post-place" name="place" maxlength="60" value="${v(pre&&pre.place)}" placeholder="Club Pilates Dupont"></div>
+      <div class="field"><label for="post-duration">Minutes</label>
+        <input id="post-duration" name="duration" type="number" min="1" max="1440" value="${pre&&pre.dur?pre.dur:45}" required></div>
+      <div class="field"><label for="post-description">How was it?</label>
+        <textarea id="post-description" name="description" maxlength="400" placeholder="Share a little about your ritual."></textarea></div>
+      <div class="field"><label for="post-photo">A photo <span class="field-optional">Optional</span></label>
+        <div class="photo-drop" id="post-drop" data-has="0">
+          <input id="post-photo" type="file" accept="image/*" class="visually-hidden">
+          <div class="photo-empty"><p class="photo-lede">Drag a photo here, or <button type="button" class="plain-link" id="post-pick">choose a file</button>.</p></div>
+          <div class="photo-editor"><figure class="post-shot"><img id="post-preview" alt="Your photo"></figure>
+            <p class="photo-swap"><button type="button" class="plain-link" id="post-repick">Choose another</button>
+              <button type="button" class="plain-link" id="post-unpick">Remove</button></p></div>
+        </div></div>
+      <fieldset class="interest-fieldset"><legend>Who you went with <span class="field-optional">Optional</span></legend>
+        ${friends.length
+          ? `<div class="check-grid">${friends.map(p=>
+              `<label class="check-box"><input type="checkbox" name="withIds" value="${escapeHTML(p.id)}"><span>${escapeHTML(p.name)}</span></label>`).join('')}</div>`
+          : '<p class="small">You can tag the people you have connected to. Connect with someone first and they appear here.</p>'}
+      </fieldset>
+      <p id="post-error" class="field-error" role="alert"></p>
+      <div class="dialog-actions"><button class="button small" type="submit">Post activity</button></div>
+    </form>`,
+   ()=>{
+     const drop=$('#post-drop'), file=$('#post-photo'), prev=$('#post-preview');
+     const take=async f=>{const d=await shrinkImage(f);
+       if(!d){$('#post-error').textContent='That file could not be read as an image.';return;}
+       postPhoto=d;prev.src=d;drop.dataset.has='1';$('#post-error').textContent='';};
+     $('#post-pick')?.addEventListener('click',()=>file.click());
+     $('#post-repick')?.addEventListener('click',()=>file.click());
+     $('#post-unpick')?.addEventListener('click',()=>{postPhoto='';file.value='';drop.dataset.has='0';});
+     file.addEventListener('change',()=>{if(file.files?.[0])take(file.files[0]);});
+     ['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('is-over');}));
+     ['dragleave','dragend'].forEach(t=>drop.addEventListener(t,e=>{
+       if(t==='dragleave'&&drop.contains(e.relatedTarget))return;drop.classList.remove('is-over');}));
+     drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('is-over');
+       const f=e.dataTransfer?.files?.[0];if(f)take(f);});
+     $('#post-form').addEventListener('submit',e=>{
+       e.preventDefault();
+       const f=Object.fromEntries(new FormData(e.target));
+       if(!String(f.title||'').trim())return;
+       const withIds=[...e.target.querySelectorAll('input[name="withIds"]:checked')].map(i=>i.value);
+       state.posts.push({title:String(f.title).trim(),activity:String(f.activity||'').trim(),
+         place:String(f.place||'').trim(),duration:Number(f.duration),
+         description:String(f.description||'').trim(),photo:postPhoto,withIds,
+         went:1+withIds.length,date:new Date().toISOString(),
+         fromPlan:pre?pre.id:null});
+       if(pre)state.logged=[...(state.logged||[]),pre.id];
+       save();closeModal();render(false);toast('Session added to your profile.');
+     });
+   });
+}
 function legalPage(privacy){return `<article class="article-detail"><p class="eyebrow">VIRI preview</p><h1>${privacy?'Your privacy':'About this preview'}</h1>${privacy?'<p>Your demo profile, saved studios, activities, connections, and posts are stored in this browser’s local storage. They are not sent to a VIRI account service.</p><p>The map loads from OpenStreetMap. Opening external studio and research links takes you to those websites, which have their own privacy practices.</p><p>This notice describes the prototype. A launch privacy policy will be provided before live accounts become available.</p><button class="button outline" data-action="clear-preview">Clear my preview data</button>':'<p>This website is an interactive preview of VIRI. Demo profiles, events, reviews, and attendance counts are illustrative. No class reservation, purchase, message, or live social connection is made through the preview.</p><p>Studio names and photographs identify the respective businesses. Listings do not imply a partnership or endorsement. Visit each studio’s official website to confirm schedules, prices, requirements, and bookings.</p><p>Launch terms will be provided before real accounts or bookings are available.</p>'}</article>`;}
 function notFound(){return `<section class="section wrap"><h1>Let’s find your way back.</h1><p style="margin:25px 0">This page isn’t part of your circle just yet.</p>${button('Back to VIRI','#/')}</section>`;}
 function initWordmark(){
@@ -1505,7 +1650,7 @@ case 'book-new':bookChoose(t.dataset.id,'new');break;
 case 'book-plan':bookChoose(t.dataset.id,'plan');break;
 case 'ex-zoom':exZoom(t.dataset.dir);break;
 case 'ex-reset':ex={...ex,cat:'All',time:'All',members:false,query:'',venue:null,cls:null};render(false);break;
-case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':state.saved=state.saved.includes(id)?state.saved.filter(x=>x!==id):[...state.saved,id];save();render(false);toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':postActivity();break;case 'show-friends':friendsModal();break;case 'msg-open':msgThread=t.dataset.id;render(false);break;case 'log-out':state.loggedOut=true;save();$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Logged out. Your profile stays on this device until you clear the preview.');location.hash='#/';render(false);break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':toast('Added to your plan. In the live product this books you alongside them.');break;case 'session-talk':toast('Comments are part of this design. Writing one is not wired up in the preview yet.');break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':t.classList.toggle('is-on');break;case 'connect-sample':state.connections=state.connections.includes('alex')?[]:['alex'];save();render(false);toast(state.connections.length?'Sample connection added to your preview.':'Sample connection removed.');break;case 'edit-profile':openModal('Make your profile yours',`<form id="edit-form"><div class="field"><label for="edit-name">Your name</label><input id="edit-name" name="name" value="${escapeHTML(state.profile?.name)}" required maxlength="60"></div><div class="field"><label for="edit-area">Your neighborhood</label><input id="edit-area" name="area" value="${escapeHTML(state.profile?.area)}" required maxlength="70"></div><div class="dialog-actions"><button class="button small" type="submit">Save profile</button></div></form>`,()=>$('#edit-form').addEventListener('submit',ev=>{ev.preventDefault();const f=Object.fromEntries(new FormData(ev.target));if(!f.name.trim()||!f.area.trim())return;state.profile={...state.profile,name:f.name.trim(),area:f.area.trim()};save();closeModal();render(false);toast('Profile updated.');}));break;case 'clear-preview':openModal('Clear your preview?',`<p class="dialog-copy">This removes your demo profile, plans, posts, connections, and saved studios from this browser.</p><div class="dialog-actions"><button class="button outline small" data-action="close-modal">Keep my preview</button><button class="button small" data-action="confirm-clear">Clear preview</button></div>`);break;case 'confirm-clear':state={profile:null,loggedOut:false,joined:[],saved:[],created:[],posts:[],connections:[]};save();closeModal();render(false);toast('Your preview data has been cleared.');break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
+case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':state.saved=state.saved.includes(id)?state.saved.filter(x=>x!==id):[...state.saved,id];save();render(false);toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':pendingPlans().length?attendModal():postActivity();break;case 'post-new':closeModal();postActivity();break;case 'attend-yes':logAttended(t.dataset.id);break;case 'attend-no':skipAttended(t.dataset.id);break;case 'finish-next':{const n=(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start)[0];if(n){n.start=Date.now()-(n.dur+5)*60000;save();render(false);toast('Moved into the past. The + now has something to ask you.');}break;}case 'attend-more':{const p=takePlan(t.dataset.id);closeModal();postActivity(p);break;}case 'show-friends':friendsModal();break;case 'msg-open':msgThread=t.dataset.id;render(false);break;case 'log-out':state.loggedOut=true;save();$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Logged out. Your profile stays on this device until you clear the preview.');location.hash='#/';render(false);break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':toast('Added to your plan. In the live product this books you alongside them.');break;case 'session-talk':toast('Comments are part of this design. Writing one is not wired up in the preview yet.');break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':t.classList.toggle('is-on');break;case 'connect-sample':state.connections=state.connections.includes('alex')?[]:['alex'];save();render(false);toast(state.connections.length?'Sample connection added to your preview.':'Sample connection removed.');break;case 'edit-profile':openModal('Make your profile yours',`<form id="edit-form"><div class="field"><label for="edit-name">Your name</label><input id="edit-name" name="name" value="${escapeHTML(state.profile?.name)}" required maxlength="60"></div><div class="field"><label for="edit-area">Your neighborhood</label><input id="edit-area" name="area" value="${escapeHTML(state.profile?.area)}" required maxlength="70"></div><div class="dialog-actions"><button class="button small" type="submit">Save profile</button></div></form>`,()=>$('#edit-form').addEventListener('submit',ev=>{ev.preventDefault();const f=Object.fromEntries(new FormData(ev.target));if(!f.name.trim()||!f.area.trim())return;state.profile={...state.profile,name:f.name.trim(),area:f.area.trim()};save();closeModal();render(false);toast('Profile updated.');}));break;case 'clear-preview':openModal('Clear your preview?',`<p class="dialog-copy">This removes your demo profile, plans, posts, connections, and saved studios from this browser.</p><div class="dialog-actions"><button class="button outline small" data-action="close-modal">Keep my preview</button><button class="button small" data-action="confirm-clear">Clear preview</button></div>`);break;case 'confirm-clear':state={profile:null,loggedOut:false,plans:[],logged:[],joined:[],saved:[],created:[],posts:[],connections:[]};save();closeModal();render(false);toast('Your preview data has been cleared.');break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
 $('#menu-button').addEventListener('click',()=>{const open=$('#menu-panel').hidden;$('#menu-panel').hidden=!open;$('#menu-button').setAttribute('aria-expanded',String(open));});
 bindAccountMenu();
 document.addEventListener('click',e=>{if(!e.target.closest('.site-header')){$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');}});
