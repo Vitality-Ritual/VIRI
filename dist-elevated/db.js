@@ -339,6 +339,91 @@ async function dbSetAvatar(dataUrl){
   return { error };
 }
 
+/* ===================== taking your data out, and leaving =====================
+   Two things a person is entitled to do with an account: get everything out
+   of it, and end it. Both belong next to each other so neither is forgotten
+   when a new table is added — anything stored about someone has to appear in both. */
+
+const EXPORT_TABLES = [
+  ['profile',       'profiles',      'id'],
+  ['sessions',      'sessions',      'profile_id'],
+  ['plans',         'plans',         'profile_id'],
+  ['saved_studios', 'saved_studios', 'profile_id'],
+];
+
+async function dbExportData(){
+  const c = db();
+  if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+
+  const out = {
+    exported_at: new Date().toISOString(),
+    account: { id: authUser.id, email: authUser.email, created_at: authUser.created_at },
+  };
+
+  for (const [key, table, col] of EXPORT_TABLES) {
+    const { data, error } = await c.from(table).select('*').eq(col, authUser.id);
+    if (error) return { error };
+    out[key] = key === 'profile' ? (data || [])[0] || null : (data || []);
+  }
+
+  /* Who you logged a session with, and who logged one with you. */
+  const mine = (out.sessions || []).map(r => r.id);
+  const tags = await c.from('session_tags').select('*')
+    .or(`profile_id.eq.${authUser.id}${mine.length ? `,session_id.in.(${mine.join(',')})` : ''}`);
+  if (tags.error) return { error: tags.error };
+  out.session_tags = tags.data || [];
+
+  /* Signed links expire, so the pictures travel as part of the file rather
+     than as addresses that stop working a week after the export. */
+  out.photos = [];
+  const { data: files } = await c.storage.from('photos').list(authUser.id, { limit: 1000 });
+  for (const file of files || []) {
+    const path = `${authUser.id}/${file.name}`;
+    const { data: blob } = await c.storage.from('photos').download(path);
+    if (!blob) { out.photos.push({ path, error: 'could not be read' }); continue; }
+    out.photos.push({
+      path,
+      bytes: blob.size,
+      image: await new Promise(res => {
+        const fr = new FileReader();
+        fr.onload  = () => res(fr.result);
+        fr.onerror = () => res(null);
+        fr.readAsDataURL(blob);
+      })
+    });
+  }
+
+  return { data: out };
+}
+
+async function dbDeleteAccount(){
+  const c = db();
+  if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const uid = authUser.id;
+
+  /* The rows and the login go first, deliberately. Deleting the pictures first
+     reads better — tidy up, then close the account — but it fails badly: if the
+     call below then errors, the person still has an account and their photographs
+     are already gone. This way the worst case leaves unreachable files behind
+     rather than destroying something on a live account. */
+  const { error } = await c.rpc('delete_my_account');
+  if (error) return { error };
+
+  /* The token still carries the id the storage policy checks, so this works for
+     the few seconds it needs to even though the account no longer exists. */
+  const { data: files } = await c.storage.from('photos').list(uid, { limit: 1000 });
+  const paths = (files || []).map(f => `${uid}/${f.name}`);
+  if (paths.length) {
+    let { error: rmError } = await c.storage.from('photos').remove(paths);
+    if (rmError) ({ error: rmError } = await c.storage.from('photos').remove(paths));
+    if (rmError) console.warn('account deleted, but these files remain:', paths);
+  }
+
+  await c.auth.signOut();
+  authUser = null;
+  return { data: true };
+}
+
 async function dbSaveProfileEdits(patch){
   const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
   const row = {};
