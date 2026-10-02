@@ -1207,3 +1207,43 @@ that hold: "It's Time to Stop" / "Acting Like Being Busy" / "is a Personality Tr
 488 in 585. Lines two and three come out within 2px of each other, which is why that split was
 picked over the alternatives. Verified at 1280, 1440 and 375; the figure stays top-aligned with the
 headline at all three.
+
+## Sign-up becomes five steps, and the profile comes back (2 October 2026)
+
+First and last name stay on `#/signup`, so `#/join` opens on 02 and the counter reads out of 05.
+Everything after the name is boxed — `.join-card` is paper on cream with a hairline, widened from
+520 to 640px because the studio list is nine names and wants three columns.
+
+**Step 03 holds three questions.** Primary forms of exercise (the six categories plus "No
+preference"), primary times (the eight ranges), and the studios to add to favourites (all nine on
+the site plus "I'm flexible"). All are multi-select. The two opt-out answers are not ordinary
+checkboxes: ticking "No preference" clears every other form, and ticking any form clears "No
+preference" — holding both at once states nothing. Same for "I'm flexible". The legends had to stop
+being the 9.5px uppercase labels the other fieldsets use; three questions sharing a step have to read
+as questions, so they are set in the display face at ~1.1rem.
+
+**Step 04** is a `select` of all fifty states, DC and the five territories — 56 entries behind a
+"Select one" placeholder — then a free-text city. The city is explicitly not required and never
+turns red: it is marked `Optional` in the label instead, since absence of an error is not the same as
+telling someone a field is theirs to skip.
+
+**Step 05** takes a photo and a bio, both optional, and says so on the page. The photo does not go
+into `localStorage` as it arrives: a picture off a phone is several megabytes of data URL against a
+~5MB quota, so `readPhoto()` centre-crops it to a 320px square on a canvas and stores JPEG at 0.82 —
+a 900x600 test image came out at 4KB. The bio shows one example as the placeholder and both of
+Margaret's examples underneath. The button reads "Create my account" and lands on `#/profile`.
+
+**The profile page is restored** from `archive/profile-page.md`, which is why that file listed what
+had been deliberately left in. Only the function and its router arm came back. The redirects in its
+table are pointed back: login, `bindSetup`, the setup page's "Skip for now", and the footer column.
+The header icon and the menu's "Your circle" group now switch on whether a profile exists —
+`syncAccountLinks()` runs on every render, sending you to `#/signup` until there is something to
+show and `#/profile` after. Two things the page did not have before, because nothing fed them
+until now: the avatar renders the uploaded photo (falling back to initials), and the bio sits under
+the location.
+
+Studios chosen in step 03 are written into `state.saved`, so "Saved studios" on the profile is
+populated by the answer rather than being empty until someone saves one by hand.
+
+15 routes, no console errors, logged in and logged out. 1280 and 375 — the check grid goes three
+columns to two and nothing overflows.

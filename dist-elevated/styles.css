@@ -452,7 +452,11 @@ input::placeholder,textarea::placeholder{color:#a0968a}
 
 /* ---- one question at a time -------------------------------------------- */
 .join-flow{display:grid;place-items:center;padding:clamp(44px,6vw,96px) 0}
-.join-card{width:min(520px,calc(100% - var(--gutter) * 2));text-align:left}
+/* every step after first and last name is boxed: the questions multiplied and
+   unboxed they ran together with the page. 640px because the studio list is
+   nine names and wants three columns. */
+.join-card{width:min(640px,calc(100% - var(--gutter) * 2));text-align:left;
+  background:var(--paper);border:1px solid var(--line);padding:clamp(26px,3.4vw,44px)}
 .join-count{margin:0 0 18px;font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
 .join-card h1{font-size:clamp(1.7rem,3.2vw,2.4rem);margin:0 0 10px}
 .join-hint{margin:0 0 28px;color:var(--muted);font-size:14.5px;max-width:44ch}
@@ -1140,6 +1144,44 @@ body:after{
   .founders-photo{order:-1;aspect-ratio:3/2}
   .f-serif{padding-left:.4em}
 }
+
+/* ---- sign-up steps 3 to 5 ---------------------------------------------- */
+/* three questions share a step, so each legend has to read as a question
+   rather than the tiny uppercase label the other fieldsets use */
+.join-set{border:0;padding:0;margin:0 0 clamp(24px,2.8vw,34px)}
+.join-set:last-of-type{margin-bottom:0}
+.join-set legend{font-family:var(--display);font-weight:400;font-size:clamp(1rem,1.35vw,1.15rem);
+  color:var(--cocoa);letter-spacing:0;text-transform:none;line-height:1.35;
+  margin:0 0 14px;padding:0;max-width:40ch}
+/* a checkbox the whole width of its box, so the target is the answer */
+.check-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:9px}
+.check-grid.is-wide{grid-template-columns:repeat(auto-fill,minmax(172px,1fr))}
+.check-box{display:flex;align-items:center;gap:10px;cursor:pointer;
+  border:1px solid var(--line);background:var(--cream-2);padding:11px 13px;
+  font-size:14px;line-height:1.3;color:var(--muted);transition:border-color .2s,background .2s,color .2s}
+.check-box:hover{border-color:var(--line-2)}
+.check-box input{accent-color:var(--taupe);width:15px;height:15px;flex:none;padding:0;margin:0}
+.check-box:has(:checked){border-color:var(--cocoa);background:var(--paper);color:var(--ink)}
+.check-box:focus-within{outline:1px solid var(--cocoa);outline-offset:2px}
+/* optional fields say so, rather than letting people guess from the absence
+   of an error - the city and both personal details never block the step */
+.field-optional{margin-left:8px;letter-spacing:.14em;color:var(--line-2)}
+.field-eg{margin:9px 0 0;font-size:12.5px;line-height:1.55;color:var(--muted)}
+.join-field .field{margin-bottom:20px}
+.join-field .field:last-of-type{margin-bottom:0}
+.join-field textarea{min-height:92px;font-size:15.5px}
+.photo-pick{display:flex;align-items:center;gap:16px}
+.photo-preview{width:72px;height:72px;flex:none;display:grid;place-items:center;overflow:hidden;
+  border-radius:50%;background:var(--cream-2);border:1px solid var(--line);
+  font-family:var(--display);font-size:19px;letter-spacing:.06em;color:var(--taupe-deep)}
+.photo-preview img{width:100%;height:100%;object-fit:cover}
+.photo-pick input[type=file]{font-family:var(--body);font-size:12.5px;color:var(--muted);
+  background:none;border:0;padding:0;max-width:100%}
+.photo-note{margin:8px 0 0;font-size:12px;line-height:1.5;color:var(--muted)}
+.join-later{margin:18px 0 0;font-size:13px;line-height:1.6;color:var(--muted)}
+.profile-bio{margin:10px 0 0;font-size:14px;line-height:1.6;color:var(--muted)}
+.profile-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+@media (max-width:520px){.check-grid,.check-grid.is-wide{grid-template-columns:1fr 1fr}}
 
 /* ---- contact form + thank you ----------------------------------------- */
 /* one column on paper, the width of the handoff card, so the form reads as a
