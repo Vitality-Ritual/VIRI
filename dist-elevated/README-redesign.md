@@ -1602,8 +1602,11 @@ everything and once skipping it all.
 
 ## The contact form goes live (2 October 2026)
 
-`CONTACT_EMAIL` is no longer empty: it holds `hello@vitalityritual.org`, now that Google Workspace is
-on the domain. Both preview notices disappear by themselves, as designed — the one on the form and
+`CONTACT_EMAIL` is no longer empty: it holds `margaret@vitalityritual.org`, now that Google
+Workspace is on the domain. It briefly held `hello@`, an address I had recommended creating but
+which does not exist — a form pointed at an unreachable mailbox fails silently from the sender's
+side, so it was corrected to the mailbox that is actually there. A `hello@` group both founders
+receive is still the right end state; the form should point at something real in the meantime. Both preview notices disappear by themselves, as designed — the one on the form and
 the one on the thank-you page were conditional on that constant being blank, so turning the inbox on
 was a one-line change and the page stopped claiming nothing was delivered.
 
