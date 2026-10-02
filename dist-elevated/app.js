@@ -644,8 +644,10 @@ function bindSignup(){
 }
 /* Sign-up asks five things. The first - first and last name - is the sign-up
    page itself, so #/join opens on 02 and the counter still reads out of 05. */
-const JOIN_FORMS=['Pilates','Yoga','Cycling','Barre','Strength','Running','No preference'];
-const JOIN_TIMES=['Before 5am','5–7am','8–10am','10–12pm','12–3pm','3–5pm','5–7pm','8pm onward'];
+/* alphabetical, with the two catch-all answers held at the end rather than
+   sorted into the middle of the activities */
+const JOIN_FORMS=['Barre','Bootcamp','Dance','Golf','HIIT','Hiking','Indoor cycling','Outdoor cycling','Pilates','Rowing','Running','Skiing','Snowboarding','Strength training','Swimming','Tennis','Walking','Yoga','Other','No preference'];
+const JOIN_TIMES=['Before 5am','5–7am','8–10am','10–12pm','12–3pm','3–5pm','5–7pm','8pm Onward'];
 const JOIN_STUDIOS=studios.map(s=>s.name).concat('I’m flexible');
 /* the two opt-out answers clear every other box in their group, and any other
    box clears them - holding both at once says nothing */

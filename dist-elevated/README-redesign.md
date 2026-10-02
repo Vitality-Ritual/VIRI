@@ -1247,3 +1247,24 @@ populated by the answer rather than being empty until someone saves one by hand.
 
 15 routes, no console errors, logged in and logged out. 1280 and 375 — the check grid goes three
 columns to two and nothing overflows.
+
+## The exercise list opens up (2 October 2026)
+
+Step 03's first question was the six Explore categories. It is now eighteen activities in
+alphabetical order — barre through yoga, including the ones no studio on the site teaches (skiing,
+snowboarding, tennis, golf, hiking, walking) — with `Other` and `No preference` held at the end
+rather than sorted into the middle, since neither is an activity. Cycling splits into indoor and
+outdoor, and strength becomes strength training. Sorting is case-insensitive, which is the only
+reason HIIT lands before Hiking.
+
+`No preference` keeps its opt-out behaviour and `Other` deliberately does not: Other is something you
+do as well as the rest, so it combines. The time ranges are unchanged except that "8pm onward" is now
+"8pm Onward", matching the other seven.
+
+Twenty boxes still fall in three columns at 1280 with none wrapping to a second line; on a phone they
+go to two columns and the six longest labels take two lines, which the grid equalises per row.
+
+**Worth knowing:** these answers no longer map onto `VIRI.categories`, which still drives the Explore
+filters and the studio categories. Someone who picks only Snowboarding has interests that Explore
+cannot match on. That is fine while the studios are DC fitness brands, but matching people by
+activity will need the two lists reconciled.
