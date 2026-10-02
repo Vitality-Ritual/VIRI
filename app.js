@@ -715,6 +715,15 @@ function syncAccountLinks(){
   const icon=$('.header-tools .icon-button[href]');
   if(icon){icon.setAttribute('href',on?'#/profile':'#/signup');
     icon.setAttribute('aria-label',on?'Your profile':'Sign up or log in');}
+  /* the feed and the finder only mean anything with a profile behind them */
+  const nav=$('.nav-left');
+  if(nav){
+    let home=$('#nav-home',nav), find=$('#nav-find',nav);
+    if(on&&!home){home=document.createElement('a');home.id='nav-home';home.href='#/feed';home.textContent='Home';nav.prepend(home);}
+    else if(!on&&home)home.remove();
+    if(on&&!find){find=document.createElement('a');find.id='nav-find';find.href='#/find';find.textContent='Search';nav.insertBefore(find,$('#nav-home',nav)?.nextSibling||nav.firstChild);}
+    else if(!on&&find)find.remove();
+  }
   const menu=$('#menu-panel');
   if(!menu)return;
   let link=$('#menu-profile-link',menu);
@@ -884,7 +893,258 @@ function friendsModal(){
       <button class="button small" data-action="close-modal">Done</button></div>`);
 }
 
-function profilePage(){const p=state.profile;const name=p?.name||'Your name';const joined=allEvents().filter(e=>state.joined.includes(e.id));const saved=studios.filter(s=>state.saved.includes(s.id));return `<section class="page-head"><div class="wrap"><div class="page-head-row"><div><p class="eyebrow">Your corner of the city</p><h1>Your circle.</h1></div><div style="display:flex;gap:12px">${p?'<button class="button outline small" data-action="edit-profile">Edit profile</button>':button('Build your profile','#/signup','small')}<button class="button small" data-action="post-activity">Post an activity</button></div></div></div></section><div class="wrap">${note('This profile, feed, and suggested people demonstrate the experience. Your changes stay on this device.')}<div class="profile-grid"><aside class="profile-panel"><div class="profile-avatar">${p?.photo?`<img src="${p.photo}" alt="">`:escapeHTML(p?initials(p.name):'ViRi')}</div><h2>${escapeHTML(name)}</h2><p class="location">${escapeHTML(p?.area||'Washington, DC')}</p>${p?.bio?`<p class="profile-bio">${escapeHTML(p.bio)}</p>`:''}<div class="profile-stats"><button type="button" class="stat-open" data-action="show-friends"><span>Friends</span><strong>${state.connections.length}</strong></button><div><span>Studios</span><strong>${saved.length}</strong></div><div><span>Activities</span><strong>${state.posts.length}</strong></div></div><div class="interests">${(p?.interests||['Pilates','Yoga','Running']).map(c=>`<span>${escapeHTML(c)}</span>`).join('')}</div><h3>Upcoming activities</h3>${joined.length?joined.map(e=>`<div class="upcoming-row"><span class="small">${prettyDate(e.date)} · ${prettyTime(e.date)}</span><strong>${escapeHTML(e.title)}</strong><button class="plain-link small" data-action="event-details" data-id="${e.id}">View plan</button></div>`).join(''):'<p class="small">Your next ritual starts with a plan. Join an activity to see it here.</p>'}<a class="text-link" href="#/explore" style="margin-top:20px">Find an activity ${arrow}</a><h3>Saved studios</h3>${saved.length?saved.map(s=>`<a class="upcoming-row" style="display:block" href="#/studios/${s.id}">${s.name} ${arrow}</a>`).join(''):'<p class="small">Keep your favorite studios close. Save one while you explore.</p>'}</aside><section class="profile-content"><h2>Feed</h2>${state.posts.slice().reverse().map(post=>`<article class="feed-card"><div class="feed-author"><span class="mini-avatar">${escapeHTML(initials(p?.name||'You'))}</span><div>${escapeHTML(p?.name||'You')}<p class="small">Your activity · ${prettyDate(post.date)}</p></div></div><h3>${escapeHTML(post.title)} · ${post.duration} min</h3><p>${escapeHTML(post.description)}</p></article>`).join('')}<article class="feed-card"><div class="feed-author"><span class="mini-avatar">JC</span><div>Jamie’s circle<p class="small">Sample member · Example activity</p></div></div><h3>CycleBar · 45 min</h3><p>A morning ride and a new reason to get out the door. Who’s joining next time?</p><img src="${A}brand-cyclebar.webp" alt="Riders in a CycleBar class"><a class="text-link" href="#/explore">Find a ride ${arrow}</a></article><article class="feed-card"><p class="eyebrow">Your next connection</p><h3>The best part might be after class.</h3><p style="margin-top:15px">Invite someone to stay for a coffee. A shared routine starts with one small plan.</p></article></section><aside class="profile-aside"><h2>Suggested</h2>${eventCard(seedEvents[0])}<div class="contact-card" style="padding:25px;margin-top:25px"><div class="profile-avatar">AL</div><h3>Alex’s circle</h3><p class="small">Sample member · Georgetown</p><p>Early morning movement, easy runs, and coffee after class.</p><div class="interests" style="margin:20px 0"><span>Running</span><span>Yoga</span></div><button class="button small outline" data-action="connect-sample" aria-pressed="${state.connections.includes('alex')}">${state.connections.includes('alex')?'Connected ✓':'Connect'}</button></div></aside></div></div>`;}
+let profileTab='sessions';
+/* ===================== sessions, feed and finding people =====================
+   A session leads with the activity, not a picture: date and place, then the
+   title, then a strip of figures, and only then the note and any photograph.
+   That is what lets a session with no photo sit in the list without looking
+   like a hole, which a grid of squares could never do. */
+const SAMPLE_SESSIONS=[
+  {sample:true,title:'Reformer, slowly',cat:'Pilates',place:'Club Pilates Dupont',
+   dur:50,went:6,met:2,ago:'Wednesday · 7:00am',img:'connect-kerb.jpg',
+   note:'Fifty minutes on the reformer and I can confirm my legs are furious. Same slot next week if anyone wants to come.',
+   withIds:['dc-p0','dc-p3','dc-p7'],withLine:'Naomi, Amara and 4 others',comments:2},
+  {sample:true,title:'Easy five before work',cat:'Running',place:'Rock Creek Park',
+   dur:48,dist:'5.0 mi',went:2,ago:'Tuesday · 6:00am',
+   note:'Met at the Dupont fountain at six. No photo, it was still dark.',
+   withIds:['dc-p3'],withLine:'Amara',comments:1},
+  {sample:true,title:'Front row, finally',cat:'Indoor cycling',place:'CycleBar Georgetown',
+   dur:45,went:9,met:3,ago:'Monday · 6:00am',
+   note:'Naomi saved me a bike. Still the fastest forty-five minutes of the week.',
+   withIds:['dc-p0'],withLine:'Naomi and 8 others',comments:0}
+];
+/* your own posts first; the samples stand in only while you have none, so the
+   shape of the page is visible before you have logged anything */
+const mySessions=()=>state.posts.length
+  ? state.posts.slice().reverse().map(p=>({title:p.title,cat:p.activity||'',place:p.place||'',
+      dur:Number(p.duration)||0,went:1,ago:prettyDate(p.date),note:p.description||'',
+      withIds:[],withLine:'',comments:0}))
+  : SAMPLE_SESSIONS;
+const avatarFor=p=>p&&p.photo
+  ? `<img src="${p.photo}" alt="">`
+  : escapeHTML(initials((p&&p.name)||'VIRI'));
+/* faces of the people who were there, overlapped the way a roster reads */
+const whoStack=ids=>!ids||!ids.length?'':`<span class="who-stack">${ids.slice(0,3).map(id=>{
+  const p=exPerson(id);
+  return `<span>${escapeHTML(initials(p?p.name:'VIRI'))}</span>`;}).join('')}</span>`;
+function sessionStats(s){
+  const cells=[];
+  if(s.dist)cells.push(['Distance',s.dist]);
+  if(s.dur)cells.push(['Length',`${s.dur} min`]);
+  if(s.cat)cells.push(['Activity',s.cat]);
+  if(s.went)cells.push(['Went',`${s.went} ${s.went===1?'person':'people'}`]);
+  if(s.met)cells.push(['Of those',`${s.met} new`]);
+  if(!cells.length)return '';
+  return `<div class="session-stats">${cells.map(([k,v])=>
+    `<span><span class="session-k">${escapeHTML(k)}</span><span class="session-v">${escapeHTML(v)}</span></span>`).join('')}</div>`;
+}
+function sessionCard(s,by){
+  return `<article class="session">
+    ${by?`<div class="session-by"><span class="av-sm">${avatarFor(by)}</span>
+      <span><b>${escapeHTML(by.name)}</b><span class="small">${escapeHTML(s.ago)} &middot; ${escapeHTML(s.place)}</span></span>
+      ${by.id&&!state.connections.includes(by.id)
+        ?`<button class="button small outline" data-action="ex-connect" data-id="${escapeHTML(by.id)}">Add friend</button>`
+        :'<span class="tag">Friend</span>'}</div>`
+     :`<p class="session-meta">${escapeHTML(s.ago)}${s.place?` &middot; ${escapeHTML(s.place)}`:''}</p>`}
+    <h3 class="session-title">${escapeHTML(s.title)}</h3>
+    ${sessionStats(s)}
+    ${s.note?`<p class="session-note">${escapeHTML(s.note)}</p>`:''}
+    ${s.img?`<figure class="session-shot"><img src="${A+s.img}" alt="" loading="lazy"></figure>`:''}
+    <div class="session-foot">
+      ${s.withLine?`${whoStack(s.withIds)}<span class="small">with ${escapeHTML(s.withLine)}</span>`:''}
+      <button class="button small" data-action="session-join">Join ${by?'them':'me'} next time</button>
+      <button class="plain-link session-talk" data-action="session-talk">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-8 8H5l-2 2V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z"/></svg>${s.comments||0}</button>
+    </div>
+  </article>`;
+}
+function profilePage(){
+  const p=state.profile;
+  if(!p)return authPage();
+  const saved=studios.filter(s=>state.saved.includes(s.id));
+  const going=exClasses().filter(c=>state.joined.includes(c.id));
+  const list=mySessions();
+  const tab=profileTab;
+  return `<div class="wrap pf">
+    <header class="pf-head">
+      <span class="pf-avatar">${avatarFor(p)}</span>
+      <div class="pf-id">
+        <div class="pf-name-row">
+          <h1>${escapeHTML(p.name)}</h1>
+          <button class="button small outline" data-action="edit-profile">Edit profile</button>
+          <button class="button small outline" data-action="share-profile">Share</button>
+        </div>
+        <div class="pf-stats">
+          <span><b>${list.length}</b> sessions</span>
+          <button class="stat-open" data-action="show-friends"><b>${state.connections.length}</b> friends</button>
+          <span><b>${saved.length}</b> studios</span>
+        </div>
+        <div class="pf-bio">
+          ${p.bio?`<p>${escapeHTML(p.bio)}</p>`:''}
+          <p class="small">${escapeHTML(p.area||'Washington, DC')}${(p.times||[]).length?` &middot; ${escapeHTML(p.times.slice(0,2).join(', '))}`:''}</p>
+          ${(p.interests||[]).length?`<div class="pf-chips">${p.interests.map(c=>
+            `<span>${escapeHTML(c)}</span>`).join('')}</div>`:''}
+        </div>
+      </div>
+    </header>
+    <nav class="pf-tabs" aria-label="Your profile">
+      ${[['sessions','Sessions'],['studios','Saved studios'],['going','Going to']].map(([k,label])=>
+        `<button class="pf-tab${tab===k?' is-on':''}" data-action="pf-tab" data-id="${k}"${tab===k?' aria-current="true"':''}>${label}</button>`).join('')}
+    </nav>
+    <div class="pf-body">${
+      tab==='studios'
+        ? (saved.length
+            ? `<div class="pf-rows">${saved.map(s=>
+                `<a class="pf-row" href="#/studios/${s.id}"><b>${escapeHTML(s.name)}</b><span class="small">${escapeHTML(s.category)}</span>${arrow}</a>`).join('')}</div>`
+            : `<p class="pf-empty">No studios yet. Save one while you explore and it will sit here.</p>${button('Find a studio','#/studios','small outline')}`)
+      : tab==='going'
+        ? (going.length
+            ? `<div class="pf-rows">${going.map(c=>{const v=exVenue(c.venue);
+                return `<a class="pf-row" href="#/book/${c.id}"><b>${escapeHTML(c.title)}</b><span class="small">${escapeHTML(v?v.brand:'')} &middot; ${prettyDate(c.start)} &middot; ${prettyTime(c.start)}</span>${arrow}</a>`;}).join('')}</div>`
+            : `<p class="pf-empty">Nothing on the plan. Add a class and the people going show up with it.</p>${button('Find a class','#/find','small outline')}`)
+      : `${state.posts.length?'':`<p class="pf-sample">${list.length} sample sessions, so you can see the shape of this page. Log one of your own and these make way.</p>`}
+         <div class="sessions">${list.map(s=>sessionCard(s)).join('')}</div>
+         <div class="pf-add">${button('Log a session','#/profile','small outline')}</div>`
+    }</div>
+  </div>`;
+}
+/* ---- the home feed: other people's sessions ---- */
+const FEED_SHAPE=[
+  {title:'45 minutes, no complaints',cat:'Indoor cycling',dur:45,went:9,ago:'This morning · 6:00am',
+   place:'CycleBar Georgetown',img:'brand-cyclebar.webp',comments:3,
+   note:'Front row, back row, does not matter. Still the fastest 45 minutes of my week. Same bike Thursday if anyone wants it.'},
+  {title:'Six miles and a flat white',cat:'Running',dist:'6.0 mi',dur:57,went:4,ago:'Yesterday · 6:30am',
+   place:'Rock Creek Park',comments:1,
+   note:'Same time Saturday if anyone wants in. We stop for coffee, it is not a race.'},
+  {title:'Shaking by minute twelve',cat:'Barre',dur:60,went:11,ago:'Yesterday · 10:00am',
+   place:'Barre3 14th Street',comments:0,
+   note:'First time at this location. Everyone was lovely and nobody mentioned my form.'}
+];
+const feedSessions=()=>{
+  const people=(VIRI.people||[]).filter(x=>x.city===(ex&&ex.city||'dc'));
+  return FEED_SHAPE.map((s,i)=>({s,by:people[i*3]||people[i]||null})).filter(x=>x.by);
+};
+function feedPage(){
+  const p=state.profile;
+  const going=exClasses().filter(c=>state.joined.includes(c.id)).slice(0,2);
+  const near=findMatches().slice(0,2);
+  return `<div class="wrap feed-wrap">
+    <section class="feed-col">
+      <div class="feed-top">
+        <h1>This week, near you</h1>
+        <a class="text-link" href="#/find">Find people ${arrow}</a>
+      </div>
+      ${note('The sessions below are sample members, so the feed is never empty. Your own posts and plans are real and stay on this device.')}
+      <div class="sessions">${feedSessions().map(({s,by})=>sessionCard(s,by)).join('')}</div>
+    </section>
+    <aside class="feed-rail">
+      <div class="rail-box">
+        <p class="rail-label">On your plan</p>
+        ${going.length?going.map(c=>{const v=exVenue(c.venue);
+          return `<p class="rail-line"><b>${prettyDate(c.start)} ${prettyTime(c.start)}</b><br>${escapeHTML(v?v.brand:'')} &middot; ${escapeHTML(c.area)}<br><span class="small">${c.going.length} going</span></p>`;}).join('')
+          :'<p class="small">Nothing yet. Add a class and it shows up here with the people going.</p>'}
+        <a class="text-link" href="#/find">Add a class ${arrow}</a>
+      </div>
+      <div class="rail-box plain">
+        <p class="rail-label">In your classes this week</p>
+        ${near.length?near.map(m=>peopleRow(m)).join('')
+          :'<p class="small">Add a class to your plan and the people in it appear here.</p>'}
+        <a class="text-link" href="#/find">See everyone ${arrow}</a>
+      </div>
+    </aside>
+  </div>`;
+}
+/* ---- find: people first, classes second ----
+   A match is a real overlap, not a guess: either you are both booked into the
+   same class, or the class is one your own answers say you would go to. */
+function findMatches(){
+  const p=state.profile, cats=(p&&p.interests)||[], seen={}, out=[];
+  const mine=exClasses().filter(c=>state.joined.includes(c.id));
+  mine.forEach(c=>c.going.forEach(id=>{
+    if(seen[id])return; const who=exPerson(id); if(!who)return;
+    seen[id]=1; out.push({who,cls:c,why:'both'});
+  }));
+  if(out.length<6){
+    exClasses().filter(c=>!cats.length||cats.some(x=>x.toLowerCase().includes(c.cat.toLowerCase())||c.cat.toLowerCase().includes(x.toLowerCase())))
+      .forEach(c=>{let fromHere=0;c.going.forEach(id=>{
+        if(seen[id]||out.length>=6||fromHere>=2)return; const who=exPerson(id); if(!who)return;
+        seen[id]=1; fromHere++; out.push({who,cls:c,why:'same'});
+      });});
+  }
+  return out;
+}
+function peopleRow(m){
+  const st=exLinked(m.who.id), v=exVenue(m.cls.venue);
+  return `<div class="find-row">
+    <span class="av-md">${escapeHTML(initials(m.who.name))}</span>
+    <div class="find-who">
+      <b>${escapeHTML(m.who.name)}</b>
+      <span class="small">${escapeHTML(m.who.line)}</span>
+      <span class="find-why">${m.why==='both'?'Both booked':'Also goes'} &middot; ${prettyDate(m.cls.start)} ${prettyTime(m.cls.start)} &middot; ${escapeHTML(v?v.brand:m.cls.area)}</span>
+    </div>
+    ${st==='connected'?'<span class="tag">Friend</span>'
+      :st==='requested'?'<span class="tag">Requested</span>'
+      :`<button class="button small" data-action="ex-connect" data-id="${escapeHTML(m.who.id)}">Connect</button>`}
+  </div>`;
+}
+function findPage(){
+  const p=state.profile, cats=(p&&p.interests)||[];
+  const matches=findMatches();
+  /* classes worth joining for the room, so the sort is by who is in them */
+  const rooms=exClasses()
+    .filter(c=>c.going.length&&(!cats.length||cats.some(x=>x.toLowerCase().includes(c.cat.toLowerCase())||c.cat.toLowerCase().includes(x.toLowerCase()))))
+    .sort((a,b)=>b.going.length-a.going.length).slice(0,3);
+  const waiting=(state.requests||[]).filter(id=>!state.connections.includes(id)).slice(0,2);
+  return `<section class="page-head"><div class="wrap"><p class="eyebrow">Find your people</p><h1>Who is already<br>in the room.</h1></div></section>
+  <div class="wrap find">
+    <form class="find-bar" id="find-form">
+      <label class="visually-hidden" for="find-q">Search people, studios or classes</label>
+      <input id="find-q" name="q" type="search" placeholder="A studio, a class, a neighborhood, a name">
+      <button class="button" type="submit">Search</button>
+    </form>
+    <div class="find-chips">${(cats.length?cats:['Pilates','Running','Indoor cycling']).slice(0,5).map((c,i)=>
+      `<button class="chip${i<2?' is-on':''}" data-action="find-chip">${escapeHTML(c)}</button>`).join('')}
+      <button class="chip" data-action="find-chip">${escapeHTML((((p&&p.times)||[]).concat('This week'))[0])}</button></div>
+    <div class="find-grid">
+      <div class="find-main">
+        <div class="find-head"><h2>${matches.some(m=>m.why==='both')?'Already in a class with you':'In classes you would go to'}</h2><span class="small">${matches.length} this week</span></div>
+        ${matches.length?matches.slice(0,4).map(m=>peopleRow(m)).join('')
+          :`<p class="pf-empty">Add a class to your plan and everyone else going appears here.</p>`}
+        <div class="find-head"><h2>Classes worth joining for the room</h2><span class="small">Next 7 days</span></div>
+        ${rooms.map(c=>{const v=exVenue(c.venue);
+          const faces=c.going.slice(0,3).map(id=>{const w=exPerson(id);
+            return `<span>${escapeHTML(initials(w?w.name:'VIRI'))}</span>`;}).join('');
+          const first=exPerson(c.going[0]);
+          return `<div class="find-room">
+            <span class="find-room-cat">${escapeHTML(c.cat)}</span>
+            <div class="find-who">
+              <span class="find-why">${prettyDate(c.start)} ${prettyTime(c.start)} &middot; ${escapeHTML(v?v.brand:'')} &middot; ${escapeHTML(c.area)}</span>
+              <b class="find-room-title">${escapeHTML(c.title)}</b>
+              <span class="find-going"><span class="who-stack">${faces}</span>
+                <span class="small">${first?escapeHTML(first.name.split(' ')[0]):''}${c.going.length>1?` and ${c.going.length-1} other${c.going.length-1===1?'':'s'}`:''} going</span></span>
+            </div>
+            <a class="button small outline" href="#/book/${c.id}">Add to plan</a>
+          </div>`;}).join('')}
+      </div>
+      <aside class="find-rail">
+        <div class="rail-box">
+          <p class="rail-label">Why these people</p>
+          <p class="rail-copy">You are matched on what you already do: the studios you saved, the activities you picked and the hours you train. Nobody appears here who is outside the week you actually have.</p>
+          <p class="small">${escapeHTML((cats.slice(0,3).join(' · '))||'Add your activities to sharpen this')}</p>
+          <a class="button small outline" href="#/profile">Change what I match on</a>
+        </div>
+        ${waiting.length?`<div class="rail-box plain"><p class="rail-label">Waiting on you</p>
+          ${waiting.map(id=>{const w=exPerson(id);return `<div class="find-row compact"><span class="av-md">${escapeHTML(initials(w?w.name:'VIRI'))}</span>
+            <div class="find-who"><b>${escapeHTML(w?w.name:'A member')}</b><span class="small">Asked to connect</span></div>
+            <button class="button small" data-action="ex-connect" data-id="${escapeHTML(id)}">Accept</button></div>`;}).join('')}</div>`:''}
+        <div class="rail-box plain">
+          <p class="rail-label">Studios near you</p>
+          ${studios.slice(0,3).map(s=>`<a class="text-link" href="#/studios/${s.id}">${escapeHTML(s.name)} ${arrow}</a>`).join('')}
+        </div>
+      </aside>
+    </div>
+  </div>`;
+}
 function authPage(){return `<section class="auth-layout"><div class="auth-image"><img src="${A}studio-entry.jpg" alt="Two women arriving at the studio together"><h2>A new ritual.<br>A new circle.<br>A little more you.</h2></div><div class="auth-form"><p class="eyebrow">Welcome back</p><h1>Back to your circle.</h1><p>Open the profile saved on this device.</p>${note('This is a local demo login. No password or email is sent.')}<form id="auth-form"><div class="field"><label for="auth-email">Email address</label><input id="auth-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required></div><p id="auth-error" class="field-error" role="alert"></p><button class="button" type="submit" style="margin-top:18px">Open my profile</button></form><p class="small">New here? <a href="#/signup">Join VIRI</a></p></div></section>`;}
 function bindAuth(){$('#auth-form')?.addEventListener('submit',e=>{e.preventDefault();const email=String(new FormData(e.target).get('email')).trim().toLowerCase();if(!state.profile||state.profile.email!==email){$('#auth-error').textContent='No profile with that email is saved in this browser. Create a demo profile to begin.';return;}toast('Welcome back to your circle.');location.hash='#/profile';});}
 
@@ -989,7 +1249,7 @@ function bindSetup(){
 function eventCard(e){const joined=state.joined.includes(e.id);return `<article class="event-card">${e.img
   ?`<img src="${A+e.img}" alt="${escapeHTML(e.category)} community activity" loading="lazy">`
   :`<span class="card-ph" role="img" aria-label="Photograph to come"><span class="ph-mark">${phMark()}</span><span class="ph-cap">Photo<br>to come</span></span>`}<div class="event-info"><p class="event-meta">${escapeHTML(e.category)} · ${escapeHTML(e.area)}</p><h3>${escapeHTML(e.title)}</h3><p>${prettyDate(e.date)} · ${prettyTime(e.date)} · ${e.duration} min</p><p class="small">${escapeHTML(e.host)}</p><div class="event-bottom"><span class="small">${e.people+(joined?1:0)} ${e.type==='club'?'members':'people going'}</span><button class="button small ${joined?'outline':''}" data-action="join-event" data-id="${e.id}" aria-pressed="${joined}">${joined?'Joined ✓':e.type==='club'?'Join club':'Join activity'}</button></div><button class="plain-link small" style="margin-top:13px" data-action="event-details" data-id="${e.id}">View details & location</button></div></article>`;}
-function postActivity(){openModal('How did you move today?',`<p class="small" style="margin-bottom:20px">Post to your local preview feed.</p><form id="post-form"><div class="field"><label for="post-title">Your activity</label><input id="post-title" name="title" required maxlength="70" placeholder="A lunchtime walk with a friend"></div><div class="field"><label for="post-duration">Minutes</label><input id="post-duration" name="duration" type="number" min="1" max="1440" value="45" required></div><div class="field"><label for="post-description">How was it?</label><textarea id="post-description" name="description" maxlength="400" placeholder="Share a little about your ritual."></textarea></div><div class="dialog-actions"><button class="button small" type="submit">Post activity</button></div></form>`,()=>$('#post-form').addEventListener('submit',e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));if(!f.title.trim())return;state.posts.push({...f,title:f.title.trim(),duration:Number(f.duration),date:new Date().toISOString()});save();closeModal();render(false);toast('Activity added to your feed.');}));}
+function postActivity(){openModal('How did you move today?',`<p class="small" style="margin-bottom:20px">Post to your local preview feed.</p><form id="post-form"><div class="field"><label for="post-title">Your activity</label><input id="post-title" name="title" required maxlength="70" placeholder="A lunchtime walk with a friend"></div><div class="field"><label for="post-activity">Activity</label><input id="post-activity" name="activity" maxlength="40" placeholder="Pilates" list="post-cats"><datalist id="post-cats">${JOIN_FORMS.filter(x=>x!==JOIN_ANY.forms&&x!=='Other').map(c=>`<option>${escapeHTML(c)}</option>`).join('')}</datalist></div><div class="field"><label for="post-place">Where</label><input id="post-place" name="place" maxlength="60" placeholder="Club Pilates Dupont"></div><div class="field"><label for="post-duration">Minutes</label><input id="post-duration" name="duration" type="number" min="1" max="1440" value="45" required></div><div class="field"><label for="post-description">How was it?</label><textarea id="post-description" name="description" maxlength="400" placeholder="Share a little about your ritual."></textarea></div><div class="dialog-actions"><button class="button small" type="submit">Post activity</button></div></form>`,()=>$('#post-form').addEventListener('submit',e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));if(!f.title.trim())return;state.posts.push({...f,title:f.title.trim(),duration:Number(f.duration),date:new Date().toISOString()});save();closeModal();render(false);toast('Activity added to your feed.');}));}
 function legalPage(privacy){return `<article class="article-detail"><p class="eyebrow">VIRI preview</p><h1>${privacy?'Your privacy':'About this preview'}</h1>${privacy?'<p>Your demo profile, saved studios, activities, connections, and posts are stored in this browser’s local storage. They are not sent to a VIRI account service.</p><p>The map loads from OpenStreetMap. Opening external studio and research links takes you to those websites, which have their own privacy practices.</p><p>This notice describes the prototype. A launch privacy policy will be provided before live accounts become available.</p><button class="button outline" data-action="clear-preview">Clear my preview data</button>':'<p>This website is an interactive preview of VIRI. Demo profiles, events, reviews, and attendance counts are illustrative. No class reservation, purchase, message, or live social connection is made through the preview.</p><p>Studio names and photographs identify the respective businesses. Listings do not imply a partnership or endorsement. Visit each studio’s official website to confirm schedules, prices, requirements, and bookings.</p><p>Launch terms will be provided before real accounts or bookings are available.</p>'}</article>`;}
 function notFound(){return `<section class="section wrap"><h1>Let’s find your way back.</h1><p style="margin:25px 0">This page isn’t part of your circle just yet.</p>${button('Back to VIRI','#/')}</section>`;}
 function initWordmark(){
@@ -1065,7 +1325,7 @@ function initPageMotion(){
   revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('is-revealed');revealObserver.unobserve(entry.target);}}),{threshold:.08,rootMargin:'0px 0px -30px 0px'});
   targets.forEach(el=>{el.classList.add('will-reveal');revealObserver.observe(el);});
 }
-function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'profile':html=profilePage();break;case 'setup':html=setupPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=legalPage(true);break;case 'terms':html=legalPage(false);break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',profile:'Your circle',setup:'Your profile',book:'Book this class',privacy:'Your privacy',terms:'Preview terms'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if(path==='login')bindAuth();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='join')bindJoin();if(path==='setup')bindSetup();
+function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'profile':html=profilePage();break;case 'feed':html=feedPage();break;case 'find':html=findPage();break;case 'setup':html=setupPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=legalPage(true);break;case 'terms':html=legalPage(false);break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',profile:'Your circle',feed:'Home',find:'Find your people',setup:'Your profile',book:'Book this class',privacy:'Your privacy',terms:'Preview terms'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if(path==='login')bindAuth();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='find')$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();toast('Search runs over the sample roster in this preview.');});if(path==='join')bindJoin();if(path==='setup')bindSetup();
   $('#subscribe-form')?.addEventListener('submit',e=>{e.preventDefault();
     toast('Saved on this device only \u2014 the preview does not send email.');e.target.reset();});if(path==='explore'){$('#ex-search').addEventListener('input',e=>{ex.query=e.target.value;exRefresh();});$('#ex-time').addEventListener('change',e=>{ex.time=e.target.value;exRefresh();});exBindMap();}}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-action]');if(!t)return;const {action,id,index,category,view,kind,name,channel}=t.dataset;switch(action){case 'video-toggle':{const v=$('#'+(t.dataset.video||'about-video'));if(v.paused)v.play().catch(()=>toast('Video playback is unavailable in this browser.'));else v.pause();break;}case 'close-modal':closeModal();break;case 'join-back':joinStep=Math.max(0,joinStep-1);render(false);break;case 'studio-prev':studioIndex=Math.max(0,studioIndex-1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'studio-next':studioIndex=Math.min(STUDIO_LAST(),studioIndex+1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'ex-city':ex={...ex,city:t.dataset.id,venue:null,cls:null};render(false);break;
@@ -1083,7 +1343,7 @@ case 'book-new':bookChoose(t.dataset.id,'new');break;
 case 'book-plan':bookChoose(t.dataset.id,'plan');break;
 case 'ex-zoom':exZoom(t.dataset.dir);break;
 case 'ex-reset':ex={...ex,cat:'All',time:'All',members:false,query:'',venue:null,cls:null};render(false);break;
-case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':state.saved=state.saved.includes(id)?state.saved.filter(x=>x!==id):[...state.saved,id];save();render(false);toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':postActivity();break;case 'show-friends':friendsModal();break;case 'connect-sample':state.connections=state.connections.includes('alex')?[]:['alex'];save();render(false);toast(state.connections.length?'Sample connection added to your preview.':'Sample connection removed.');break;case 'edit-profile':openModal('Make your profile yours',`<form id="edit-form"><div class="field"><label for="edit-name">Your name</label><input id="edit-name" name="name" value="${escapeHTML(state.profile?.name)}" required maxlength="60"></div><div class="field"><label for="edit-area">Your neighborhood</label><input id="edit-area" name="area" value="${escapeHTML(state.profile?.area)}" required maxlength="70"></div><div class="dialog-actions"><button class="button small" type="submit">Save profile</button></div></form>`,()=>$('#edit-form').addEventListener('submit',ev=>{ev.preventDefault();const f=Object.fromEntries(new FormData(ev.target));if(!f.name.trim()||!f.area.trim())return;state.profile={...state.profile,name:f.name.trim(),area:f.area.trim()};save();closeModal();render(false);toast('Profile updated.');}));break;case 'clear-preview':openModal('Clear your preview?',`<p class="dialog-copy">This removes your demo profile, plans, posts, connections, and saved studios from this browser.</p><div class="dialog-actions"><button class="button outline small" data-action="close-modal">Keep my preview</button><button class="button small" data-action="confirm-clear">Clear preview</button></div>`);break;case 'confirm-clear':state={profile:null,joined:[],saved:[],created:[],posts:[],connections:[]};save();closeModal();render(false);toast('Your preview data has been cleared.');break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
+case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':state.saved=state.saved.includes(id)?state.saved.filter(x=>x!==id):[...state.saved,id];save();render(false);toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':postActivity();break;case 'show-friends':friendsModal();break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':toast('Added to your plan. In the live product this books you alongside them.');break;case 'session-talk':toast('Comments are part of this design. Writing one is not wired up in the preview yet.');break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':t.classList.toggle('is-on');break;case 'connect-sample':state.connections=state.connections.includes('alex')?[]:['alex'];save();render(false);toast(state.connections.length?'Sample connection added to your preview.':'Sample connection removed.');break;case 'edit-profile':openModal('Make your profile yours',`<form id="edit-form"><div class="field"><label for="edit-name">Your name</label><input id="edit-name" name="name" value="${escapeHTML(state.profile?.name)}" required maxlength="60"></div><div class="field"><label for="edit-area">Your neighborhood</label><input id="edit-area" name="area" value="${escapeHTML(state.profile?.area)}" required maxlength="70"></div><div class="dialog-actions"><button class="button small" type="submit">Save profile</button></div></form>`,()=>$('#edit-form').addEventListener('submit',ev=>{ev.preventDefault();const f=Object.fromEntries(new FormData(ev.target));if(!f.name.trim()||!f.area.trim())return;state.profile={...state.profile,name:f.name.trim(),area:f.area.trim()};save();closeModal();render(false);toast('Profile updated.');}));break;case 'clear-preview':openModal('Clear your preview?',`<p class="dialog-copy">This removes your demo profile, plans, posts, connections, and saved studios from this browser.</p><div class="dialog-actions"><button class="button outline small" data-action="close-modal">Keep my preview</button><button class="button small" data-action="confirm-clear">Clear preview</button></div>`);break;case 'confirm-clear':state={profile:null,joined:[],saved:[],created:[],posts:[],connections:[]};save();closeModal();render(false);toast('Your preview data has been cleared.');break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
 $('#menu-button').addEventListener('click',()=>{const open=$('#menu-panel').hidden;$('#menu-panel').hidden=!open;$('#menu-button').setAttribute('aria-expanded',String(open));});
 document.addEventListener('click',e=>{if(!e.target.closest('.site-header')){$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');}});
