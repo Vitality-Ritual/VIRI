@@ -1567,3 +1567,35 @@ in; it is only the cover that steps aside.
 
 16 routes signed out, no console errors, no overflow; bare URL and `#/` both land on the feed when
 signed in.
+
+## A sixth step: age, college, industry (2 October 2026)
+
+**On the privacy question Margaret raised: this does not create a blocker, so it is built.** Age,
+education and employment are ordinary personal data — none of them are the special categories that
+carry extra duties (health, race, religion, sexual orientation, politics, biometrics, union
+membership). Nothing leaves the browser in the preview, so there is no new processing to disclose.
+Three things are worth knowing rather than worrying about, and the first is handled in code:
+
+1. **A birth year creates an age obligation.** Under 13 is COPPA in the US; under 16 brings parental
+   consent rules in parts of the EU. The dropdown therefore starts at 16 and cannot express a child,
+   so the form cannot collect what the product has no way to handle.
+2. **The combination identifies people.** Age, a named college, a graduation year, an industry, a
+   neighbourhood and a weekly class schedule together narrow a person down very precisely — and this
+   is a product where strangers meet in person. That is a safety matter more than a legal one, and
+   before live accounts exist VIRI has to decide who sees each field.
+3. **The launch policy has to list them.** The preview privacy page now does, including the 16 floor.
+
+**The step** is 05 of 06, before the photo and bio finale. Birth year is a dropdown that reads
+"28 — born 1998" while choosing and stores only the year; the profile and Settings show the age and
+never the year. College is a checkbox that reveals where and when, via `:has()` rather than a script,
+so an unticked box leaves nothing behind. Industry is a free text field.
+
+**Industry uses a placeholder reading "Corporate", not a prefilled value.** A value sitting in the box
+is the thing people forget to change, and every member would end up filing as Corporate. The
+placeholder gives the same example and leaves the field genuinely empty.
+
+Everything is optional and skipping is silent — no red text, and a profile with nothing shared simply
+omits the line rather than printing blanks. Settings says "Not shared" for each.
+
+19 routes, no console errors, 1280 and 375; the full six-step sign-up run twice, once filling
+everything and once skipping it all.
