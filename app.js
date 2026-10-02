@@ -550,7 +550,7 @@ function aboutPage(){return `<section class="about-hero is-placeholder"><div cla
    submission sends a one-off confirmation link to that address, and nothing is
    stored here. While this is empty the form still validates and still reaches
    the thank-you page, and the page says plainly that nothing is delivered. */
-const CONTACT_EMAIL='margaret@vitalityritual.org';
+const CONTACT_EMAIL='info@vitalityritual.org';
 const contactEndpoint=()=>CONTACT_EMAIL?`https://formsubmit.co/ajax/${encodeURIComponent(CONTACT_EMAIL)}`:'';
 function contactPage(){return `<section class="page-head"><div class="wrap"><p class="eyebrow">Contact us</p><h1>Good things start<br>with a conversation.</h1><p>Questions, press, partnerships, or a studio that belongs on VIRI — write to us here.</p></div></section>
 <div class="wrap contact-wrap">

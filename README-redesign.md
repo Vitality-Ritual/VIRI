@@ -1616,3 +1616,14 @@ actually exists, and it fails safe rather than silently losing a message.
 
 This is the first of the nine preview notices in section 9 of the launch document to come down for
 real rather than for a demo.
+
+## The contact form lands in the shared inbox (2 October 2026)
+
+`CONTACT_EMAIL` is now `info@vitalityritual.org`, a Google Group both founders receive, rather than
+one person's mailbox. Groups are free and are not billed as Workspace seats, so a shared address
+costs nothing; the setting that makes it work is **Who can post → External**, without which every
+message from outside the organisation is rejected and the form looks broken from the sender's side.
+Tested from an outside address before switching.
+
+The same pattern is there for `press@`, `safety@` and `privacy@` later — the privacy policy will need
+a contact address of exactly that kind, and it should not be a personal one.
