@@ -1551,3 +1551,19 @@ Messages goes from 294px to **156px** before the first thread, Settings to 155px
 phone. The editorial pages keep the big headline, which is the point of them.
 
 18 routes, no console errors, 1280 and 375.
+
+## Signed in, the cover is not your home (2 October 2026)
+
+Refreshing at the bare address landed a signed-in member on the marketing cover — "Socialize your
+Fitness" — wearing the product header. Nothing was broken; `#/` simply rendered `home()` whoever you
+were, and the header had already switched shape around it. The mismatch is what read as a fault.
+
+`#/` now redirects to `#/feed` when `signedIn()`, the same way `#/profile` used to bounce to sign-up.
+`location.replace` rather than an assignment, so the cover does not sit in your back history.
+
+Signed out, `#/` is the cover exactly as before, and logging out from anywhere returns you to it with
+the marketing header restored. Studios, Read and About stay reachable from the burger while signed
+in; it is only the cover that steps aside.
+
+16 routes signed out, no console errors, no overflow; bare URL and `#/` both land on the feed when
+signed in.
