@@ -1535,3 +1535,19 @@ it to 69px, and 30px rather than 46 at phone widths. It governs Explore, Studios
 Find, Messages and Settings alike, so they stay consistent.
 
 18 routes, no console errors, signed in and out, 1280 and 375.
+
+## Messages and Settings get a working-page header (2 October 2026)
+
+Reducing `.page-head`'s padding helped the editorial pages but barely touched Messages, because the
+padding was not what was costing the space. The chrome was: 49px of padding, an eyebrow, a 56px
+display headline reading "Messages.", 38px more padding, then a preview notice with a 32px margin —
+294px between the header and the first conversation.
+
+These are working pages, not editorial ones, so they take a `.is-tight` head: no eyebrow, the label
+at ~29px instead of 56, and tighter padding above and below. The preview notice on both pages is
+slimmer too, and its margin now lives in one rule rather than being set separately per page.
+
+Messages goes from 294px to **156px** before the first thread, Settings to 155px; 142 and 146 on a
+phone. The editorial pages keep the big headline, which is the point of them.
+
+18 routes, no console errors, 1280 and 375.
