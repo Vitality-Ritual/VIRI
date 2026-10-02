@@ -447,6 +447,20 @@ const REPORT_REASONS = [
   ['other',        'Something else'],
 ];
 
+/* FormSubmit answers 200 with {"success":"false"} when it will not send —
+   an unactivated address, a rate limit, a rejected field. Checking res.ok
+   alone reads every one of those as a delivered message, which is how a
+   contact form can show a thank-you page for a note nobody ever receives. */
+async function relayDelivered(res){
+  if (!res || !res.ok) throw new Error('The message could not be sent.');
+  let body = null;
+  try { body = await res.clone().json(); } catch (e) { return true; }
+  if (body && String(body.success) === 'false') {
+    throw new Error(body.message || 'The message was not delivered.');
+  }
+  return true;
+}
+
 async function dbReport(reportedId, reason, detail){
   const c = db();
   if (!c || !authUser) return { error: { message: 'Not signed in.' } };
@@ -461,7 +475,10 @@ async function dbReport(reportedId, reason, detail){
   }).select().maybeSingle();
   if (error) return { error };
 
-  dbNotifyReport(data, reason).catch(() => {});
+  /* The report is saved either way; this is only the nudge to go and read it.
+     Still worth saying out loud when it fails, or a broken relay stays
+     invisible until somebody wonders why no reports ever arrive. */
+  dbNotifyReport(data, reason).catch(e => console.warn('report email not delivered:', e.message));
   return { data };
 }
 
@@ -472,7 +489,7 @@ async function dbNotifyReport(row, reason){
   const url = contactEndpoint();
   if (!url) return;
   const label = (REPORT_REASONS.find(r => r[0] === reason) || [, reason])[1];
-  await fetch(url, {
+  const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify({
@@ -492,6 +509,7 @@ async function dbNotifyReport(row, reason){
       _template: 'table'
     })
   });
+  await relayDelivered(res);
 }
 
 async function dbBlock(blockedId){
