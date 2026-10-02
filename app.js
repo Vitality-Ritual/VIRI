@@ -653,7 +653,14 @@ const JOIN_STUDIOS=studios.map(s=>s.name).concat('I’m flexible');
    box clears them - holding both at once says nothing */
 const JOIN_ANY={forms:'No preference',studios:'I’m flexible'};
 const US_STATES=['Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','District of Columbia','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming','American Samoa','Guam','Northern Mariana Islands','Puerto Rico','U.S. Virgin Islands'];
-const BIO_EXAMPLES=['Corporate girl training for a marathon and looking for a running buddy.','Just moved to DC and looking for a pilates and cycling partner.'];
+/* the placeholder sits in the box, so the list underneath offers different ones */
+const BIO_PLACEHOLDER='Corporate girl training for a marathon and looking for a running buddy.';
+const BIO_EXAMPLES=[
+  'Just moved to DC and looking for a pilates and cycling partner.',
+  'Early riser. 6am classes, coffee after, always up for a new studio.',
+  'Training for my first half and would love company on long runs.',
+  'Lifting four days a week and looking for someone to keep me honest.'
+];
 const JOIN_STEPS=[
   {key:'name',type:'text',q:'What should we call you?',hint:'However you introduce yourself in class.',placeholder:'First and last name',autocomplete:'name',required:true},
   {key:'email',type:'email',q:'Where can we reach you?',hint:'Only used to find this profile again in this browser. Nothing is sent.',placeholder:'you@example.com',autocomplete:'email',required:true},
@@ -678,18 +685,27 @@ function joinControl(s){
         `<option${joinData.region===r?' selected':''}>${escapeHTML(r)}</option>`).join('')}</select></div>
     <div class="field"><label for="join-city">Your primary city <span class="field-optional">Optional</span></label>
       <input id="join-city" name="city" placeholder="Washington" autocomplete="address-level2" maxlength="60" value="${escapeHTML(joinData.city||'')}"></div>`;
-  if(s.type==='details')return `
-    <div class="field"><label for="join-photo">Profile photo <span class="field-optional">Optional</span></label>
-      <div class="photo-pick">
-        <span class="photo-preview" id="join-photo-preview">${joinData.photo
-          ?`<img src="${joinData.photo}" alt="Your profile photo">`
-          :escapeHTML(initials(joinData.name||'VIRI'))}</span>
-        <div><input id="join-photo" name="photo" type="file" accept="image/*">
-          <p class="photo-note">A square crop of the middle works best. It is stored on this device only.</p></div>
-      </div></div>
-    <div class="field"><label for="join-bio">A short bio <span class="field-optional">Optional</span></label>
-      <textarea id="join-bio" name="bio" maxlength="160" rows="3" placeholder="${escapeHTML(BIO_EXAMPLES[0])}">${escapeHTML(joinData.bio||'')}</textarea>
-      <p class="field-eg">For example &mdash; &ldquo;${escapeHTML(BIO_EXAMPLES[0])}&rdquo; or &ldquo;${escapeHTML(BIO_EXAMPLES[1])}&rdquo;</p></div>`;
+if(s.type==='details')return `
+  <div class="field"><label for="join-photo">Profile photo <span class="field-optional">Optional</span></label>
+    <div class="photo-drop" id="join-drop" data-has="${joinData.photo?'1':'0'}">
+      <input id="join-photo" name="photo" type="file" accept="image/*" class="visually-hidden">
+      <div class="photo-empty">
+        <p class="photo-lede">Drag a photo here, or <button type="button" class="plain-link" id="join-pick">choose a file</button>.</p>
+      </div>
+      <div class="photo-editor">
+        <div class="photo-stage"><canvas id="join-canvas" width="320" height="320"></canvas><span class="photo-ring" aria-hidden="true"></span></div>
+        <div class="photo-tools">
+          <label for="join-zoom">Zoom</label>
+          <input id="join-zoom" type="range" min="1" max="4" step="0.01" value="1">
+          <p class="photo-hint">Drag the photo to move it inside the circle.</p>
+          <p class="photo-swap"><button type="button" class="plain-link" id="join-replace">Choose another</button>
+            <button type="button" class="plain-link" id="join-remove">Remove</button></p>
+        </div>
+      </div>
+    </div></div>
+  <div class="field"><label for="join-bio">A short bio <span class="field-optional">Optional</span></label>
+    <textarea id="join-bio" name="bio" maxlength="160" rows="3" placeholder="${escapeHTML(BIO_PLACEHOLDER)}">${escapeHTML(joinData.bio||'')}</textarea>
+    <div class="field-eg"><p>For example:</p><ul>${BIO_EXAMPLES.map(x=>`<li>${escapeHTML(x)}</li>`).join('')}</ul></div></div>`;
   return `<input id="join-input" name="${s.key}" type="${s.type}" placeholder="${s.placeholder}" autocomplete="${s.autocomplete}" value="${escapeHTML(joinData[s.key]||'')}" maxlength="80">`;
 }
 /* the header icon and the menu's "Your circle" group send you to sign-up
@@ -724,18 +740,97 @@ function joinPage(){
     <div class="join-progress" aria-hidden="true">${JOIN_STEPS.map((_,i)=>`<span class="${i<=joinStep?'is-on':''}"></span>`).join('')}</div>
     ${note('This creates a demo profile in this browser only. No real account is made and no email is sent.')}
   </div></section>`;}
-/* a photo straight off a phone is several megabytes of data URL and localStorage
-   holds about five, so it is redrawn to a 320px square before it is ever stored */
-function readPhoto(file){return new Promise(res=>{
-  if(!file||!/^image\//.test(file.type))return res('');
+/* The crop is done here rather than taken as given: a 320px square is what gets
+   stored (a picture off a phone is several megabytes of data URL against a ~5MB
+   localStorage quota), and the canvas IS the preview, so what is on screen is
+   exactly the file. photoEdit lives at module scope so stepping back and
+   forward keeps the full-resolution original rather than re-cropping a crop. */
+const PHOTO_OUT=320;
+let photoEdit=null;
+const photoCover=()=>{const im=photoEdit.img;return Math.max(PHOTO_OUT/im.width,PHOTO_OUT/im.height);};
+function photoCentre(){const k=photoCover()*photoEdit.scale;
+  photoEdit.x=(PHOTO_OUT-photoEdit.img.width*k)/2;photoEdit.y=(PHOTO_OUT-photoEdit.img.height*k)/2;}
+function photoDraw(){
+  const c=$('#join-canvas'); if(!c||!photoEdit)return;
+  const im=photoEdit.img, k=photoCover()*photoEdit.scale, w=im.width*k, h=im.height*k;
+  /* the square must stay covered, so panning stops at the edges */
+  photoEdit.x=Math.min(0,Math.max(PHOTO_OUT-w,photoEdit.x));
+  photoEdit.y=Math.min(0,Math.max(PHOTO_OUT-h,photoEdit.y));
+  const g=c.getContext('2d');
+  g.fillStyle='#F1EDE6'; g.fillRect(0,0,PHOTO_OUT,PHOTO_OUT);
+  g.drawImage(im,photoEdit.x,photoEdit.y,w,h);
+}
+/* toDataURL on every pointermove would be wasteful, so the export happens when
+   a gesture ends and once more at submit */
+function photoCommit(){const c=$('#join-canvas');
+  if(c&&photoEdit)joinData.photo=c.toDataURL('image/jpeg',.86);}
+function photoLoad(src){return new Promise(res=>{
+  const img=new Image();
+  img.onload=()=>{photoEdit={img,scale:1,x:0,y:0};photoCentre();res(true);};
+  img.onerror=()=>res(false); img.src=src;});}
+function photoFromFile(file){return new Promise(res=>{
+  if(!file||!/^image\//.test(file.type))return res(false);
   const fr=new FileReader();
-  fr.onload=()=>{const img=new Image();
-    img.onload=()=>{const S=320,c=document.createElement('canvas');c.width=c.height=S;
-      const k=Math.min(img.width,img.height),x=(img.width-k)/2,y=(img.height-k)/2;
-      c.getContext('2d').drawImage(img,x,y,k,k,0,0,S,S);
-      res(c.toDataURL('image/jpeg',.82));};
-    img.onerror=()=>res('');img.src=fr.result;};
-  fr.onerror=()=>res('');fr.readAsDataURL(file);});}
+  fr.onload=()=>photoLoad(fr.result).then(res);
+  fr.onerror=()=>res(false); fr.readAsDataURL(file);});}
+function bindPhoto(){
+  const drop=$('#join-drop'); if(!drop)return;
+  const file=$('#join-photo'), zoom=$('#join-zoom'), canvas=$('#join-canvas');
+  const show=on=>{drop.dataset.has=on?'1':'0';};
+  const fail=msg=>{$('#join-error').textContent=msg;};
+  const ready=()=>{show(true);zoom.value=photoEdit.scale;photoDraw();photoCommit();fail('');};
+  /* a re-render loses the canvas but not photoEdit, so the original is redrawn
+     rather than re-cropped; after a reload only the stored square survives */
+  if(photoEdit)ready();
+  else if(joinData.photo)photoLoad(joinData.photo).then(ok=>{if(ok)ready();});
+  const take=async src=>{
+    const ok=await(src instanceof File?photoFromFile(src):photoLoad(src));
+    if(!ok)return fail('That file could not be read as an image.');
+    ready();
+  };
+  $('#join-pick')?.addEventListener('click',()=>file.click());
+  $('#join-replace')?.addEventListener('click',()=>file.click());
+  $('#join-remove')?.addEventListener('click',()=>{
+    photoEdit=null;joinData.photo='';file.value='';show(false);fail('');});
+  file.addEventListener('change',()=>{if(file.files?.[0])take(file.files[0]);});
+  ['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{
+    e.preventDefault();drop.classList.add('is-over');}));
+  ['dragleave','dragend'].forEach(t=>drop.addEventListener(t,e=>{
+    if(t==='dragleave'&&drop.contains(e.relatedTarget))return;
+    drop.classList.remove('is-over');}));
+  drop.addEventListener('drop',e=>{
+    e.preventDefault();drop.classList.remove('is-over');
+    const dropped=e.dataTransfer?.files?.[0];
+    if(dropped)take(dropped);});
+  /* zoom around the middle of the frame, so the face you centred stays centred */
+  zoom.addEventListener('input',()=>{
+    if(!photoEdit)return;
+    const base=photoCover(), im=photoEdit.img, was=photoEdit.scale, now=+zoom.value;
+    const fx=(PHOTO_OUT/2-photoEdit.x)/(im.width*base*was);
+    const fy=(PHOTO_OUT/2-photoEdit.y)/(im.height*base*was);
+    photoEdit.scale=now;
+    photoEdit.x=PHOTO_OUT/2-fx*im.width*base*now;
+    photoEdit.y=PHOTO_OUT/2-fy*im.height*base*now;
+    photoDraw();});
+  zoom.addEventListener('change',photoCommit);
+  let from=null;
+  canvas.addEventListener('pointerdown',e=>{
+    if(!photoEdit)return;
+    canvas.setPointerCapture(e.pointerId);
+    /* the canvas is drawn at 320 but displayed smaller, so pointer pixels have
+       to be scaled into canvas pixels or the photo lags behind the cursor */
+    const r=canvas.getBoundingClientRect();
+    from={px:e.clientX,py:e.clientY,x:photoEdit.x,y:photoEdit.y,k:PHOTO_OUT/r.width};
+    canvas.classList.add('is-dragging');});
+  canvas.addEventListener('pointermove',e=>{
+    if(!from)return;
+    photoEdit.x=from.x+(e.clientX-from.px)*from.k;
+    photoEdit.y=from.y+(e.clientY-from.py)*from.k;
+    photoDraw();});
+  ['pointerup','pointercancel'].forEach(t=>canvas.addEventListener(t,()=>{
+    if(!from)return;from=null;canvas.classList.remove('is-dragging');photoCommit();}));
+}
+
 function bindJoin(){
   const f=$('#join-form');if(!f)return;
   $('#join-input')?.focus();
@@ -747,20 +842,14 @@ function bindJoin(){
         if(o!==box && (box.value===any || o.value===any))o.checked=false;});
     }));
   });
-  const photo=$('#join-photo');
-  photo?.addEventListener('change',async()=>{
-    const data=await readPhoto(photo.files?.[0]);
-    if(!data){$('#join-error').textContent='That file could not be read as an image.';return;}
-    joinData.photo=data;$('#join-error').textContent='';
-    $('#join-photo-preview').innerHTML=`<img src="${data}" alt="Your profile photo">`;
-  });
+bindPhoto();
   f.addEventListener('submit',e=>{
     e.preventDefault();
     const s=JOIN_STEPS[joinStep], err=$('#join-error'), fd=new FormData(f);
     const picked=g=>[...f.querySelectorAll(`input[name="${g}"]:checked`)].map(i=>i.value);
     if(s.type==='training'){joinData.forms=picked('forms');joinData.times=picked('times');joinData.studios=picked('studios');}
     else if(s.type==='location'){joinData.region=String(fd.get('region')||'');joinData.city=String(fd.get('city')||'').trim();}
-    else if(s.type==='details'){joinData.bio=String(fd.get('bio')||'').trim();}
+    else if(s.type==='details'){joinData.bio=String(fd.get('bio')||'').trim();photoCommit();}
     else joinData[s.key]=String(fd.get(s.key)||'').trim();
     if(s.required&&!joinData[s.key]){err.textContent=s.key==='email'?'Please enter an email address.':'Please enter your name.';return;}
     if(s.key==='email'&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(joinData.email)){err.textContent='Please enter a valid email address.';return;}
@@ -777,7 +866,25 @@ function bindJoin(){
     save();joinStep=0;toast('Account created. Welcome to your circle.');location.hash='#/profile';
   });
 }
-function profilePage(){const p=state.profile;const name=p?.name||'Your name';const joined=allEvents().filter(e=>state.joined.includes(e.id));const saved=studios.filter(s=>state.saved.includes(s.id));return `<section class="page-head"><div class="wrap"><div class="page-head-row"><div><p class="eyebrow">Your corner of the city</p><h1>Your circle.</h1></div><div style="display:flex;gap:12px">${p?'<button class="button outline small" data-action="edit-profile">Edit profile</button>':button('Build your profile','#/signup','small')}<button class="button small" data-action="post-activity">Post an activity</button></div></div></div></section><div class="wrap">${note('This profile, feed, suggested people, and rewards demonstrate the experience. Your changes stay on this device.')}<div class="profile-grid"><aside class="profile-panel"><div class="profile-avatar">${p?.photo?`<img src="${p.photo}" alt="">`:escapeHTML(p?initials(p.name):'ViRi')}</div><h2>${escapeHTML(name)}</h2><p class="location">${escapeHTML(p?.area||'Washington, DC')}</p>${p?.bio?`<p class="profile-bio">${escapeHTML(p.bio)}</p>`:''}<div class="profile-stats"><div><span>Friends</span><strong>${state.connections.length}</strong></div><div><span>Requests sent</span><strong>${(state.requests||[]).length}</strong></div><div><span>Studios</span><strong>${saved.length}</strong></div><div><span>Activities</span><strong>${state.posts.length}</strong></div></div><div class="interests">${(p?.interests||['Pilates','Yoga','Running']).map(c=>`<span>${escapeHTML(c)}</span>`).join('')}</div><h3>Upcoming activities</h3>${joined.length?joined.map(e=>`<div class="upcoming-row"><span class="small">${prettyDate(e.date)} · ${prettyTime(e.date)}</span><strong>${escapeHTML(e.title)}</strong><button class="plain-link small" data-action="event-details" data-id="${e.id}">View plan</button></div>`).join(''):'<p class="small">Your next ritual starts with a plan. Join an activity to see it here.</p>'}<a class="text-link" href="#/explore" style="margin-top:20px">Find an activity ${arrow}</a><h3>Saved studios</h3>${saved.length?saved.map(s=>`<a class="upcoming-row" style="display:block" href="#/studios/${s.id}">${s.name} ${arrow}</a>`).join(''):'<p class="small">Keep your favorite studios close. Save one while you explore.</p>'}<h3>Your ritual rewards</h3><p>${state.posts.length*100} points</p><p class="small">Demo points for showing up. Reward redemptions are not available in this preview.</p></aside><section class="profile-content"><h2>Feed</h2>${state.posts.slice().reverse().map(post=>`<article class="feed-card"><div class="feed-author"><span class="mini-avatar">${escapeHTML(initials(p?.name||'You'))}</span><div>${escapeHTML(p?.name||'You')}<p class="small">Your activity · ${prettyDate(post.date)}</p></div></div><h3>${escapeHTML(post.title)} · ${post.duration} min</h3><p>${escapeHTML(post.description)}</p><p class="small" style="margin-top:15px">+100 ritual points · Preview</p></article>`).join('')}<article class="feed-card"><div class="feed-author"><span class="mini-avatar">JC</span><div>Jamie’s circle<p class="small">Sample member · Example activity</p></div></div><h3>CycleBar · 45 min</h3><p>A morning ride and a new reason to get out the door. Who’s joining next time?</p><img src="${A}brand-cyclebar.webp" alt="Riders in a CycleBar class"><a class="text-link" href="#/explore">Find a ride ${arrow}</a></article><article class="feed-card"><p class="eyebrow">Your next connection</p><h3>The best part might be after class.</h3><p style="margin-top:15px">Invite someone to stay for a coffee. A shared routine starts with one small plan.</p></article></section><aside class="profile-aside"><h2>Suggested</h2>${eventCard(seedEvents[0])}<div class="contact-card" style="padding:25px;margin-top:25px"><div class="profile-avatar">AL</div><h3>Alex’s circle</h3><p class="small">Sample member · Georgetown</p><p>Early morning movement, easy runs, and coffee after class.</p><div class="interests" style="margin:20px 0"><span>Running</span><span>Yoga</span></div><button class="button small outline" data-action="connect-sample" aria-pressed="${state.connections.includes('alex')}">${state.connections.includes('alex')?'Connected ✓':'Connect'}</button></div></aside></div></div>`;}
+/* Requests sent was its own stat, which made a number nobody needed into a
+   quarter of the panel. Friends now opens both lists instead. */
+function friendsModal(){
+  const mine=state.connections||[], waiting=(state.requests||[]).filter(id=>!mine.includes(id));
+  const nameOf=id=>exPerson(id)?.name||(id==='alex'?'Alex’s circle':'Sample member');
+  const lineOf=id=>{const p=exPerson(id);return p?`${p.area} · ${p.line}`:'Illustrative profile in this preview';};
+  const list=ids=>`<ul class="friend-list">${ids.map(id=>
+    `<li><strong>${escapeHTML(nameOf(id))}</strong><span class="small">${escapeHTML(lineOf(id))}</span></li>`).join('')}</ul>`;
+  openModal('Your friends',
+    (mine.length?list(mine)
+      :'<p class="dialog-copy">No one yet. Connect with someone on Explore and they will show up here.</p>')+
+    `<h3 class="modal-sub">Pending requests</h3>`+
+    (waiting.length?list(waiting)
+      :'<p class="small">Nothing waiting. Requests you send sit here until they are accepted.</p>')+
+    `<div class="dialog-actions"><a class="button small outline" href="#/explore" data-action="close-modal">Find people ${arrow}</a>
+      <button class="button small" data-action="close-modal">Done</button></div>`);
+}
+
+function profilePage(){const p=state.profile;const name=p?.name||'Your name';const joined=allEvents().filter(e=>state.joined.includes(e.id));const saved=studios.filter(s=>state.saved.includes(s.id));return `<section class="page-head"><div class="wrap"><div class="page-head-row"><div><p class="eyebrow">Your corner of the city</p><h1>Your circle.</h1></div><div style="display:flex;gap:12px">${p?'<button class="button outline small" data-action="edit-profile">Edit profile</button>':button('Build your profile','#/signup','small')}<button class="button small" data-action="post-activity">Post an activity</button></div></div></div></section><div class="wrap">${note('This profile, feed, and suggested people demonstrate the experience. Your changes stay on this device.')}<div class="profile-grid"><aside class="profile-panel"><div class="profile-avatar">${p?.photo?`<img src="${p.photo}" alt="">`:escapeHTML(p?initials(p.name):'ViRi')}</div><h2>${escapeHTML(name)}</h2><p class="location">${escapeHTML(p?.area||'Washington, DC')}</p>${p?.bio?`<p class="profile-bio">${escapeHTML(p.bio)}</p>`:''}<div class="profile-stats"><button type="button" class="stat-open" data-action="show-friends"><span>Friends</span><strong>${state.connections.length}</strong></button><div><span>Studios</span><strong>${saved.length}</strong></div><div><span>Activities</span><strong>${state.posts.length}</strong></div></div><div class="interests">${(p?.interests||['Pilates','Yoga','Running']).map(c=>`<span>${escapeHTML(c)}</span>`).join('')}</div><h3>Upcoming activities</h3>${joined.length?joined.map(e=>`<div class="upcoming-row"><span class="small">${prettyDate(e.date)} · ${prettyTime(e.date)}</span><strong>${escapeHTML(e.title)}</strong><button class="plain-link small" data-action="event-details" data-id="${e.id}">View plan</button></div>`).join(''):'<p class="small">Your next ritual starts with a plan. Join an activity to see it here.</p>'}<a class="text-link" href="#/explore" style="margin-top:20px">Find an activity ${arrow}</a><h3>Saved studios</h3>${saved.length?saved.map(s=>`<a class="upcoming-row" style="display:block" href="#/studios/${s.id}">${s.name} ${arrow}</a>`).join(''):'<p class="small">Keep your favorite studios close. Save one while you explore.</p>'}</aside><section class="profile-content"><h2>Feed</h2>${state.posts.slice().reverse().map(post=>`<article class="feed-card"><div class="feed-author"><span class="mini-avatar">${escapeHTML(initials(p?.name||'You'))}</span><div>${escapeHTML(p?.name||'You')}<p class="small">Your activity · ${prettyDate(post.date)}</p></div></div><h3>${escapeHTML(post.title)} · ${post.duration} min</h3><p>${escapeHTML(post.description)}</p></article>`).join('')}<article class="feed-card"><div class="feed-author"><span class="mini-avatar">JC</span><div>Jamie’s circle<p class="small">Sample member · Example activity</p></div></div><h3>CycleBar · 45 min</h3><p>A morning ride and a new reason to get out the door. Who’s joining next time?</p><img src="${A}brand-cyclebar.webp" alt="Riders in a CycleBar class"><a class="text-link" href="#/explore">Find a ride ${arrow}</a></article><article class="feed-card"><p class="eyebrow">Your next connection</p><h3>The best part might be after class.</h3><p style="margin-top:15px">Invite someone to stay for a coffee. A shared routine starts with one small plan.</p></article></section><aside class="profile-aside"><h2>Suggested</h2>${eventCard(seedEvents[0])}<div class="contact-card" style="padding:25px;margin-top:25px"><div class="profile-avatar">AL</div><h3>Alex’s circle</h3><p class="small">Sample member · Georgetown</p><p>Early morning movement, easy runs, and coffee after class.</p><div class="interests" style="margin:20px 0"><span>Running</span><span>Yoga</span></div><button class="button small outline" data-action="connect-sample" aria-pressed="${state.connections.includes('alex')}">${state.connections.includes('alex')?'Connected ✓':'Connect'}</button></div></aside></div></div>`;}
 function authPage(){return `<section class="auth-layout"><div class="auth-image"><img src="${A}studio-entry.jpg" alt="Two women arriving at the studio together"><h2>A new ritual.<br>A new circle.<br>A little more you.</h2></div><div class="auth-form"><p class="eyebrow">Welcome back</p><h1>Back to your circle.</h1><p>Open the profile saved on this device.</p>${note('This is a local demo login. No password or email is sent.')}<form id="auth-form"><div class="field"><label for="auth-email">Email address</label><input id="auth-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required></div><p id="auth-error" class="field-error" role="alert"></p><button class="button" type="submit" style="margin-top:18px">Open my profile</button></form><p class="small">New here? <a href="#/signup">Join VIRI</a></p></div></section>`;}
 function bindAuth(){$('#auth-form')?.addEventListener('submit',e=>{e.preventDefault();const email=String(new FormData(e.target).get('email')).trim().toLowerCase();if(!state.profile||state.profile.email!==email){$('#auth-error').textContent='No profile with that email is saved in this browser. Create a demo profile to begin.';return;}toast('Welcome back to your circle.');location.hash='#/profile';});}
 
@@ -882,8 +989,8 @@ function bindSetup(){
 function eventCard(e){const joined=state.joined.includes(e.id);return `<article class="event-card">${e.img
   ?`<img src="${A+e.img}" alt="${escapeHTML(e.category)} community activity" loading="lazy">`
   :`<span class="card-ph" role="img" aria-label="Photograph to come"><span class="ph-mark">${phMark()}</span><span class="ph-cap">Photo<br>to come</span></span>`}<div class="event-info"><p class="event-meta">${escapeHTML(e.category)} · ${escapeHTML(e.area)}</p><h3>${escapeHTML(e.title)}</h3><p>${prettyDate(e.date)} · ${prettyTime(e.date)} · ${e.duration} min</p><p class="small">${escapeHTML(e.host)}</p><div class="event-bottom"><span class="small">${e.people+(joined?1:0)} ${e.type==='club'?'members':'people going'}</span><button class="button small ${joined?'outline':''}" data-action="join-event" data-id="${e.id}" aria-pressed="${joined}">${joined?'Joined ✓':e.type==='club'?'Join club':'Join activity'}</button></div><button class="plain-link small" style="margin-top:13px" data-action="event-details" data-id="${e.id}">View details & location</button></div></article>`;}
-function postActivity(){openModal('How did you move today?',`<p class="small" style="margin-bottom:20px">Post to your local preview feed and earn 100 demo ritual points.</p><form id="post-form"><div class="field"><label for="post-title">Your activity</label><input id="post-title" name="title" required maxlength="70" placeholder="A lunchtime walk with a friend"></div><div class="field"><label for="post-duration">Minutes</label><input id="post-duration" name="duration" type="number" min="1" max="1440" value="45" required></div><div class="field"><label for="post-description">How was it?</label><textarea id="post-description" name="description" maxlength="400" placeholder="Share a little about your ritual."></textarea></div><div class="dialog-actions"><button class="button small" type="submit">Post activity</button></div></form>`,()=>$('#post-form').addEventListener('submit',e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));if(!f.title.trim())return;state.posts.push({...f,title:f.title.trim(),duration:Number(f.duration),date:new Date().toISOString()});save();closeModal();render(false);toast('Activity added. You earned 100 demo ritual points.');}));}
-function legalPage(privacy){return `<article class="article-detail"><p class="eyebrow">VIRI preview</p><h1>${privacy?'Your privacy':'About this preview'}</h1>${privacy?'<p>Your demo profile, saved studios, activities, connections, and posts are stored in this browser’s local storage. They are not sent to a VIRI account service.</p><p>The map loads from OpenStreetMap. Opening external studio and research links takes you to those websites, which have their own privacy practices.</p><p>This notice describes the prototype. A launch privacy policy will be provided before live accounts become available.</p><button class="button outline" data-action="clear-preview">Clear my preview data</button>':'<p>This website is an interactive preview of VIRI. Demo profiles, events, reviews, attendance counts, and rewards are illustrative. No class reservation, purchase, message, or live social connection is made through the preview.</p><p>Studio names and photographs identify the respective businesses. Listings do not imply a partnership or endorsement. Visit each studio’s official website to confirm schedules, prices, requirements, and bookings.</p><p>Launch terms will be provided before real accounts or bookings are available.</p>'}</article>`;}
+function postActivity(){openModal('How did you move today?',`<p class="small" style="margin-bottom:20px">Post to your local preview feed.</p><form id="post-form"><div class="field"><label for="post-title">Your activity</label><input id="post-title" name="title" required maxlength="70" placeholder="A lunchtime walk with a friend"></div><div class="field"><label for="post-duration">Minutes</label><input id="post-duration" name="duration" type="number" min="1" max="1440" value="45" required></div><div class="field"><label for="post-description">How was it?</label><textarea id="post-description" name="description" maxlength="400" placeholder="Share a little about your ritual."></textarea></div><div class="dialog-actions"><button class="button small" type="submit">Post activity</button></div></form>`,()=>$('#post-form').addEventListener('submit',e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));if(!f.title.trim())return;state.posts.push({...f,title:f.title.trim(),duration:Number(f.duration),date:new Date().toISOString()});save();closeModal();render(false);toast('Activity added to your feed.');}));}
+function legalPage(privacy){return `<article class="article-detail"><p class="eyebrow">VIRI preview</p><h1>${privacy?'Your privacy':'About this preview'}</h1>${privacy?'<p>Your demo profile, saved studios, activities, connections, and posts are stored in this browser’s local storage. They are not sent to a VIRI account service.</p><p>The map loads from OpenStreetMap. Opening external studio and research links takes you to those websites, which have their own privacy practices.</p><p>This notice describes the prototype. A launch privacy policy will be provided before live accounts become available.</p><button class="button outline" data-action="clear-preview">Clear my preview data</button>':'<p>This website is an interactive preview of VIRI. Demo profiles, events, reviews, and attendance counts are illustrative. No class reservation, purchase, message, or live social connection is made through the preview.</p><p>Studio names and photographs identify the respective businesses. Listings do not imply a partnership or endorsement. Visit each studio’s official website to confirm schedules, prices, requirements, and bookings.</p><p>Launch terms will be provided before real accounts or bookings are available.</p>'}</article>`;}
 function notFound(){return `<section class="section wrap"><h1>Let’s find your way back.</h1><p style="margin:25px 0">This page isn’t part of your circle just yet.</p>${button('Back to VIRI','#/')}</section>`;}
 function initWordmark(){
   const mark=$('#mark');
@@ -976,7 +1083,7 @@ case 'book-new':bookChoose(t.dataset.id,'new');break;
 case 'book-plan':bookChoose(t.dataset.id,'plan');break;
 case 'ex-zoom':exZoom(t.dataset.dir);break;
 case 'ex-reset':ex={...ex,cat:'All',time:'All',members:false,query:'',venue:null,cls:null};render(false);break;
-case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':state.saved=state.saved.includes(id)?state.saved.filter(x=>x!==id):[...state.saved,id];save();render(false);toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':postActivity();break;case 'connect-sample':state.connections=state.connections.includes('alex')?[]:['alex'];save();render(false);toast(state.connections.length?'Sample connection added to your preview.':'Sample connection removed.');break;case 'edit-profile':openModal('Make your profile yours',`<form id="edit-form"><div class="field"><label for="edit-name">Your name</label><input id="edit-name" name="name" value="${escapeHTML(state.profile?.name)}" required maxlength="60"></div><div class="field"><label for="edit-area">Your neighborhood</label><input id="edit-area" name="area" value="${escapeHTML(state.profile?.area)}" required maxlength="70"></div><div class="dialog-actions"><button class="button small" type="submit">Save profile</button></div></form>`,()=>$('#edit-form').addEventListener('submit',ev=>{ev.preventDefault();const f=Object.fromEntries(new FormData(ev.target));if(!f.name.trim()||!f.area.trim())return;state.profile={...state.profile,name:f.name.trim(),area:f.area.trim()};save();closeModal();render(false);toast('Profile updated.');}));break;case 'clear-preview':openModal('Clear your preview?',`<p class="dialog-copy">This removes your demo profile, plans, posts, connections, and saved studios from this browser.</p><div class="dialog-actions"><button class="button outline small" data-action="close-modal">Keep my preview</button><button class="button small" data-action="confirm-clear">Clear preview</button></div>`);break;case 'confirm-clear':state={profile:null,joined:[],saved:[],created:[],posts:[],connections:[]};save();closeModal();render(false);toast('Your preview data has been cleared.');break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
+case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':state.saved=state.saved.includes(id)?state.saved.filter(x=>x!==id):[...state.saved,id];save();render(false);toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':postActivity();break;case 'show-friends':friendsModal();break;case 'connect-sample':state.connections=state.connections.includes('alex')?[]:['alex'];save();render(false);toast(state.connections.length?'Sample connection added to your preview.':'Sample connection removed.');break;case 'edit-profile':openModal('Make your profile yours',`<form id="edit-form"><div class="field"><label for="edit-name">Your name</label><input id="edit-name" name="name" value="${escapeHTML(state.profile?.name)}" required maxlength="60"></div><div class="field"><label for="edit-area">Your neighborhood</label><input id="edit-area" name="area" value="${escapeHTML(state.profile?.area)}" required maxlength="70"></div><div class="dialog-actions"><button class="button small" type="submit">Save profile</button></div></form>`,()=>$('#edit-form').addEventListener('submit',ev=>{ev.preventDefault();const f=Object.fromEntries(new FormData(ev.target));if(!f.name.trim()||!f.area.trim())return;state.profile={...state.profile,name:f.name.trim(),area:f.area.trim()};save();closeModal();render(false);toast('Profile updated.');}));break;case 'clear-preview':openModal('Clear your preview?',`<p class="dialog-copy">This removes your demo profile, plans, posts, connections, and saved studios from this browser.</p><div class="dialog-actions"><button class="button outline small" data-action="close-modal">Keep my preview</button><button class="button small" data-action="confirm-clear">Clear preview</button></div>`);break;case 'confirm-clear':state={profile:null,joined:[],saved:[],created:[],posts:[],connections:[]};save();closeModal();render(false);toast('Your preview data has been cleared.');break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
 $('#menu-button').addEventListener('click',()=>{const open=$('#menu-panel').hidden;$('#menu-panel').hidden=!open;$('#menu-button').setAttribute('aria-expanded',String(open));});
 document.addEventListener('click',e=>{if(!e.target.closest('.site-header')){$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');}});

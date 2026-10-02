@@ -1268,3 +1268,40 @@ go to two columns and the six longest labels take two lines, which the grid equa
 filters and the studio categories. Someone who picks only Snowboarding has interests that Explore
 cannot match on. That is fine while the studios are DC fitness brands, but matching people by
 activity will need the two lists reconciled.
+
+## A real photo cropper, and the profile panel loses two things (2 October 2026)
+
+**The photo picker is a drop well now** — drag onto it, or click through to the file dialog. The note
+about a square crop of the middle is gone, because it is no longer true: there is a cropper.
+
+The canvas *is* the preview and *is* the file. It is 320x320 internally, displayed at 148, and
+whatever is framed in it is exactly what `toDataURL` writes — there is no second render path that
+could disagree with what someone sees. Zoom runs 1x to 4x about the centre of the frame, so the face
+you centred stays centred as you scale; panning clamps at the edges so the square is always covered
+and never shows the backing colour. A round `box-shadow` ring dims everything outside the circle,
+since the avatar is round and the corners are not what you are choosing.
+
+Two things worth recording. `toDataURL` on every `pointermove` would be wasteful, so the export
+happens when a gesture ends — pointerup, the range's `change` — and once more at submit. And the
+canvas is drawn at 320 but displayed at 148, so pointer deltas are multiplied by `320/rect.width`;
+without that the photo moves at half the speed of the cursor and feels broken. `photoEdit` holds the
+loaded `Image` at module scope, so stepping back and forward keeps the full-resolution original
+rather than re-cropping a crop. Only after a reload does it fall back to the stored square.
+
+**The bio examples became a list** of four, and the one in the placeholder is not among them — it was
+redundant to show the same sentence twice.
+
+**The profile stats went from four to three.** "Requests sent" is gone; Friends, Studios and
+Activities remain. Friends is now a button that opens both lists in one dialog — who you are
+connected to, and what is still pending — and pending excludes anyone already a friend, since a
+request that was accepted is not still waiting. Unknown ids (the `alex` sample) fall back to a
+generic line rather than rendering a raw id.
+
+**Ritual points are archived** to `archive/ritual-rewards.md` at Margaret's request, to return later.
+Four display-only places: the rewards panel, the `+100` line on each of your own feed cards, and the
+post dialog's lede and toast. Nothing was stored for points — the number was always
+`state.posts.length * 100` — so nothing is lost and nothing needs migrating. Two notices that listed
+rewards among the illustrative things were trimmed rather than archived, being descriptions of the
+preview rather than the feature.
+
+15 routes, no console errors. 1280 and 375.
