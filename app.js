@@ -47,7 +47,7 @@ $('#modal').addEventListener('click',e=>{if(e.target===$('#modal')){const b=e.ta
    single run around the ring, which left the back half upside down. Colour comes
    from currentColor so .footer-seal can still tint it cream on the dark footer. */
 function seal(label){return `<svg class="seal" viewBox="0 0 400 400" role="img" aria-label="${label}"><circle cx="200.0" cy="200.0" r="176" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="200.0" cy="200.0" r="160" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".55"/><g fill="currentColor"><g transform="translate(200.0 200.0) rotate(-58.4879) translate(0 -139) translate(-6.2605 0) scale(0.019000 -0.019000)"><path d="M634 699 369 0H289L24 699H100L329 76L560 699Z"/></g><g transform="translate(200.0 200.0) rotate(-51.0946) translate(0 -139) translate(-2.1755 0) scale(0.019000 -0.019000)"><path d="M150 699V0H80V699Z"/></g><g transform="translate(200.0 200.0) rotate(-44.2457) translate(0 -139) translate(-4.9400 0) scale(0.019000 -0.019000)"><path d="M489 699V641H295V0H225V641H30V699Z"/></g><g transform="translate(200.0 200.0) rotate(-35.7404) translate(0 -139) translate(-6.1940 0) scale(0.019000 -0.019000)"><path d="M485 166H167L106 0H32L287 690H366L620 0H546ZM464 224 326 602 188 224Z"/></g><g transform="translate(200.0 200.0) rotate(-27.6227) translate(0 -139) translate(-3.9995 0) scale(0.019000 -0.019000)"><path d="M150 57H401V0H80V699H150Z"/></g><g transform="translate(200.0 200.0) rotate(-21.1615) translate(0 -139) translate(-2.1755 0) scale(0.019000 -0.019000)"><path d="M150 699V0H80V699Z"/></g><g transform="translate(200.0 200.0) rotate(-14.3126) translate(0 -139) translate(-4.9400 0) scale(0.019000 -0.019000)"><path d="M489 699V641H295V0H225V641H30V699Z"/></g><g transform="translate(200.0 200.0) rotate(-6.1519) translate(0 -139) translate(-5.3580 0) scale(0.019000 -0.019000)"><path d="M542 699 318 272V0H248V272L22 699H101L283 336L464 699Z"/></g><g transform="translate(200.0 200.0) rotate(6.7510) translate(0 -139) translate(-1.7385 0) scale(0.019000 -0.019000)"><path d="M43 347Q43 369 57.5 383.5Q72 398 94 398Q115 398 129.5 383.5Q144 369 144 347Q144 325 129.5 310.0Q115 295 94 295Q72 295 57.5 310.0Q43 325 43 347Z"/></g><g transform="translate(200.0 200.0) rotate(19.7440) translate(0 -139) translate(-5.5765 0) scale(0.019000 -0.019000)"><path d="M452 0 279 292H150V0H80V699H290Q407 699 467.5 643.0Q528 587 528 496Q528 420 484.5 366.5Q441 313 356 297L536 0ZM150 349H291Q373 349 414.5 389.0Q456 429 456 496Q456 565 416.0 602.5Q376 640 290 640H150Z"/></g><g transform="translate(200.0 200.0) rotate(26.8552) translate(0 -139) translate(-2.1755 0) scale(0.019000 -0.019000)"><path d="M150 699V0H80V699Z"/></g><g transform="translate(200.0 200.0) rotate(33.7041) translate(0 -139) translate(-4.9400 0) scale(0.019000 -0.019000)"><path d="M489 699V641H295V0H225V641H30V699Z"/></g><g transform="translate(200.0 200.0) rotate(42.2447) translate(0 -139) translate(-6.2795 0) scale(0.019000 -0.019000)"><path d="M147 699V259Q147 155 196.5 105.0Q246 55 332 55Q418 55 466.5 104.5Q515 154 515 259V699H585V260Q585 127 514.5 60.0Q444 -7 331 -7Q218 -7 147.5 60.0Q77 127 77 260V699Z"/></g><g transform="translate(200.0 200.0) rotate(51.3022) translate(0 -139) translate(-6.1940 0) scale(0.019000 -0.019000)"><path d="M485 166H167L106 0H32L287 690H366L620 0H546ZM464 224 326 602 188 224Z"/></g><g transform="translate(200.0 200.0) rotate(59.4198) translate(0 -139) translate(-3.9995 0) scale(0.019000 -0.019000)"><path d="M150 57H401V0H80V699H150Z"/></g><g transform="translate(200.0 200.0) rotate(209.4577) translate(0 -139) rotate(180) translate(-4.2755 0) scale(0.017000 -0.017000)"><path d="M150 642V381H415V323H150V58H445V0H80V700H445V642Z"/></g><g transform="translate(200.0 200.0) rotate(201.7753) translate(0 -139) rotate(180) translate(-4.8620 0) scale(0.017000 -0.017000)"><path d="M56 180H130Q135 129 175.0 90.5Q215 52 292 52Q363 52 404.5 88.5Q446 125 446 181Q446 226 423.0 253.5Q400 281 366.0 294.5Q332 308 272 324Q202 343 161.0 361.0Q120 379 91.0 417.0Q62 455 62 520Q62 574 90.0 616.5Q118 659 169.0 683.0Q220 707 286 707Q383 707 442.5 659.5Q502 612 511 537H435Q428 580 388.0 613.5Q348 647 280 647Q217 647 175.0 613.5Q133 580 133 522Q133 478 156.0 451.0Q179 424 213.5 410.0Q248 396 307 380Q375 361 417.0 342.5Q459 324 488.0 286.0Q517 248 517 184Q517 135 491.0 91.0Q465 47 414.0 20.0Q363 -7 292 -7Q223 -7 170.5 17.0Q118 41 88.0 84.0Q58 127 56 180Z"/></g><g transform="translate(200.0 200.0) rotate(194.0333) translate(0 -139) rotate(180) translate(-4.4200 0) scale(0.017000 -0.017000)"><path d="M489 699V641H295V0H225V641H30V699Z"/></g><g transform="translate(200.0 200.0) rotate(187.6578) translate(0 -139) rotate(180) translate(-1.5470 0) scale(0.017000 -0.017000)"><path d="M41 47Q41 69 55.5 83.5Q70 98 92 98Q113 98 127.5 83.5Q142 69 142 47Q142 25 127.5 10.0Q113 -5 92 -5Q70 -5 55.5 10.0Q41 25 41 47Z"/></g><g transform="translate(200.0 200.0) rotate(175.2642) translate(0 -139) rotate(180) translate(-4.8620 0) scale(0.017000 -0.017000)"><path d="M436 517Q436 586 401.5 627.5Q367 669 289 669Q213 669 171.5 621.5Q130 574 125 495H57Q63 606 125.5 667.5Q188 729 289 729Q386 729 446.0 674.5Q506 620 506 520Q506 399 405.5 285.5Q305 172 158 64H528V5H51V55Q235 193 335.5 302.5Q436 412 436 517Z"/></g><g transform="translate(200.0 200.0) rotate(167.1859) translate(0 -139) rotate(180) translate(-5.2360 0) scale(0.017000 -0.017000)"><path d="M308 727Q445 727 498.0 632.0Q551 537 551 365Q551 190 498.0 94.0Q445 -2 308 -2Q170 -2 117.5 94.0Q65 190 65 365Q65 537 118.0 632.0Q171 727 308 727ZM308 664Q236 664 198.0 625.0Q160 586 147.0 522.0Q134 458 134 365Q134 269 147.0 204.5Q160 140 198.0 101.0Q236 62 308 62Q380 62 418.0 101.0Q456 140 469.0 204.5Q482 269 482 365Q482 458 469.0 522.0Q456 586 418.0 625.0Q380 664 308 664Z"/></g><g transform="translate(200.0 200.0) rotate(159.1077) translate(0 -139) rotate(180) translate(-4.8620 0) scale(0.017000 -0.017000)"><path d="M436 517Q436 586 401.5 627.5Q367 669 289 669Q213 669 171.5 621.5Q130 574 125 495H57Q63 606 125.5 667.5Q188 729 289 729Q386 729 446.0 674.5Q506 620 506 520Q506 399 405.5 285.5Q305 172 158 64H528V5H51V55Q235 193 335.5 302.5Q436 412 436 517Z"/></g><g transform="translate(200.0 200.0) rotate(150.9838) translate(0 -139) rotate(180) translate(-5.3465 0) scale(0.017000 -0.017000)"><path d="M326 672Q228 672 179.0 596.0Q130 520 134 347Q154 407 210.5 441.5Q267 476 340 476Q445 476 506.5 411.5Q568 347 568 234Q568 168 542.5 114.5Q517 61 464.5 29.0Q412 -3 334 -3Q185 -3 128.5 92.0Q72 187 72 361Q72 731 326 731Q422 731 477.0 678.5Q532 626 542 542H477Q455 672 326 672ZM143 245Q143 164 191.0 110.0Q239 56 331 56Q408 56 454.0 103.0Q500 150 500 231Q500 318 455.0 367.0Q410 416 327 416Q280 416 238.0 397.0Q196 378 169.5 339.5Q143 301 143 245Z"/></g></g><circle cx="103.0" cy="200.0" r="2.4" fill="currentColor" opacity=".8"/><circle cx="297.0" cy="200.0" r="2.4" fill="currentColor" opacity=".8"/><g fill="currentColor"><g transform="translate(115.120 240.0)"><g transform="translate(0.000 0) scale(0.120000 -0.120000)"><path d="M682 657V683C659 681 633 681 608 681C584 681 543 681 520 683V657C570 654 572 619 572 613C572 602 569 595 566 587L369 74L163 613C160 620 158 625 158 630C158 657 198 657 219 657V683C187 681 140 681 107 681C81 681 34 681 10 683V657C68 657 79 653 91 621L329 0C334 -14 335 -16 346 -16C357 -16 358 -14 363 0L590 591C599 613 615 656 682 657Z"/></g><g transform="translate(88.160 0) scale(0.120000 -0.120000)"><path d="M682 84C682 90 682 97 673 97C665 97 664 91 664 87C659 22 630 0 599 0C544 0 538 63 532 124C529 145 527 160 525 182C519 232 511 305 392 341C487 360 567 424 567 504C567 598 461 683 321 683H52V657C121 657 132 657 132 612V71C132 26 121 26 52 26V0C81 2 133 2 164 2C195 2 247 2 276 0V26C207 26 196 26 196 71V334H313C370 334 402 311 416 298C456 259 456 232 456 164C456 97 456 63 486 29C524 -12 575 -16 597 -16C671 -16 682 67 682 84ZM491 504C491 375 385 350 310 350H196V618C196 652 198 657 238 657H311C394 657 491 628 491 504Z"/></g></g></g></svg>`;}
-function renderFooter(){ $('#footer').innerHTML=`<div class="footer-main"><div class="wrap"><div class="footer-grid"><div class="footer-brand"><a class="footer-seal" href="#/" aria-label="VIRI home">${seal('VIRI \u2014 Vitality Ritual')}</a><a class="footer-logo" href="#/" aria-label="VIRI home">VIRI</a><p>Vitality Ritual</p><p>Build community around what moves you.</p><div class="socials"><a href="https://www.instagram.com/vitalityritual.co/" target="_blank" rel="noopener" aria-label="VIRI on Instagram, opens in a new tab"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".5"/></svg>Instagram</a><a href="#/connect" aria-label="VIRI TikTok information"><svg viewBox="0 0 24 24"><path d="M14 3v13a4 4 0 1 1-4-4M14 3c0 4 3 6 7 6"/></svg>TikTok</a></div></div><div class="footer-links"><p class="footer-label">Your next ritual</p><a href="#/explore">Explore opportunities</a><a href="#/studios">Discover studios</a><a href="#/read">The VIRI edit</a><a href="#/login">Log in</a></div><div class="footer-links"><p class="footer-label">Our community</p><a href="#/about">About us</a><a href="#/connect">Contact us</a><a href="#/signup">Join now</a></div></div><div class="footer-bottom"><span>© ${new Date().getFullYear()} VIRI · Vitality Ritual</span><span>Interactive preview · <a href="#/privacy">Privacy</a> · <a href="#/terms">Terms</a> · <button class="plain-link" data-action="credits">Image credits</button></span></div></div></div>`;}
+function renderFooter(){ $('#footer').innerHTML=`<div class="footer-main"><div class="wrap"><div class="footer-grid"><div class="footer-brand"><a class="footer-seal" href="#/" aria-label="VIRI home">${seal('VIRI \u2014 Vitality Ritual')}</a><a class="footer-logo" href="#/" aria-label="VIRI home">VIRI</a><p>Vitality Ritual</p><p>Build community around what moves you.</p><div class="socials"><a href="https://www.instagram.com/vitalityritual.co/" target="_blank" rel="noopener" aria-label="VIRI on Instagram, opens in a new tab"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".5"/></svg>Instagram</a><a href="#/connect" aria-label="VIRI TikTok information"><svg viewBox="0 0 24 24"><path d="M14 3v13a4 4 0 1 1-4-4M14 3c0 4 3 6 7 6"/></svg>TikTok</a></div></div><div class="footer-links"><p class="footer-label">Your next ritual</p><a href="#/explore">Explore opportunities</a><a href="#/studios">Discover studios</a><a href="#/read">The VIRI edit</a>${state.profile?'<a href="#/profile">Your profile</a>':''}<a href="#/login">Log in</a></div><div class="footer-links"><p class="footer-label">Our community</p><a href="#/about">About us</a><a href="#/connect">Contact us</a><a href="#/signup">Join now</a></div></div><div class="footer-bottom"><span>© ${new Date().getFullYear()} VIRI · Vitality Ritual</span><span>Interactive preview · <a href="#/privacy">Privacy</a> · <a href="#/terms">Terms</a> · <button class="plain-link" data-action="credits">Image credits</button></span></div></div></div>`;}
 function revealWords(text){return text.split(' ').map((word,i)=>`<span class="reveal-word" style="--word:${i}">${word}</span>`).join(' ');}
 function home(){return `<div class="home-page">
 <section class="cover">
@@ -642,50 +642,142 @@ function bindSignup(){
     location.hash='#/join';
   });
 }
+/* Sign-up asks five things. The first - first and last name - is the sign-up
+   page itself, so #/join opens on 02 and the counter still reads out of 05. */
+const JOIN_FORMS=['Pilates','Yoga','Cycling','Barre','Strength','Running','No preference'];
+const JOIN_TIMES=['Before 5am','5–7am','8–10am','10–12pm','12–3pm','3–5pm','5–7pm','8pm onward'];
+const JOIN_STUDIOS=studios.map(s=>s.name).concat('I’m flexible');
+/* the two opt-out answers clear every other box in their group, and any other
+   box clears them - holding both at once says nothing */
+const JOIN_ANY={forms:'No preference',studios:'I’m flexible'};
+const US_STATES=['Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','District of Columbia','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming','American Samoa','Guam','Northern Mariana Islands','Puerto Rico','U.S. Virgin Islands'];
+const BIO_EXAMPLES=['Corporate girl training for a marathon and looking for a running buddy.','Just moved to DC and looking for a pilates and cycling partner.'];
 const JOIN_STEPS=[
   {key:'name',type:'text',q:'What should we call you?',hint:'However you introduce yourself in class.',placeholder:'First and last name',autocomplete:'name',required:true},
   {key:'email',type:'email',q:'Where can we reach you?',hint:'Only used to find this profile again in this browser. Nothing is sent.',placeholder:'you@example.com',autocomplete:'email',required:true},
-  {key:'area',type:'select',q:'Where do you move?',hint:'The neighborhood you train in most.',options:['Dupont Circle','Georgetown','NoMa','Capitol Hill','Logan Circle','Elsewhere']},
-  {key:'interests',type:'checks',q:'What moves you?',hint:'Choose as many as you like.',options:['Pilates','Yoga','Cycling','Running','Barre','Strength']}
+  {type:'training',q:'How you train.',hint:'All three are optional, and nothing here is locked in.'},
+  {type:'location',q:'Where do you train most?',hint:'This is how we show you the people and studios nearby.'},
+  {type:'details',q:'A little about you.',hint:'Both are optional. You can add these later from your profile.'}
 ];
-let joinStep=0, joinData={name:'',email:'',area:'Dupont Circle',interests:[]};
+let joinStep=0, joinData={name:'',email:'',forms:[],times:[],studios:[],region:'',city:'',photo:'',bio:''};
+const checkGrid=(name,options,chosen,cols='')=>`<div class="check-grid${cols}">${options.map(o=>
+  `<label class="check-box"><input type="checkbox" name="${name}" value="${escapeHTML(o)}"${chosen.includes(o)?' checked':''}><span>${escapeHTML(o)}</span></label>`).join('')}</div>`;
+function joinControl(s){
+  if(s.type==='training')return `
+    <fieldset class="join-set"><legend>What are your primary forms of exercise?</legend>
+      ${checkGrid('forms',JOIN_FORMS,joinData.forms)}</fieldset>
+    <fieldset class="join-set"><legend>What are the primary times you exercise?</legend>
+      ${checkGrid('times',JOIN_TIMES,joinData.times)}</fieldset>
+    <fieldset class="join-set"><legend>Attend any of these regularly? Add them to your favorites:</legend>
+      ${checkGrid('studios',JOIN_STUDIOS,joinData.studios,' is-wide')}</fieldset>`;
+  if(s.type==='location')return `
+    <div class="field"><label for="join-region">State or territory</label>
+      <select id="join-region" name="region"><option value="">Select one</option>${US_STATES.map(r=>
+        `<option${joinData.region===r?' selected':''}>${escapeHTML(r)}</option>`).join('')}</select></div>
+    <div class="field"><label for="join-city">Your primary city <span class="field-optional">Optional</span></label>
+      <input id="join-city" name="city" placeholder="Washington" autocomplete="address-level2" maxlength="60" value="${escapeHTML(joinData.city||'')}"></div>`;
+  if(s.type==='details')return `
+    <div class="field"><label for="join-photo">Profile photo <span class="field-optional">Optional</span></label>
+      <div class="photo-pick">
+        <span class="photo-preview" id="join-photo-preview">${joinData.photo
+          ?`<img src="${joinData.photo}" alt="Your profile photo">`
+          :escapeHTML(initials(joinData.name||'VIRI'))}</span>
+        <div><input id="join-photo" name="photo" type="file" accept="image/*">
+          <p class="photo-note">A square crop of the middle works best. It is stored on this device only.</p></div>
+      </div></div>
+    <div class="field"><label for="join-bio">A short bio <span class="field-optional">Optional</span></label>
+      <textarea id="join-bio" name="bio" maxlength="160" rows="3" placeholder="${escapeHTML(BIO_EXAMPLES[0])}">${escapeHTML(joinData.bio||'')}</textarea>
+      <p class="field-eg">For example &mdash; &ldquo;${escapeHTML(BIO_EXAMPLES[0])}&rdquo; or &ldquo;${escapeHTML(BIO_EXAMPLES[1])}&rdquo;</p></div>`;
+  return `<input id="join-input" name="${s.key}" type="${s.type}" placeholder="${s.placeholder}" autocomplete="${s.autocomplete}" value="${escapeHTML(joinData[s.key]||'')}" maxlength="80">`;
+}
+/* the header icon and the menu's "Your circle" group send you to sign-up
+   until a profile exists on this device, and to the profile once it does */
+function syncAccountLinks(){
+  const on=!!state.profile;
+  const icon=$('.header-tools .icon-button[href]');
+  if(icon){icon.setAttribute('href',on?'#/profile':'#/signup');
+    icon.setAttribute('aria-label',on?'Your profile':'Sign up or log in');}
+  const menu=$('#menu-panel');
+  if(!menu)return;
+  let link=$('#menu-profile-link',menu);
+  if(on&&!link){link=document.createElement('a');link.id='menu-profile-link';
+    link.href='#/profile';link.textContent='Your profile';
+    menu.insertBefore(link,$('a[href="#/signup"]',menu));}
+  else if(!on&&link){link.remove();}
+}
 function joinPage(){
-  const s=JOIN_STEPS[joinStep], n=JOIN_STEPS.length;
-  let control;
-  if(s.type==='select')control=`<select id="join-input" name="${s.key}">${s.options.map(o=>`<option${joinData.area===o?' selected':''}>${o}</option>`).join('')}</select>`;
-  else if(s.type==='checks')control=`<div class="interest-choices">${s.options.map(o=>`<label><input type="checkbox" name="interests" value="${o}"${joinData.interests.includes(o)?' checked':''}> ${o}</label>`).join('')}</div>`;
-  else control=`<input id="join-input" name="${s.key}" type="${s.type}" placeholder="${s.placeholder}" autocomplete="${s.autocomplete}" value="${escapeHTML(joinData[s.key]||'')}" maxlength="80">`;
+  const s=JOIN_STEPS[joinStep], n=JOIN_STEPS.length, last=joinStep===n-1;
   return `<section class="join-flow"><div class="join-card">
     <p class="join-count">${String(joinStep+1).padStart(2,'0')} &nbsp;/&nbsp; ${String(n).padStart(2,'0')}</p>
     <h1>${s.q}</h1>
     <p class="join-hint">${s.hint}</p>
-    <form id="join-form" class="join-field">${control}
+    <form id="join-form" class="join-field">${joinControl(s)}
       <p id="join-error" class="field-error" role="alert"></p>
+      ${last?'<p class="join-later">None of this is final. You can add or change any of it later from your profile.</p>':''}
       <div class="join-actions">
         ${joinStep>0?'<button type="button" class="button outline" data-action="join-back">Back</button>':'<a class="button outline" href="#/signup">Back</a>'}
-        <button class="button" type="submit">${joinStep===n-1?'Create my profile':`Continue ${arrow}`}</button>
+        <button class="button" type="submit">${last?'Create my account':`Continue ${arrow}`}</button>
       </div>
     </form>
     <div class="join-progress" aria-hidden="true">${JOIN_STEPS.map((_,i)=>`<span class="${i<=joinStep?'is-on':''}"></span>`).join('')}</div>
     ${note('This creates a demo profile in this browser only. No real account is made and no email is sent.')}
   </div></section>`;}
+/* a photo straight off a phone is several megabytes of data URL and localStorage
+   holds about five, so it is redrawn to a 320px square before it is ever stored */
+function readPhoto(file){return new Promise(res=>{
+  if(!file||!/^image\//.test(file.type))return res('');
+  const fr=new FileReader();
+  fr.onload=()=>{const img=new Image();
+    img.onload=()=>{const S=320,c=document.createElement('canvas');c.width=c.height=S;
+      const k=Math.min(img.width,img.height),x=(img.width-k)/2,y=(img.height-k)/2;
+      c.getContext('2d').drawImage(img,x,y,k,k,0,0,S,S);
+      res(c.toDataURL('image/jpeg',.82));};
+    img.onerror=()=>res('');img.src=fr.result;};
+  fr.onerror=()=>res('');fr.readAsDataURL(file);});}
 function bindJoin(){
   const f=$('#join-form');if(!f)return;
   $('#join-input')?.focus();
+  /* "No preference" and "I'm flexible" are answers about the whole group */
+  Object.entries(JOIN_ANY).forEach(([group,any])=>{
+    $$(`input[name="${group}"]`,f).forEach(box=>box.addEventListener('change',()=>{
+      if(!box.checked)return;
+      $$(`input[name="${group}"]`,f).forEach(o=>{
+        if(o!==box && (box.value===any || o.value===any))o.checked=false;});
+    }));
+  });
+  const photo=$('#join-photo');
+  photo?.addEventListener('change',async()=>{
+    const data=await readPhoto(photo.files?.[0]);
+    if(!data){$('#join-error').textContent='That file could not be read as an image.';return;}
+    joinData.photo=data;$('#join-error').textContent='';
+    $('#join-photo-preview').innerHTML=`<img src="${data}" alt="Your profile photo">`;
+  });
   f.addEventListener('submit',e=>{
     e.preventDefault();
-    const s=JOIN_STEPS[joinStep], err=$('#join-error');
-    if(s.type==='checks')joinData.interests=[...f.querySelectorAll('input[name="interests"]:checked')].map(i=>i.value);
-    else joinData[s.key]=String(new FormData(f).get(s.key)||'').trim();
+    const s=JOIN_STEPS[joinStep], err=$('#join-error'), fd=new FormData(f);
+    const picked=g=>[...f.querySelectorAll(`input[name="${g}"]:checked`)].map(i=>i.value);
+    if(s.type==='training'){joinData.forms=picked('forms');joinData.times=picked('times');joinData.studios=picked('studios');}
+    else if(s.type==='location'){joinData.region=String(fd.get('region')||'');joinData.city=String(fd.get('city')||'').trim();}
+    else if(s.type==='details'){joinData.bio=String(fd.get('bio')||'').trim();}
+    else joinData[s.key]=String(fd.get(s.key)||'').trim();
     if(s.required&&!joinData[s.key]){err.textContent=s.key==='email'?'Please enter an email address.':'Please enter your name.';return;}
     if(s.key==='email'&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(joinData.email)){err.textContent='Please enter a valid email address.';return;}
+    err.textContent='';
     if(joinStep<JOIN_STEPS.length-1){joinStep++;render(false);return;}
-    state.profile={name:joinData.name,email:joinData.email.toLowerCase(),area:joinData.area,interests:joinData.interests};
-    save();joinStep=0;toast('Account created. Two more questions.');location.hash='#/setup';
+    const forms=joinData.forms.filter(x=>x!==JOIN_ANY.forms);
+    state.profile={name:joinData.name,email:joinData.email.toLowerCase(),
+      area:joinData.city||joinData.region||'Washington, DC',region:joinData.region,city:joinData.city,
+      interests:forms,times:joinData.times,
+      studios:joinData.studios.filter(x=>x!==JOIN_ANY.studios),
+      photo:joinData.photo,bio:joinData.bio};
+    /* the studios chosen here are the saved ones the profile already lists */
+    state.saved=[...new Set([...state.saved,...studios.filter(x=>joinData.studios.includes(x.name)).map(x=>x.id)])];
+    save();joinStep=0;toast('Account created. Welcome to your circle.');location.hash='#/profile';
   });
 }
+function profilePage(){const p=state.profile;const name=p?.name||'Your name';const joined=allEvents().filter(e=>state.joined.includes(e.id));const saved=studios.filter(s=>state.saved.includes(s.id));return `<section class="page-head"><div class="wrap"><div class="page-head-row"><div><p class="eyebrow">Your corner of the city</p><h1>Your circle.</h1></div><div style="display:flex;gap:12px">${p?'<button class="button outline small" data-action="edit-profile">Edit profile</button>':button('Build your profile','#/signup','small')}<button class="button small" data-action="post-activity">Post an activity</button></div></div></div></section><div class="wrap">${note('This profile, feed, suggested people, and rewards demonstrate the experience. Your changes stay on this device.')}<div class="profile-grid"><aside class="profile-panel"><div class="profile-avatar">${p?.photo?`<img src="${p.photo}" alt="">`:escapeHTML(p?initials(p.name):'ViRi')}</div><h2>${escapeHTML(name)}</h2><p class="location">${escapeHTML(p?.area||'Washington, DC')}</p>${p?.bio?`<p class="profile-bio">${escapeHTML(p.bio)}</p>`:''}<div class="profile-stats"><div><span>Friends</span><strong>${state.connections.length}</strong></div><div><span>Requests sent</span><strong>${(state.requests||[]).length}</strong></div><div><span>Studios</span><strong>${saved.length}</strong></div><div><span>Activities</span><strong>${state.posts.length}</strong></div></div><div class="interests">${(p?.interests||['Pilates','Yoga','Running']).map(c=>`<span>${escapeHTML(c)}</span>`).join('')}</div><h3>Upcoming activities</h3>${joined.length?joined.map(e=>`<div class="upcoming-row"><span class="small">${prettyDate(e.date)} · ${prettyTime(e.date)}</span><strong>${escapeHTML(e.title)}</strong><button class="plain-link small" data-action="event-details" data-id="${e.id}">View plan</button></div>`).join(''):'<p class="small">Your next ritual starts with a plan. Join an activity to see it here.</p>'}<a class="text-link" href="#/explore" style="margin-top:20px">Find an activity ${arrow}</a><h3>Saved studios</h3>${saved.length?saved.map(s=>`<a class="upcoming-row" style="display:block" href="#/studios/${s.id}">${s.name} ${arrow}</a>`).join(''):'<p class="small">Keep your favorite studios close. Save one while you explore.</p>'}<h3>Your ritual rewards</h3><p>${state.posts.length*100} points</p><p class="small">Demo points for showing up. Reward redemptions are not available in this preview.</p></aside><section class="profile-content"><h2>Feed</h2>${state.posts.slice().reverse().map(post=>`<article class="feed-card"><div class="feed-author"><span class="mini-avatar">${escapeHTML(initials(p?.name||'You'))}</span><div>${escapeHTML(p?.name||'You')}<p class="small">Your activity · ${prettyDate(post.date)}</p></div></div><h3>${escapeHTML(post.title)} · ${post.duration} min</h3><p>${escapeHTML(post.description)}</p><p class="small" style="margin-top:15px">+100 ritual points · Preview</p></article>`).join('')}<article class="feed-card"><div class="feed-author"><span class="mini-avatar">JC</span><div>Jamie’s circle<p class="small">Sample member · Example activity</p></div></div><h3>CycleBar · 45 min</h3><p>A morning ride and a new reason to get out the door. Who’s joining next time?</p><img src="${A}brand-cyclebar.webp" alt="Riders in a CycleBar class"><a class="text-link" href="#/explore">Find a ride ${arrow}</a></article><article class="feed-card"><p class="eyebrow">Your next connection</p><h3>The best part might be after class.</h3><p style="margin-top:15px">Invite someone to stay for a coffee. A shared routine starts with one small plan.</p></article></section><aside class="profile-aside"><h2>Suggested</h2>${eventCard(seedEvents[0])}<div class="contact-card" style="padding:25px;margin-top:25px"><div class="profile-avatar">AL</div><h3>Alex’s circle</h3><p class="small">Sample member · Georgetown</p><p>Early morning movement, easy runs, and coffee after class.</p><div class="interests" style="margin:20px 0"><span>Running</span><span>Yoga</span></div><button class="button small outline" data-action="connect-sample" aria-pressed="${state.connections.includes('alex')}">${state.connections.includes('alex')?'Connected ✓':'Connect'}</button></div></aside></div></div>`;}
 function authPage(){return `<section class="auth-layout"><div class="auth-image"><img src="${A}studio-entry.jpg" alt="Two women arriving at the studio together"><h2>A new ritual.<br>A new circle.<br>A little more you.</h2></div><div class="auth-form"><p class="eyebrow">Welcome back</p><h1>Back to your circle.</h1><p>Open the profile saved on this device.</p>${note('This is a local demo login. No password or email is sent.')}<form id="auth-form"><div class="field"><label for="auth-email">Email address</label><input id="auth-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required></div><p id="auth-error" class="field-error" role="alert"></p><button class="button" type="submit" style="margin-top:18px">Open my profile</button></form><p class="small">New here? <a href="#/signup">Join VIRI</a></p></div></section>`;}
-function bindAuth(){$('#auth-form')?.addEventListener('submit',e=>{e.preventDefault();const email=String(new FormData(e.target).get('email')).trim().toLowerCase();if(!state.profile||state.profile.email!==email){$('#auth-error').textContent='No profile with that email is saved in this browser. Create a demo profile to begin.';return;}toast('Welcome back to your circle.');location.hash='#/';});}
+function bindAuth(){$('#auth-form')?.addEventListener('submit',e=>{e.preventDefault();const email=String(new FormData(e.target).get('email')).trim().toLowerCase();if(!state.profile||state.profile.email!==email){$('#auth-error').textContent='No profile with that email is saved in this browser. Create a demo profile to begin.';return;}toast('Welcome back to your circle.');location.hash='#/profile';});}
 
 /* ===================== booking hand-off ===================== */
 function bookPage(id){
@@ -770,7 +862,7 @@ function setupPage(){
       <p id="setup-error" class="field-error" role="alert"></p>
       <button class="button" type="submit" style="margin-top:6px">Save and see my circle</button>
     </form>
-    <p class="handoff-foot"><a class="plain-link" href="#/">Skip for now</a></p>
+    <p class="handoff-foot"><a class="plain-link" href="#/profile">Skip for now</a></p>
   </div></div>`;
 }
 function bindSetup(){
@@ -782,7 +874,7 @@ function bindSetup(){
     state.profile={...state.profile,area:fd.get('area'),interests,times:fd.getAll('times'),
       line:String(fd.get('line')).trim()};
     save();toast('Your profile is set. This is what a class roster will show.');
-    location.hash='#/';
+    location.hash='#/profile';
   });
 }
 function eventCard(e){const joined=state.joined.includes(e.id);return `<article class="event-card">${e.img
@@ -864,7 +956,7 @@ function initPageMotion(){
   revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('is-revealed');revealObserver.unobserve(entry.target);}}),{threshold:.08,rootMargin:'0px 0px -30px 0px'});
   targets.forEach(el=>{el.classList.add('will-reveal');revealObserver.observe(el);});
 }
-function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'profile':location.replace('#/signup');return;case 'setup':html=setupPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=legalPage(true);break;case 'terms':html=legalPage(false);break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',profile:'Your circle',setup:'Your profile',book:'Book this class',privacy:'Your privacy',terms:'Preview terms'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if(path==='login')bindAuth();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='join')bindJoin();if(path==='setup')bindSetup();
+function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'profile':html=profilePage();break;case 'setup':html=setupPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=legalPage(true);break;case 'terms':html=legalPage(false);break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',profile:'Your circle',setup:'Your profile',book:'Book this class',privacy:'Your privacy',terms:'Preview terms'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if(path==='login')bindAuth();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='join')bindJoin();if(path==='setup')bindSetup();
   $('#subscribe-form')?.addEventListener('submit',e=>{e.preventDefault();
     toast('Saved on this device only \u2014 the preview does not send email.');e.target.reset();});if(path==='explore'){$('#ex-search').addEventListener('input',e=>{ex.query=e.target.value;exRefresh();});$('#ex-time').addEventListener('change',e=>{ex.time=e.target.value;exRefresh();});exBindMap();}}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-action]');if(!t)return;const {action,id,index,category,view,kind,name,channel}=t.dataset;switch(action){case 'video-toggle':{const v=$('#'+(t.dataset.video||'about-video'));if(v.paused)v.play().catch(()=>toast('Video playback is unavailable in this browser.'));else v.pause();break;}case 'close-modal':closeModal();break;case 'join-back':joinStep=Math.max(0,joinStep-1);render(false);break;case 'studio-prev':studioIndex=Math.max(0,studioIndex-1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'studio-next':studioIndex=Math.min(STUDIO_LAST(),studioIndex+1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'ex-city':ex={...ex,city:t.dataset.id,venue:null,cls:null};render(false);break;
