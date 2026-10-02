@@ -1423,3 +1423,39 @@ it.
 
 Desktop is untouched: the bar is `display:none` above 760px and those destinations stay in the top
 nav.
+
+## Two headers, not one (2 October 2026)
+
+The header now has two shapes rather than one with bits bolted on.
+
+**Signed out** it is the marketing site, unchanged: Explore, Studios, Read on the left, About on the
+right, a person icon that goes to sign-up.
+
+**Signed in** it is the product. The left nav is Feed, Explore, Messages, My profile. About moves
+into the burger, which now holds Explore, Studios, Read, About, and the lone right-hand About link is
+removed rather than duplicated. Where the icon was there is now the account control: your profile
+picture with a chevron that rotates when open.
+
+The account menu opens on hover, which is what was asked for, but hover alone would strand anyone on
+a phone or using a keyboard, so it also opens on click and closes on blur or Escape. The panel is a
+child of a wrapper that also holds the button, and its box reaches up to the button with the visible
+card inset by padding — without that the pointer crosses a dead gap on the way down and the menu
+shuts under the cursor. Its three items are My profile, Log out, Settings, in the order asked for.
+
+`HEADER_OUT` captures the signed-out markup once at load, so there is a single source of truth to
+restore to rather than two copies of the marketing nav drifting apart in the code.
+
+**The phone carries the same four destinations**: the bottom bar is Feed, Explore, Messages, My
+profile, matching the signed-in top nav exactly. Log a session left the bar to make room; it is still
+the first button on your own profile.
+
+**Messages and Settings are real pages, not dead links.** Messages draws its threads from the people
+you have actually connected to — a list, a conversation, and a composer that is disabled and says so.
+Settings shows your details, exactly what Search matches you on, and the two device actions (log out,
+clear preview data) in one place.
+
+18 routes, no console errors, signed in and out, 1280 and 375.
+
+**Worth deciding now:** the signed-in nav points Explore at `#/explore`, the city class browser, and
+`#/find` — the people-first page built yesterday — is no longer in any nav. It is reachable from the
+feed and profile rails. Those two pages overlap and one of them should probably absorb the other.

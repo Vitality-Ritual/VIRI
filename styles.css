@@ -98,8 +98,75 @@ strong{font-weight:500}
 #menu-button{display:none}
 /* the account panel hangs off the profile icon rather than the burger, so it
    is offset by one icon's width */
-.account-panel{right:calc(var(--gutter) + 46px);min-width:206px}
-.account-panel .plain-link{font-size:13.5px;letter-spacing:.02em;text-align:left}
+/* the avatar and its chevron are one control; the panel hangs off the wrapper
+   so hover never has to cross a gap between the two */
+.account-wrap{position:relative;display:flex}
+.account-button{display:flex;align-items:center;gap:5px;background:none;border:0;
+  padding:4px 2px 4px 4px;cursor:pointer;color:var(--cocoa);border-radius:999px}
+.account-button .acc-av{width:28px;height:28px;border-radius:50%;overflow:hidden;flex:none;
+  display:grid;place-items:center;background:var(--cream-2);border:1px solid var(--line-2);
+  font-family:var(--display);font-size:11px;letter-spacing:.03em;color:var(--taupe-deep)}
+.account-button .acc-av img{width:100%;height:100%;object-fit:cover}
+.account-button .chev{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.6;
+  stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+.account-button[aria-expanded="true"] .chev{transform:rotate(180deg)}
+/* the panel box reaches the button; the visible card is inset by its padding */
+.account-panel{position:absolute;right:0;top:100%;z-index:55;padding-top:10px;min-width:214px}
+.account-card{background:var(--paper);padding:20px 22px 22px;
+  box-shadow:0 26px 50px rgba(59,50,42,.14);display:flex;flex-direction:column;gap:11px}
+.account-card .menu-label{margin:0 0 3px}
+.account-card a,.account-card .plain-link{font-size:13.5px;letter-spacing:.02em;
+  text-align:left;color:var(--ink);text-decoration:none;border-bottom:0;transition:color .2s}
+.account-card a:hover,.account-card .plain-link:hover{color:var(--cocoa)}
+
+/* ---- messages ---- */
+.msg{padding-bottom:clamp(60px,7vw,100px)}
+.msg .preview-note{margin-bottom:clamp(22px,2.6vw,32px)}
+.msg-grid{display:grid;grid-template-columns:300px minmax(0,1fr);gap:clamp(22px,2.6vw,36px);
+  align-items:start;border-top:1px solid var(--line-2)}
+.msg-list{display:flex;flex-direction:column;border-right:1px solid var(--line);padding-right:clamp(10px,1.4vw,18px)}
+.msg-row{display:flex;gap:13px;align-items:center;text-align:left;width:100%;
+  background:none;border:0;border-bottom:1px solid var(--line);padding:16px 8px;cursor:pointer;
+  font:inherit;color:inherit;transition:background .2s}
+.msg-row:hover{background:var(--cream-2)}
+.msg-row.is-on{background:var(--paper)}
+.msg-who{display:flex;flex-direction:column;gap:3px;min-width:0}
+.msg-who b{font-family:var(--body);font-weight:400;font-size:14.5px;color:var(--ink)}
+.msg-who .small{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.msg-thread{display:flex;flex-direction:column;min-height:460px;min-width:0}
+.msg-head{display:flex;gap:13px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)}
+.msg-body{flex:1;display:flex;flex-direction:column;gap:11px;padding:24px 0;align-items:flex-start}
+.msg-bubble{margin:0;max-width:62%;font-size:14.5px;line-height:1.6;padding:12px 16px}
+.msg-bubble.them{background:var(--cream-2);color:var(--ink)}
+.msg-bubble.me{background:var(--cocoa);color:var(--paper);align-self:flex-end}
+.msg-send{display:flex;gap:10px;border-top:1px solid var(--line);padding-top:16px}
+.msg-send input{flex:1;min-width:0;font-size:14.5px}
+.msg-send input:disabled{color:var(--muted);background:var(--cream-2)}
+
+/* ---- settings ---- */
+.set{padding-bottom:clamp(60px,7vw,100px);max-width:760px}
+.set .preview-note{margin-bottom:clamp(22px,2.6vw,32px)}
+.set-block{border-top:1px solid var(--line-2);padding:clamp(22px,2.6vw,32px) 0}
+.set-block h2{font-family:var(--body);font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--cocoa);margin:0 0 18px}
+.set-note{margin:-6px 0 18px;font-size:13.5px;line-height:1.7;color:var(--muted)}
+.set-row{display:flex;gap:20px;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--line)}
+.set-k{flex:none;width:150px;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.set-v{flex:1;min-width:0;font-size:15px;color:var(--ink);display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.set-block .button{margin-top:18px}
+.set-actions{display:flex;gap:12px;flex-wrap:wrap}
+.set-actions .button{margin-top:0}
+
+@media (max-width:860px){
+  .msg-grid{grid-template-columns:1fr}
+  .msg-list{border-right:0;border-bottom:1px solid var(--line);padding-right:0}
+  .msg-thread{min-height:0}
+  .msg-bubble{max-width:82%}
+}
+@media (max-width:560px){
+  .set-row{flex-direction:column;gap:6px}
+  .set-k{width:auto}
+}
 .menu-panel{position:absolute;right:var(--gutter);top:calc(var(--header) - 4px);z-index:50;min-width:248px;padding:26px 30px 28px;background:var(--paper);box-shadow:0 26px 50px rgba(59,50,42,.14)}
 .menu-label{font-size:9px;color:var(--taupe);margin:0 0 12px}
 .menu-label:not(:first-child){margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}
@@ -738,6 +805,7 @@ dialog p{color:var(--muted)}
   .mark{font-size:19px}
   .site-header .nav-right{display:none}
   .menu-panel{left:12px;right:12px;min-width:0}
+  .account-panel{right:0;left:auto;min-width:200px}
   .cover{min-height:0}
   .cover-rail{display:none}
   .cover-plate{flex:1 1 auto;width:100%;align-self:auto;aspect-ratio:736/860}

@@ -714,48 +714,78 @@ const signedIn=()=>!!state.profile&&!state.loggedOut;
 /* assigning the hash it already holds fires no hashchange, so a route that
    sends you where you already are has to re-render by hand */
 const goTo=h=>{if(location.hash===h)render();else location.hash=h;};
+/* The header has two shapes. Signed out it is the marketing site: Explore,
+   Studios, Read, About. Signed in it is the product: Feed, Explore, Messages,
+   My profile, with the marketing links folded into the burger and the account
+   behind the avatar. The signed-out markup is captured once at load so there is
+   one source of truth to restore to. */
+const HEADER_OUT={
+  left:$('.nav-left')?.innerHTML||'',
+  right:$('.nav-right')?.innerHTML||'',
+  icon:$('#account-button')?.innerHTML||'',
+  menu:$('#menu-panel')?.innerHTML||''
+};
+const CHEV='<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+const navItem=(href,label,here)=>`<a href="${href}"${here?' aria-current="page"':''}>${label}</a>`;
 function syncAccountLinks(){
   const on=signedIn();
-  /* signed out the icon is a shortcut to joining; signed in it has to offer
-     a way back out, so it opens a small account panel instead */
-  const icon=$('#account-button'), panel=$('#account-panel');
-  if(icon)icon.setAttribute('aria-label',on?'Your account':'Sign up or log in');
-  if(panel){
-    panel.innerHTML=on?`<p class="menu-label">${escapeHTML(state.profile.name)}</p>
-      <a href="#/profile">Your profile</a><a href="#/feed">Home</a><a href="#/find">Find people</a>
-      <p class="menu-label">Account</p><button class="plain-link" data-action="log-out">Log out</button>`:'';
-    if(!on){panel.hidden=true;icon?.setAttribute('aria-expanded','false');}
+  const here=(location.hash.replace(/^#\/?/,'')||'').split('/')[0];
+  const left=$('.nav-left'), right=$('.nav-right'),
+        icon=$('#account-button'), panel=$('#account-panel'),
+        card=$('#account-card'), menu=$('#menu-panel');
+  if(left)left.innerHTML=on
+    ? navItem('#/feed','Feed',here==='feed')+navItem('#/explore','Explore',here==='explore')
+      +navItem('#/messages','Messages',here==='messages')+navItem('#/profile','My profile',here==='profile')
+    : HEADER_OUT.left;
+  /* About is in the burger once signed in, so the lone right-hand link goes */
+  if(right){right.innerHTML=on?'':HEADER_OUT.right;right.hidden=on;}
+  if(menu)menu.innerHTML=on
+    ? '<p class="menu-label">Discover</p><a href="#/explore">Explore</a><a href="#/studios">Studios</a>'
+      +'<a href="#/read">Read</a><a href="#/about">About</a>'
+    : HEADER_OUT.menu;
+  if(icon){
+    icon.innerHTML=on?`<span class="acc-av">${avatarFor(state.profile)}</span>${CHEV}`:HEADER_OUT.icon;
+    icon.classList.toggle('account-button',on);
+    icon.classList.toggle('icon-button',!on);
+    icon.setAttribute('aria-label',on?'Your account':'Sign up or log in');
   }
+  if(card)card.innerHTML=on
+    ? `<p class="menu-label">${escapeHTML(state.profile.name)}</p>`
+      +'<a href="#/profile">My profile</a>'
+      +'<button class="plain-link" data-action="log-out">Log out</button>'
+      +'<a href="#/settings">Settings</a>'
+    : '';
+  if(panel&&!on){panel.hidden=true;icon?.setAttribute('aria-expanded','false');}
+  /* the phone carries the same four destinations as the signed-in top nav */
   const bar=$('#tabbar');
   if(bar){
     bar.hidden=!on;
     if(on){
-      const here=(location.hash.replace(/^#\/?/,'')||'').split('/')[0];
-      const ic={home:'<path d="M3 10.5 12 3l9 7.5V21H3V10.5Z"/>',
-        find:'<circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/>',
-        log:'<rect x="3" y="3" width="18" height="18"/><path d="M12 8v8M8 12h8"/>'};
+      const ic={feed:'<path d="M3 10.5 12 3l9 7.5V21H3V10.5Z"/>',
+        explore:'<circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/>',
+        messages:'<path d="M21 12a8 8 0 0 1-8 8H5l-2 2V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z"/>'};
       const tab=(href,key,label)=>`<a href="${href}" aria-label="${label}"${here===key?' aria-current="page"':''}><svg viewBox="0 0 24 24" aria-hidden="true">${ic[key]}</svg></a>`;
-      bar.innerHTML=tab('#/feed','home','Home')+tab('#/find','find','Find people')
-        +`<a href="#/profile" aria-label="Log a session" data-action="post-activity"><svg viewBox="0 0 24 24" aria-hidden="true">${ic.log}</svg></a>`
-        +`<a href="#/profile" aria-label="Your profile"${here==='profile'?' aria-current="page"':''}><span class="tab-av">${avatarFor(state.profile)}</span></a>`;
+      bar.innerHTML=tab('#/feed','feed','Feed')+tab('#/explore','explore','Explore')
+        +tab('#/messages','messages','Messages')
+        +`<a href="#/profile" aria-label="My profile"${here==='profile'?' aria-current="page"':''}><span class="tab-av">${avatarFor(state.profile)}</span></a>`;
     } else bar.innerHTML='';
   }
-  /* the feed and the finder only mean anything with a profile behind them */
-  const nav=$('.nav-left');
-  if(nav){
-    let home=$('#nav-home',nav), find=$('#nav-find',nav);
-    if(on&&!home){home=document.createElement('a');home.id='nav-home';home.href='#/feed';home.textContent='Home';nav.prepend(home);}
-    else if(!on&&home)home.remove();
-    if(on&&!find){find=document.createElement('a');find.id='nav-find';find.href='#/find';find.textContent='Search';nav.insertBefore(find,$('#nav-home',nav)?.nextSibling||nav.firstChild);}
-    else if(!on&&find)find.remove();
-  }
-  const menu=$('#menu-panel');
-  if(!menu)return;
-  let link=$('#menu-profile-link',menu);
-  if(on&&!link){link=document.createElement('a');link.id='menu-profile-link';
-    link.href='#/profile';link.textContent='Your profile';
-    menu.insertBefore(link,$('a[href="#/signup"]',menu));}
-  else if(!on&&link){link.remove();}
+}
+/* Hover opens it on a pointer, tap and keyboard open it everywhere else. The
+   panel's own box reaches up to the button so the pointer never crosses a gap. */
+function bindAccountMenu(){
+  const wrap=$('#account-wrap'), btn=$('#account-button'), panel=$('#account-panel');
+  if(!wrap||!btn||!panel)return;
+  const show=v=>{panel.hidden=!v;btn.setAttribute('aria-expanded',String(v));
+    if(v){$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');}};
+  const fine=()=>matchMedia('(hover: hover) and (pointer: fine)').matches;
+  wrap.addEventListener('mouseenter',()=>{if(signedIn()&&fine())show(true);});
+  wrap.addEventListener('mouseleave',()=>{if(fine())show(false);});
+  btn.addEventListener('click',()=>{
+    if(!signedIn()){location.hash='#/signup';return;}
+    show(panel.hidden);
+  });
+  wrap.addEventListener('focusout',e=>{if(!wrap.contains(e.relatedTarget))show(false);});
 }
 function joinPage(){
   const s=JOIN_STEPS[joinStep], n=JOIN_STEPS.length, last=joinStep===n-1;
@@ -983,6 +1013,84 @@ function sessionCard(s,by){
     </div>
   </article>`;
 }
+let msgThread=null;
+/* ---- messages ----
+   No message is ever sent from here; the threads are drawn from the people you
+   have actually connected to, so the page is yours rather than a mock-up, and
+   the composer says plainly that it does not send. */
+const MSG_LINES=[
+  'Are you going Thursday? I can save you a bike.',
+  'That was brutal. Same time next week?',
+  'Coffee after on Saturday if you are around.',
+  'I booked the 7am. See you there.'
+];
+function messagesPage(){
+  if(!signedIn())return authPage();
+  const ids=(state.connections||[]).filter(id=>exPerson(id));
+  const open=msgThread&&ids.includes(msgThread)?msgThread:ids[0];
+  const who=open?exPerson(open):null;
+  return `<section class="page-head"><div class="wrap"><p class="eyebrow">Your circle</p><h1>Messages.</h1></div></section>
+  <div class="wrap msg">
+    ${note('Threads are drawn from the people you have connected to. Nothing is sent from this preview.')}
+    ${ids.length?`<div class="msg-grid">
+      <aside class="msg-list">
+        ${ids.map((id,i)=>{const p=exPerson(id);
+          return `<button class="msg-row${id===open?' is-on':''}" data-action="msg-open" data-id="${escapeHTML(id)}">
+            <span class="av-md">${escapeHTML(initials(p.name))}</span>
+            <span class="msg-who"><b>${escapeHTML(p.name)}</b>
+              <span class="small">${escapeHTML(MSG_LINES[i%MSG_LINES.length])}</span></span>
+          </button>`;}).join('')}
+      </aside>
+      <section class="msg-thread">
+        <header class="msg-head"><span class="av-md">${escapeHTML(initials(who.name))}</span>
+          <span class="msg-who"><b>${escapeHTML(who.name)}</b><span class="small">${escapeHTML(who.area)} &middot; ${escapeHTML(who.line)}</span></span></header>
+        <div class="msg-body">
+          <p class="msg-bubble them">${escapeHTML(MSG_LINES[ids.indexOf(open)%MSG_LINES.length])}</p>
+          <p class="msg-bubble me">Yes — adding it to my plan now.</p>
+          <p class="msg-bubble them">Perfect. I will grab the two by the window.</p>
+        </div>
+        <form class="msg-send" id="msg-form">
+          <label class="visually-hidden" for="msg-input">Write a message</label>
+          <input id="msg-input" name="msg" placeholder="Messaging is not wired up in this preview" disabled>
+          <button class="button small" type="button" disabled>Send</button>
+        </form>
+      </section>
+    </div>`
+    :`<p class="pf-empty">No one to write to yet. Connect with someone in your classes and the thread starts here.</p>${button('Find people','#/find','small outline')}`}
+  </div>`;}
+/* ---- settings ---- */
+function settingsPage(){
+  if(!signedIn())return authPage();
+  const p=state.profile;
+  const row=(k,v)=>`<div class="set-row"><span class="set-k">${escapeHTML(k)}</span><span class="set-v">${v}</span></div>`;
+  return `<section class="page-head"><div class="wrap"><p class="eyebrow">Your account</p><h1>Settings.</h1></div></section>
+  <div class="wrap set">
+    ${note('Everything here is stored in this browser only. No account service holds any of it.')}
+    <section class="set-block">
+      <h2>Your details</h2>
+      ${row('Name',escapeHTML(p.name))}
+      ${row('Email',escapeHTML(p.email||'—'))}
+      ${row('Where you train',escapeHTML([p.city,p.region].filter(Boolean).join(', ')||p.area||'—'))}
+      <button class="button small outline" data-action="edit-profile">Edit these</button>
+    </section>
+    <section class="set-block">
+      <h2>What you are matched on</h2>
+      <p class="set-note">Search only shows you people whose week overlaps yours. These are the answers it uses.</p>
+      ${row('Activities',(p.interests||[]).length?p.interests.map(c=>`<span class="tag">${escapeHTML(c)}</span>`).join(''):'<span class="small">None chosen</span>')}
+      ${row('Times',(p.times||[]).length?p.times.map(c=>`<span class="tag">${escapeHTML(c)}</span>`).join(''):'<span class="small">None chosen</span>')}
+      ${row('Studios saved',String((state.saved||[]).length))}
+      <a class="button small outline" href="#/find">See who that matches</a>
+    </section>
+    <section class="set-block">
+      <h2>This device</h2>
+      <p class="set-note">Logging out keeps your profile here so you can come back to it. Clearing removes it.</p>
+      <div class="set-actions">
+        <button class="button small outline" data-action="log-out">Log out</button>
+        <button class="button small outline" data-action="clear-preview">Clear preview data</button>
+      </div>
+    </section>
+  </div>`;}
+
 function profilePage(){
   const p=state.profile;
   if(!signedIn())return authPage();
@@ -1368,7 +1476,7 @@ function initPageMotion(){
   revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('is-revealed');revealObserver.unobserve(entry.target);}}),{threshold:.08,rootMargin:'0px 0px -30px 0px'});
   targets.forEach(el=>{el.classList.add('will-reveal');revealObserver.observe(el);});
 }
-function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'profile':html=profilePage();break;case 'feed':html=feedPage();break;case 'find':html=findPage();break;case 'setup':html=setupPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=legalPage(true);break;case 'terms':html=legalPage(false);break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',profile:'Your circle',feed:'Home',find:'Find your people',setup:'Your profile',book:'Book this class',privacy:'Your privacy',terms:'Preview terms'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#auth-form'))bindAuth();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='find')$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();toast('Search runs over the sample roster in this preview.');});if(path==='join')bindJoin();if(path==='setup')bindSetup();
+function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'profile':html=profilePage();break;case 'feed':html=feedPage();break;case 'find':html=findPage();break;case 'messages':html=messagesPage();break;case 'settings':html=settingsPage();break;case 'setup':html=setupPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=legalPage(true);break;case 'terms':html=legalPage(false);break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',profile:'Your circle',feed:'Feed',find:'Find your people',messages:'Messages',settings:'Settings',setup:'Your profile',book:'Book this class',privacy:'Your privacy',terms:'Preview terms'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#auth-form'))bindAuth();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='find')$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();toast('Search runs over the sample roster in this preview.');});if(path==='join')bindJoin();if(path==='setup')bindSetup();
   $('#subscribe-form')?.addEventListener('submit',e=>{e.preventDefault();
     toast('Saved on this device only \u2014 the preview does not send email.');e.target.reset();});if(path==='explore'){$('#ex-search').addEventListener('input',e=>{ex.query=e.target.value;exRefresh();});$('#ex-time').addEventListener('change',e=>{ex.time=e.target.value;exRefresh();});exBindMap();}}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-action]');if(!t)return;const {action,id,index,category,view,kind,name,channel}=t.dataset;switch(action){case 'video-toggle':{const v=$('#'+(t.dataset.video||'about-video'));if(v.paused)v.play().catch(()=>toast('Video playback is unavailable in this browser.'));else v.pause();break;}case 'close-modal':closeModal();break;case 'join-back':joinStep=Math.max(0,joinStep-1);render(false);break;case 'studio-prev':studioIndex=Math.max(0,studioIndex-1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'studio-next':studioIndex=Math.min(STUDIO_LAST(),studioIndex+1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'ex-city':ex={...ex,city:t.dataset.id,venue:null,cls:null};render(false);break;
@@ -1386,15 +1494,9 @@ case 'book-new':bookChoose(t.dataset.id,'new');break;
 case 'book-plan':bookChoose(t.dataset.id,'plan');break;
 case 'ex-zoom':exZoom(t.dataset.dir);break;
 case 'ex-reset':ex={...ex,cat:'All',time:'All',members:false,query:'',venue:null,cls:null};render(false);break;
-case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':state.saved=state.saved.includes(id)?state.saved.filter(x=>x!==id):[...state.saved,id];save();render(false);toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':postActivity();break;case 'show-friends':friendsModal();break;case 'log-out':state.loggedOut=true;save();$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Logged out. Your profile stays on this device until you clear the preview.');location.hash='#/';render(false);break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':toast('Added to your plan. In the live product this books you alongside them.');break;case 'session-talk':toast('Comments are part of this design. Writing one is not wired up in the preview yet.');break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':t.classList.toggle('is-on');break;case 'connect-sample':state.connections=state.connections.includes('alex')?[]:['alex'];save();render(false);toast(state.connections.length?'Sample connection added to your preview.':'Sample connection removed.');break;case 'edit-profile':openModal('Make your profile yours',`<form id="edit-form"><div class="field"><label for="edit-name">Your name</label><input id="edit-name" name="name" value="${escapeHTML(state.profile?.name)}" required maxlength="60"></div><div class="field"><label for="edit-area">Your neighborhood</label><input id="edit-area" name="area" value="${escapeHTML(state.profile?.area)}" required maxlength="70"></div><div class="dialog-actions"><button class="button small" type="submit">Save profile</button></div></form>`,()=>$('#edit-form').addEventListener('submit',ev=>{ev.preventDefault();const f=Object.fromEntries(new FormData(ev.target));if(!f.name.trim()||!f.area.trim())return;state.profile={...state.profile,name:f.name.trim(),area:f.area.trim()};save();closeModal();render(false);toast('Profile updated.');}));break;case 'clear-preview':openModal('Clear your preview?',`<p class="dialog-copy">This removes your demo profile, plans, posts, connections, and saved studios from this browser.</p><div class="dialog-actions"><button class="button outline small" data-action="close-modal">Keep my preview</button><button class="button small" data-action="confirm-clear">Clear preview</button></div>`);break;case 'confirm-clear':state={profile:null,loggedOut:false,joined:[],saved:[],created:[],posts:[],connections:[]};save();closeModal();render(false);toast('Your preview data has been cleared.');break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
+case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':state.saved=state.saved.includes(id)?state.saved.filter(x=>x!==id):[...state.saved,id];save();render(false);toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':postActivity();break;case 'show-friends':friendsModal();break;case 'msg-open':msgThread=t.dataset.id;render(false);break;case 'log-out':state.loggedOut=true;save();$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Logged out. Your profile stays on this device until you clear the preview.');location.hash='#/';render(false);break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':toast('Added to your plan. In the live product this books you alongside them.');break;case 'session-talk':toast('Comments are part of this design. Writing one is not wired up in the preview yet.');break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':t.classList.toggle('is-on');break;case 'connect-sample':state.connections=state.connections.includes('alex')?[]:['alex'];save();render(false);toast(state.connections.length?'Sample connection added to your preview.':'Sample connection removed.');break;case 'edit-profile':openModal('Make your profile yours',`<form id="edit-form"><div class="field"><label for="edit-name">Your name</label><input id="edit-name" name="name" value="${escapeHTML(state.profile?.name)}" required maxlength="60"></div><div class="field"><label for="edit-area">Your neighborhood</label><input id="edit-area" name="area" value="${escapeHTML(state.profile?.area)}" required maxlength="70"></div><div class="dialog-actions"><button class="button small" type="submit">Save profile</button></div></form>`,()=>$('#edit-form').addEventListener('submit',ev=>{ev.preventDefault();const f=Object.fromEntries(new FormData(ev.target));if(!f.name.trim()||!f.area.trim())return;state.profile={...state.profile,name:f.name.trim(),area:f.area.trim()};save();closeModal();render(false);toast('Profile updated.');}));break;case 'clear-preview':openModal('Clear your preview?',`<p class="dialog-copy">This removes your demo profile, plans, posts, connections, and saved studios from this browser.</p><div class="dialog-actions"><button class="button outline small" data-action="close-modal">Keep my preview</button><button class="button small" data-action="confirm-clear">Clear preview</button></div>`);break;case 'confirm-clear':state={profile:null,loggedOut:false,joined:[],saved:[],created:[],posts:[],connections:[]};save();closeModal();render(false);toast('Your preview data has been cleared.');break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
 $('#menu-button').addEventListener('click',()=>{const open=$('#menu-panel').hidden;$('#menu-panel').hidden=!open;$('#menu-button').setAttribute('aria-expanded',String(open));});
-$('#account-button').addEventListener('click',()=>{
-  if(!signedIn()){location.hash='#/signup';return;}
-  const open=$('#account-panel').hidden;
-  $('#account-panel').hidden=!open;$('#menu-panel').hidden=true;
-  $('#account-button').setAttribute('aria-expanded',String(open));
-  $('#menu-button').setAttribute('aria-expanded','false');
-});
+bindAccountMenu();
 document.addEventListener('click',e=>{if(!e.target.closest('.site-header')){$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');}});
 window.addEventListener('hashchange',()=>{if($('#modal').open)closeModal();render();});
