@@ -1494,3 +1494,44 @@ matching reason is dropped since the rail's own heading already says these are p
 classes.
 
 18 routes, no console errors, signed in and out, 1280 and 375.
+
+## "Did you go?" — logging a class without typing (2 October 2026)
+
+**The obstacle first, because it shaped everything else.** `exClasses()` is rebuilt on every load from
+a seeded generator and only ever holds the *next seven days* — it explicitly skips anything already
+started. `state.joined` held class ids alone. So an hour after your class there was nothing left to
+look up and nothing to ask you about. A plan is a record now: `snapshotPlan()` copies the title,
+activity, studio, area, start, duration and roster into `state.plans` the moment you add a class, from
+both routes in (`bookChoose` and `toggleJoin`). The prompt is built from memory, not from a lookup.
+
+**The + carries the question.** When a plan's start plus its duration is in the past and it has not
+been answered, the Create button wears a count — on the header button and the phone bar both — and its
+`aria-label` says what the number means. Pressing it asks "Did you go?" instead of opening a blank
+form. Three answers per class: **I went** logs it in one tap with nothing to fill in, **Add a photo**
+opens the form already filled from the plan, **I did not** drops it from your plan without logging
+anything. Below them, "Log something else" is the old blank form.
+
+The title comes straight from the class — "Reformer Flow", "Ride & Restore" — in an editable field, so
+it behaves like Strava's "Morning Run": right by default, yours to change.
+
+**Photos.** One per session, scaled to 900px and stored as a JPEG data URL at 0.75. The whole of
+`localStorage` is about 5MB and a photo straight off a phone would fill it on its own; this keeps one
+at roughly a quarter of a megabyte. The session card had to learn two kinds of image source — a seeded
+filename under `assets/` and an uploaded data URL — so it tests for `data:` before prefixing.
+
+**Tagging.** The people you have connected to appear as checkboxes; tagged names show under the
+session as "with Amara, Naomi" with their initials stacked, and the attendance count follows. Nobody
+you have not connected to can be tagged.
+
+**Seeing it without waiting.** The prompt depends on real elapsed time, so Settings has a Preview
+block with "Mark my next class as finished", which back-dates your soonest plan. It only appears when
+there is an upcoming plan to move.
+
+## The gap above interior pages (2 October 2026)
+
+`.page-head` had `6vw` of top padding — 77px at 1280 — sitting on top of the 80px fixed header, so
+Studios and Read opened with 97px of nothing before any ink. Now `3.8vw` capped at 60, which closes
+it to 69px, and 30px rather than 46 at phone widths. It governs Explore, Studios, Read, Contact,
+Find, Messages and Settings alike, so they stay consistent.
+
+18 routes, no console errors, signed in and out, 1280 and 375.

@@ -407,7 +407,9 @@ strong{font-weight:500}
 .join-inner h2{color:#fff;margin-bottom:30px;text-transform:uppercase;letter-spacing:.06em}
 
 /* ---------------------------------------------------------- page heads */
-.page-head{padding:clamp(46px,6vw,86px) 0 clamp(26px,3vw,40px)}
+/* 6vw put 77px of air above the first line on top of the 80px fixed header -
+   97px of nothing before any ink. Closed to roughly two thirds of that. */
+.page-head{padding:clamp(30px,3.8vw,60px) 0 clamp(26px,3vw,40px)}
 .page-head h1{max-width:17ch;text-transform:uppercase;letter-spacing:.02em;color:var(--cocoa)}
 .page-head p{margin-top:20px;max-width:58ch;color:var(--muted)}
 .page-head-row{display:flex;justify-content:space-between;align-items:flex-end;gap:32px}
@@ -1243,6 +1245,31 @@ body:after{
   .founders-photo{order:-1;aspect-ratio:3/2}
   .f-serif{padding-left:.4em}
 }
+
+/* ---- did you go? ------------------------------------------------------- */
+/* the count rides the + rather than sitting beside it, so the question
+   travels with the control that answers it */
+#create-button,.tabbar .tab-make{position:relative}
+#create-button[data-badge]:not([data-badge=""])::after,
+.tabbar .tab-make[data-badge]:not([data-badge=""])::after{
+  content:attr(data-badge);position:absolute;top:1px;right:0;min-width:15px;height:15px;
+  padding:0 3px;box-sizing:border-box;border-radius:999px;background:var(--cocoa);color:var(--paper);
+  font-family:var(--body);font-size:9px;line-height:15px;text-align:center;letter-spacing:0}
+.attend-list{display:flex;flex-direction:column;margin:18px 0 4px;border-top:1px solid var(--line)}
+.attend-row{display:flex;gap:16px;align-items:center;flex-wrap:wrap;
+  padding:16px 0;border-bottom:1px solid var(--line)}
+.attend-what{flex:1 1 220px;min-width:0;display:flex;flex-direction:column;gap:4px}
+.attend-what b{font-family:var(--display);font-weight:400;font-size:18px;color:var(--cocoa)}
+.attend-what .small{color:var(--muted)}
+.attend-acts{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.attend-acts .plain-link{font-size:12.5px}
+/* a post's photo is wide, not the square the avatar cropper makes */
+.post-shot{margin:0;height:170px;overflow:hidden;background:var(--taupe-light)}
+.post-shot img{width:100%;height:100%;object-fit:cover;display:block}
+#post-drop .photo-editor{flex-direction:column;align-items:stretch;gap:12px}
+#post-form .interest-fieldset legend{display:flex;align-items:baseline}
+#post-form .check-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+@media (max-width:560px){.attend-row{gap:10px}.attend-acts{width:100%}}
 
 /* ---- the phone's bottom bar -------------------------------------------- */
 /* Signed in on a phone the four things you actually do should be under your
