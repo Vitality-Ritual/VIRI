@@ -1047,7 +1047,7 @@ function messagesPage(){
   const ids=(state.connections||[]).filter(id=>exPerson(id));
   const open=msgThread&&ids.includes(msgThread)?msgThread:ids[0];
   const who=open?exPerson(open):null;
-  return `<section class="page-head"><div class="wrap"><p class="eyebrow">Your circle</p><h1>Messages.</h1></div></section>
+  return `<section class="page-head is-tight"><div class="wrap"><h1>Messages</h1></div></section>
   <div class="wrap msg">
     ${note('Threads are drawn from the people you have connected to. Nothing is sent from this preview.')}
     ${ids.length?`<div class="msg-grid">
@@ -1081,7 +1081,7 @@ function settingsPage(){
   if(!signedIn())return authPage();
   const p=state.profile;
   const row=(k,v)=>`<div class="set-row"><span class="set-k">${escapeHTML(k)}</span><span class="set-v">${v}</span></div>`;
-  return `<section class="page-head"><div class="wrap"><p class="eyebrow">Your account</p><h1>Settings.</h1></div></section>
+  return `<section class="page-head is-tight"><div class="wrap"><h1>Settings</h1></div></section>
   <div class="wrap set">
     ${note('Everything here is stored in this browser only. No account service holds any of it.')}
     <section class="set-block">
