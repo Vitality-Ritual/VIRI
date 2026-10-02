@@ -596,7 +596,7 @@ function bindContact(){
           headers:{'Content-Type':'application/json',Accept:'application/json'},
           body:JSON.stringify({name:`${first} ${last}`,email,message,
             _subject:'New inquiry from vitalityritual.org',_captcha:'false',_template:'table'})});
-        if(!res.ok)throw new Error('HTTP '+res.status);
+        await relayDelivered(res);
       }catch(_){
         btn.disabled=false; btn.innerHTML=label;
         err.textContent='That did not send. Please try again in a moment.';
