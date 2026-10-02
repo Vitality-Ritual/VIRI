@@ -1074,7 +1074,7 @@ function sessionCard(s,by){
       <span><b>${escapeHTML(by.name)}</b><span class="small">${escapeHTML(s.ago)} &middot; ${escapeHTML(s.place)}</span></span>
       ${by.id&&!state.connections.includes(by.id)
         ?`<button class="button small outline" data-action="ex-connect" data-id="${escapeHTML(by.id)}">Add friend</button>`
-        :'<span class="tag">Friend</span>'}</div>`
+        :'<span class="tag">Friend</span>'}${safetyButton(by.id,by.name)}</div>`
      :`<p class="session-meta">${escapeHTML(s.ago)}${s.place?` &middot; ${escapeHTML(s.place)}`:''}</p>`}
     <h3 class="session-title">${escapeHTML(s.title)}</h3>
     ${sessionStats(s)}
@@ -1188,6 +1188,88 @@ function deleteAccountModal(){
   });
 }
 
+/* Real accounts carry a uuid; the sample members in the preview carry names
+   like 'alex'. Reporting one of those would write a row pointing at nobody. */
+const isRealAccount=id=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(id||''));
+const isBlocked=id=>(state.blocked||[]).includes(id);
+
+/* Every face in the product gets the same quiet control in the same corner, so
+   nobody has to hunt for it at the moment they most need it. */
+function safetyButton(id,name){
+  if(!id||!signedIn()||id===(state.profile&&state.profile.id))return '';
+  return `<button class="icon-more" data-action="person-menu" data-id="${escapeHTML(id)}" data-name="${escapeHTML(name||'')}" aria-label="Report or block ${escapeHTML(name||'this person')}" title="More">&#8943;</button>`;
+}
+
+function personMenu(id,name){
+  openModal(escapeHTML(name||'This person'),
+    `<p class="dialog-copy">If this person is making VIRI worse for you, you can tell us, or stop them reaching you entirely.</p>
+     <div class="safety-menu">
+       <button class="button small outline" data-action="report-person" data-id="${escapeHTML(id)}" data-name="${escapeHTML(name||'')}">Report this person</button>
+       ${isBlocked(id)
+         ?`<button class="button small outline" data-action="unblock-person" data-id="${escapeHTML(id)}" data-name="${escapeHTML(name||'')}">Unblock</button>`
+         :`<button class="button small outline is-grave" data-action="block-person" data-id="${escapeHTML(id)}" data-name="${escapeHTML(name||'')}">Block</button>`}
+     </div>`);
+}
+
+function reportModal(id,name){
+  const who=name||'this person';
+  openModal('Report '+escapeHTML(who),
+    `<p class="dialog-copy">This goes to the VIRI team. We read every one. ${escapeHTML(who)} is not told that you reported them.</p>
+     <form id="report-form">
+       <div class="field"><label for="rp-reason">What happened?</label>
+         <select id="rp-reason" name="reason" required>
+           ${REPORT_REASONS.map(([v,l])=>`<option value="${v}">${escapeHTML(l)}</option>`).join('')}
+         </select></div>
+       <div class="field"><label for="rp-detail">Anything you want to add <span class="field-optional">Optional</span></label>
+         <textarea id="rp-detail" name="detail" maxlength="2000" placeholder="You do not have to explain. Anything you tell us helps."></textarea></div>
+       <p id="rp-error" class="field-error" role="alert"></p>
+       <div class="dialog-actions">
+         <button class="button outline small" type="button" data-action="close-modal">Cancel</button>
+         <button class="button small" type="submit">Send report</button>
+       </div>
+     </form>`,()=>{
+    $('#report-form').addEventListener('submit',async ev=>{
+      ev.preventDefault();
+      if(!isRealAccount(id)){$('#rp-error').textContent='This is a sample member in the preview, so there is no account to report.';return;}
+      const btn=ev.target.querySelector('button[type=submit]'),label=btn.innerHTML;
+      btn.disabled=true;btn.textContent='Sending…';
+      const fd=Object.fromEntries(new FormData(ev.target));
+      const {error}=await dbReport(id,fd.reason,String(fd.detail||'').trim());
+      if(error){btn.disabled=false;btn.innerHTML=label;$('#rp-error').textContent=error.message;return;}
+      closeModal();
+      toast('Thank you. We have your report and we will look at it.');
+    });
+  });
+}
+
+function blockConfirm(id,name){
+  const who=name||'this person';
+  openModal('Block '+escapeHTML(who),
+    `<p class="dialog-copy">${escapeHTML(who)} will not be able to message you or send you a friend request, and you will not see each other. They are not told.</p>
+     <p class="dialog-copy">You can undo this in Settings whenever you like.</p>
+     <div class="dialog-actions">
+       <button class="button outline small" data-action="close-modal">Cancel</button>
+       <button class="button small is-grave" data-action="block-confirm" data-id="${escapeHTML(id)}" data-name="${escapeHTML(who)}">Block ${escapeHTML(who)}</button>
+     </div>`);
+}
+
+async function doBlock(id,name){
+  if(!isRealAccount(id)){closeModal();toast('This is a sample member in the preview, so there is nobody to block.');return;}
+  const {error}=await dbBlock(id);
+  closeModal();
+  if(error){toast(error.message);return;}
+  render(false);
+  toast((name||'They')+' can no longer reach you.');
+}
+
+async function doUnblock(id,name){
+  const {error}=await dbUnblock(id);
+  closeModal();
+  if(error){toast(error.message);return;}
+  render(false);
+  toast((name||'They')+' is unblocked.');
+}
+
 function settingsPage(){
   if(!signedIn())return authPage();
   const p=state.profile;
@@ -1227,6 +1309,14 @@ function settingsPage(){
         <button class="button small outline" data-action="log-out">Log out</button>
         <button class="button small outline" data-action="clear-preview">Clear preview data</button>
       </div>
+    </section>
+    <section class="set-block">
+      <h2>People you have blocked</h2>
+      <p class="set-note">They cannot message you or send you a friend request, and you do not appear to each other. They were never told.</p>
+      ${(state.blocked||[]).length
+        ? (state.blocked||[]).map(id=>{const who=(typeof exPerson==='function'&&exPerson(id))||null;
+            return `<div class="set-row"><span class="set-k">${escapeHTML(who?who.name:id)}</span><span class="set-v"><button class="button small outline" data-action="unblock-person" data-id="${escapeHTML(id)}" data-name="${escapeHTML(who?who.name:'')}">Unblock</button></span></div>`;}).join('')
+        : '<p class="small">You have not blocked anyone.</p>'}
     </section>
     <section class="set-block">
       <h2>Your data</h2>
@@ -1370,6 +1460,8 @@ function feedPage(){
    same class, or the class is one your own answers say you would go to. */
 function findMatches(){
   const p=state.profile, cats=(p&&p.interests)||[], seen={}, out=[];
+  /* Somebody you blocked should not come back as a suggestion. */
+  (state.blocked||[]).forEach(id=>{seen[id]=1;});
   const mine=exClasses().filter(c=>state.joined.includes(c.id));
   mine.forEach(c=>c.going.forEach(id=>{
     if(seen[id])return; const who=exPerson(id); if(!who)return;
@@ -1396,6 +1488,7 @@ function peopleRow(m){
     ${st==='connected'?'<span class="tag">Friend</span>'
       :st==='requested'?'<span class="tag">Requested</span>'
       :`<button class="button small" data-action="ex-connect" data-id="${escapeHTML(m.who.id)}">Connect</button>`}
+    ${safetyButton(m.who.id,m.who.name)}
   </div>`;
 }
 function findPage(){
@@ -1820,7 +1913,7 @@ case 'book-new':bookChoose(t.dataset.id,'new');break;
 case 'book-plan':bookChoose(t.dataset.id,'plan');break;
 case 'ex-zoom':exZoom(t.dataset.dir);break;
 case 'ex-reset':ex={...ex,cat:'All',time:'All',members:false,query:'',venue:null,cls:null};render(false);break;
-case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':{const nowOn=!state.saved.includes(id);state.saved=nowOn?[...state.saved,id]:state.saved.filter(x=>x!==id);if(typeof dbSetStudio==='function')dbPush(dbSetStudio(id,nowOn),'that studio');save();render(false);}toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':pendingPlans().length?attendModal():postActivity();break;case 'post-new':closeModal();postActivity();break;case 'attend-yes':logAttended(t.dataset.id);break;case 'attend-no':skipAttended(t.dataset.id);break;case 'finish-next':{const n=(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start)[0];if(n){n.start=Date.now()-(n.dur+5)*60000;save();render(false);toast('Moved into the past. The + now has something to ask you.');}break;}case 'attend-more':{const p=takePlan(t.dataset.id);closeModal();postActivity(p);break;}case 'show-friends':friendsModal();break;case 'msg-open':msgThread=t.dataset.id;render(false);break;case 'log-out':dbSignOut().then(()=>{$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Signed out.');location.hash='#/';render(false);});break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':toast('Added to your plan. In the live product this books you alongside them.');break;case 'session-talk':toast('Comments are part of this design. Writing one is not wired up in the preview yet.');break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':t.classList.toggle('is-on');break;case 'connect-sample':state.connections=state.connections.includes('alex')?[]:['alex'];save();render(false);toast(state.connections.length?'Sample connection added to your preview.':'Sample connection removed.');break;case 'edit-profile':openModal('Make your profile yours',`<form id="edit-form"><div class="field"><label for="edit-name">Your name</label><input id="edit-name" name="name" value="${escapeHTML(state.profile?.name)}" required maxlength="60"></div><div class="field"><label for="edit-area">Your neighborhood</label><input id="edit-area" name="area" value="${escapeHTML(state.profile?.area)}" required maxlength="70"></div><div class="field"><label for="edit-photo">Profile photo <span class="field-optional">Optional</span></label><div class="photo-drop" id="edit-drop" data-has="0"><input id="edit-photo" type="file" accept="image/*" class="visually-hidden"><div class="photo-empty"><p class="photo-lede">Drag a photo here, or <button type="button" class="plain-link" id="edit-pick">choose a file</button>.</p></div><div class="photo-editor"><figure class="post-shot"><img id="edit-preview" alt="Your photo"></figure><p class="photo-swap"><button type="button" class="plain-link" id="edit-repick">Choose another</button></p></div></div></div><p id="edit-error" class="field-error" role="alert"></p><div class="dialog-actions"><button class="button small" type="submit">Save profile</button></div></form>`,()=>{let newPhoto='';const drop=$('#edit-drop'),file=$('#edit-photo');const take=async f=>{const d=await shrinkImage(f,640);if(!d){$('#edit-error').textContent='That file could not be read as an image.';return;}newPhoto=d;$('#edit-preview').src=d;drop.dataset.has='1';};$('#edit-pick')?.addEventListener('click',()=>file.click());$('#edit-repick')?.addEventListener('click',()=>file.click());file.addEventListener('change',()=>{if(file.files?.[0])take(file.files[0]);});['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('is-over');}));['dragleave','dragend'].forEach(t=>drop.addEventListener(t,e=>{if(t==='dragleave'&&drop.contains(e.relatedTarget))return;drop.classList.remove('is-over');}));drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('is-over');const f=e.dataTransfer?.files?.[0];if(f)take(f);});$('#edit-form').addEventListener('submit',async ev=>{ev.preventDefault();const fd=Object.fromEntries(new FormData(ev.target));if(!fd.name.trim()||!fd.area.trim())return;const btn=ev.target.querySelector('button[type=submit]'),label=btn.innerHTML;btn.disabled=true;btn.textContent='Saving\u2026';state.profile={...state.profile,name:fd.name.trim(),area:fd.area.trim()};if(typeof dbSaveProfileEdits==='function')await dbSaveProfileEdits({name:fd.name.trim(),area:fd.area.trim()});if(newPhoto&&typeof dbSetAvatar==='function'){const r=await dbSetAvatar(newPhoto);if(r.error){btn.disabled=false;btn.innerHTML=label;$('#edit-error').textContent=r.error.message;return;}}save();closeModal();render(false);toast('Profile updated.');});});break;case 'clear-preview':openModal('Clear your preview?',`<p class="dialog-copy">This removes your demo profile, plans, posts, connections, and saved studios from this browser.</p><div class="dialog-actions"><button class="button outline small" data-action="close-modal">Keep my preview</button><button class="button small" data-action="confirm-clear">Clear preview</button></div>`);break;case 'confirm-clear':state={profile:null,loggedOut:false,plans:[],logged:[],joined:[],saved:[],created:[],posts:[],connections:[]};save();closeModal();render(false);toast('Your preview data has been cleared.');break;case 'export-data':exportMyData(t);break;case 'delete-account':deleteAccountModal();break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
+case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':{const nowOn=!state.saved.includes(id);state.saved=nowOn?[...state.saved,id]:state.saved.filter(x=>x!==id);if(typeof dbSetStudio==='function')dbPush(dbSetStudio(id,nowOn),'that studio');save();render(false);}toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':pendingPlans().length?attendModal():postActivity();break;case 'post-new':closeModal();postActivity();break;case 'attend-yes':logAttended(t.dataset.id);break;case 'attend-no':skipAttended(t.dataset.id);break;case 'finish-next':{const n=(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start)[0];if(n){n.start=Date.now()-(n.dur+5)*60000;save();render(false);toast('Moved into the past. The + now has something to ask you.');}break;}case 'attend-more':{const p=takePlan(t.dataset.id);closeModal();postActivity(p);break;}case 'show-friends':friendsModal();break;case 'msg-open':msgThread=t.dataset.id;render(false);break;case 'log-out':dbSignOut().then(()=>{$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Signed out.');location.hash='#/';render(false);});break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':toast('Added to your plan. In the live product this books you alongside them.');break;case 'session-talk':toast('Comments are part of this design. Writing one is not wired up in the preview yet.');break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':t.classList.toggle('is-on');break;case 'connect-sample':state.connections=state.connections.includes('alex')?[]:['alex'];save();render(false);toast(state.connections.length?'Sample connection added to your preview.':'Sample connection removed.');break;case 'edit-profile':openModal('Make your profile yours',`<form id="edit-form"><div class="field"><label for="edit-name">Your name</label><input id="edit-name" name="name" value="${escapeHTML(state.profile?.name)}" required maxlength="60"></div><div class="field"><label for="edit-area">Your neighborhood</label><input id="edit-area" name="area" value="${escapeHTML(state.profile?.area)}" required maxlength="70"></div><div class="field"><label for="edit-photo">Profile photo <span class="field-optional">Optional</span></label><div class="photo-drop" id="edit-drop" data-has="0"><input id="edit-photo" type="file" accept="image/*" class="visually-hidden"><div class="photo-empty"><p class="photo-lede">Drag a photo here, or <button type="button" class="plain-link" id="edit-pick">choose a file</button>.</p></div><div class="photo-editor"><figure class="post-shot"><img id="edit-preview" alt="Your photo"></figure><p class="photo-swap"><button type="button" class="plain-link" id="edit-repick">Choose another</button></p></div></div></div><p id="edit-error" class="field-error" role="alert"></p><div class="dialog-actions"><button class="button small" type="submit">Save profile</button></div></form>`,()=>{let newPhoto='';const drop=$('#edit-drop'),file=$('#edit-photo');const take=async f=>{const d=await shrinkImage(f,640);if(!d){$('#edit-error').textContent='That file could not be read as an image.';return;}newPhoto=d;$('#edit-preview').src=d;drop.dataset.has='1';};$('#edit-pick')?.addEventListener('click',()=>file.click());$('#edit-repick')?.addEventListener('click',()=>file.click());file.addEventListener('change',()=>{if(file.files?.[0])take(file.files[0]);});['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('is-over');}));['dragleave','dragend'].forEach(t=>drop.addEventListener(t,e=>{if(t==='dragleave'&&drop.contains(e.relatedTarget))return;drop.classList.remove('is-over');}));drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('is-over');const f=e.dataTransfer?.files?.[0];if(f)take(f);});$('#edit-form').addEventListener('submit',async ev=>{ev.preventDefault();const fd=Object.fromEntries(new FormData(ev.target));if(!fd.name.trim()||!fd.area.trim())return;const btn=ev.target.querySelector('button[type=submit]'),label=btn.innerHTML;btn.disabled=true;btn.textContent='Saving\u2026';state.profile={...state.profile,name:fd.name.trim(),area:fd.area.trim()};if(typeof dbSaveProfileEdits==='function')await dbSaveProfileEdits({name:fd.name.trim(),area:fd.area.trim()});if(newPhoto&&typeof dbSetAvatar==='function'){const r=await dbSetAvatar(newPhoto);if(r.error){btn.disabled=false;btn.innerHTML=label;$('#edit-error').textContent=r.error.message;return;}}save();closeModal();render(false);toast('Profile updated.');});});break;case 'clear-preview':openModal('Clear your preview?',`<p class="dialog-copy">This removes your demo profile, plans, posts, connections, and saved studios from this browser.</p><div class="dialog-actions"><button class="button outline small" data-action="close-modal">Keep my preview</button><button class="button small" data-action="confirm-clear">Clear preview</button></div>`);break;case 'confirm-clear':state={profile:null,loggedOut:false,plans:[],logged:[],joined:[],saved:[],created:[],posts:[],connections:[]};save();closeModal();render(false);toast('Your preview data has been cleared.');break;case 'person-menu':personMenu(t.dataset.id,t.dataset.name);break;case 'report-person':closeModal();reportModal(t.dataset.id,t.dataset.name);break;case 'block-person':closeModal();blockConfirm(t.dataset.id,t.dataset.name);break;case 'block-confirm':doBlock(t.dataset.id,t.dataset.name);break;case 'unblock-person':doUnblock(t.dataset.id,t.dataset.name);break;case 'export-data':exportMyData(t);break;case 'delete-account':deleteAccountModal();break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
 $('#menu-button').addEventListener('click',()=>{const open=$('#menu-panel').hidden;$('#menu-panel').hidden=!open;$('#menu-button').setAttribute('aria-expanded',String(open));});
 bindAccountMenu();
 document.addEventListener('click',e=>{if(!e.target.closest('.site-header')){$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');}});

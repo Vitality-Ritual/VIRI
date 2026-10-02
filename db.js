@@ -130,6 +130,7 @@ async function dbLoadProfile(){
   state.profile.photo = await dbPhotoUrl(data.photo_path);
   await dbClaimPendingStudios();
   await dbClaimPendingPhoto();
+  await dbLoadBlocks();
   await dbLoadSessions();
   await dbLoadPlans();
   return state.profile;
@@ -349,6 +350,8 @@ const EXPORT_TABLES = [
   ['sessions',      'sessions',      'profile_id'],
   ['plans',         'plans',         'profile_id'],
   ['saved_studios', 'saved_studios', 'profile_id'],
+  ['reports_filed', 'reports',       'reporter_id'],
+  ['blocks',        'blocks',        'blocker_id'],
 ];
 
 async function dbExportData(){
@@ -422,6 +425,102 @@ async function dbDeleteAccount(){
   await c.auth.signOut();
   authUser = null;
   return { data: true };
+}
+
+/* ===================== reporting and blocking =====================
+   The report is written to the database first and only then emailed. If the
+   mail fails the report still exists; if it were the other way round a failed
+   send would lose the thing entirely.
+
+   The free text of a report is deliberately NOT emailed. It is somebody's
+   account of what another named person did to them, and the relay that carries
+   our mail today is a free third-party service. The notification carries enough
+   to triage — who, what kind, when — and the account itself stays in the
+   database. Once mail goes out through our own domain this can carry the lot. */
+
+const REPORT_REASONS = [
+  ['harassment',   'Harassment or abuse'],
+  ['inappropriate','Inappropriate photographs or messages'],
+  ['impersonation','Pretending to be someone else'],
+  ['spam',         'Spam or advertising'],
+  ['safety',       'I felt unsafe meeting this person'],
+  ['other',        'Something else'],
+];
+
+async function dbReport(reportedId, reason, detail){
+  const c = db();
+  if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  if (reportedId === authUser.id) return { error: { message: 'You cannot report yourself.' } };
+
+  const { data, error } = await c.from('reports').insert({
+    reporter_id: authUser.id,
+    reported_profile_id: reportedId,
+    reason,
+    detail: detail || null,
+    status: 'open'
+  }).select().maybeSingle();
+  if (error) return { error };
+
+  dbNotifyReport(data, reason).catch(() => {});
+  return { data };
+}
+
+/* Deliberately not awaited by the caller: a slow relay should never hold up
+   telling somebody their report was filed. */
+async function dbNotifyReport(row, reason){
+  if (typeof contactEndpoint !== 'function') return;
+  const url = contactEndpoint();
+  if (!url) return;
+  const label = (REPORT_REASONS.find(r => r[0] === reason) || [, reason])[1];
+  await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({
+      name: 'VIRI safety',
+      email: authUser.email,
+      message:
+        `A member reported another member.\n\n` +
+        `Reason: ${label}\n` +
+        `Report id: ${row && row.id}\n` +
+        `Reported account: ${row && row.reported_profile_id}\n` +
+        `Reported by: ${authUser.email} (${authUser.id})\n` +
+        `Filed: ${row && row.created_at}\n\n` +
+        `What they wrote is in the reports table in Supabase. It is not included ` +
+        `here on purpose — see the note in db.js.`,
+      _subject: `VIRI report — ${label}`,
+      _captcha: 'false',
+      _template: 'table'
+    })
+  });
+}
+
+async function dbBlock(blockedId){
+  const c = db();
+  if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  if (blockedId === authUser.id) return { error: { message: 'You cannot block yourself.' } };
+  const { error } = await c.from('blocks')
+    .upsert({ blocker_id: authUser.id, blocked_id: blockedId },
+            { onConflict: 'blocker_id,blocked_id' });
+  if (error) return { error };
+  if (!state.blocked) state.blocked = [];
+  if (!state.blocked.includes(blockedId)) state.blocked.push(blockedId);
+  return { data: true };
+}
+
+async function dbUnblock(blockedId){
+  const c = db();
+  if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const { error } = await c.from('blocks').delete()
+    .eq('blocker_id', authUser.id).eq('blocked_id', blockedId);
+  if (error) return { error };
+  state.blocked = (state.blocked || []).filter(x => x !== blockedId);
+  return { data: true };
+}
+
+async function dbLoadBlocks(){
+  const c = db(); if (!c || !authUser) return;
+  const { data } = await c.from('blocks').select('blocked_id').eq('blocker_id', authUser.id);
+  state.blocked = (data || []).map(r => r.blocked_id);
 }
 
 async function dbSaveProfileEdits(patch){
