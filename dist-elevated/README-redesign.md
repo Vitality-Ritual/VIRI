@@ -1355,3 +1355,51 @@ city-wide class discovery with a map, Find is people-first matching. They should
 page. I left Explore alone rather than delete a large working feature unasked. The old
 `.profile-grid`, `.profile-panel`, `.feed-card` and `.upcoming-row` rules are also now unused but
 still in `styles.css`, since `archive/profile-page.md` describes them.
+
+## The empty right-hand third, and where Log a session goes (2 October 2026)
+
+**Measured before changing anything.** At 1440 the profile wrap is 1320px, the header and tabs ran
+the full 1320, and `.pf-body` was capped at 820 — so 500px down the right was empty from the tabs
+down. The cap was not even earning its keep: `.session-note` is held to `62ch`, which is 539px, so
+the 820 was only constraining the figures strip and the photograph.
+
+`.pf-main` is now a grid of `minmax(0,1fr) 320px` and the cap is gone. The session column takes 940px
+and a rail takes the rest — 940 + 60 gap + 320 = 1320, nothing left over. The rail carries what the
+product is for: what is on your plan, and who is in your classes this week, both sticky. It mirrors
+the feed's rail deliberately, so the two logged-in pages read as one system. Line length did not
+change: the note is still 539px.
+
+**Log a session moved up.** It sat under the list, which put the control for making a thing after all
+the things, and below the fold once you had a few. It is now the first button in the profile's own
+action row beside Edit profile and Share, which is where a control that acts on *your* profile
+belongs. The sample-sessions line also carries it inline, where it reads as the next step rather
+than a stray button.
+
+The post dialog gained Activity and Where when sessions arrived, which left it asking for both "Your
+activity" and "Activity". The title field is now "Name this session" and the dialog is headed "Log a
+session".
+
+## A way back out, and two bugs the way out exposed (2 October 2026)
+
+**There was no log out.** The header icon went straight to `#/profile` once a profile existed, so once
+you made one there was no way to see the site as a signed-out visitor again — which reads as "the
+site is broken" rather than "the site remembered you". The icon is now a `<button>` with a small
+account panel behind it: your name, Your profile, Home, Find people, and Log out.
+
+Logging out does not delete the account. `state.loggedOut` is a session flag; the profile stays in
+storage so you can log back in with the same email. `signedIn()` is now the single test — it replaces
+every bare `!!state.profile` check in the nav, the footer, the profile route and the rails.
+
+**Two real bugs surfaced while testing the way back in.**
+
+`profilePage()` and `setupPage()` fall back to `authPage()` when nobody is signed in, but the router
+only called `bindAuth()` for `path === 'login'`. So at `#/profile` the login form rendered with *no
+submit handler at all* — the button did a native form submit and reloaded the page. It now binds on
+`$('#auth-form')` being present rather than on the route that usually shows it.
+
+And assigning `location.hash` the value it already holds fires no `hashchange`, so logging in from
+`#/profile` set the state correctly and then rendered nothing — the form just sat there. `goTo(h)`
+re-renders by hand when the hash is unchanged, and the four places that send you to a route you may
+already be on now use it.
+
+17 routes, no console errors. The panel fits a 375px screen (12px to 363px).
