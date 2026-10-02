@@ -666,9 +666,18 @@ const JOIN_STEPS=[
   {key:'email',type:'email',q:'Where can we reach you?',hint:'Only used to find this profile again in this browser. Nothing is sent.',placeholder:'you@example.com',autocomplete:'email',required:true},
   {type:'training',q:'How you train.',hint:'All three are optional, and nothing here is locked in.'},
   {type:'location',q:'Where do you train most?',hint:'This is how we show you the people and studios nearby.'},
+  {type:'personal',q:'A little more about you.',hint:'All optional, and all of it helps us put you next to people you would actually get on with.'},
   {type:'details',q:'A little about you.',hint:'Both are optional. You can add these later from your profile.'}
 ];
-let joinStep=0, joinData={name:'',email:'',forms:[],times:[],studios:[],region:'',city:'',photo:'',bio:''};
+/* The floor is 16 rather than open-ended: a birth year that can express a
+   child is an obligation (COPPA under 13, GDPR consent rules under 16) that
+   this product has no way to meet, so the form cannot express one. */
+const YEAR_NOW=new Date().getFullYear();
+const BIRTH_YEARS=Array.from({length:75},(_,i)=>YEAR_NOW-16-i);
+const GRAD_YEARS=Array.from({length:77},(_,i)=>YEAR_NOW+6-i);
+const ageOf=y=>y?YEAR_NOW-Number(y):null;
+let joinStep=0, joinData={name:'',email:'',forms:[],times:[],studios:[],region:'',city:'',
+  birthYear:'',college:'',collegeYear:'',industry:'',photo:'',bio:''};
 const checkGrid=(name,options,chosen,cols='')=>`<div class="check-grid${cols}">${options.map(o=>
   `<label class="check-box"><input type="checkbox" name="${name}" value="${escapeHTML(o)}"${chosen.includes(o)?' checked':''}><span>${escapeHTML(o)}</span></label>`).join('')}</div>`;
 function joinControl(s){
@@ -685,6 +694,24 @@ function joinControl(s){
         `<option${joinData.region===r?' selected':''}>${escapeHTML(r)}</option>`).join('')}</select></div>
     <div class="field"><label for="join-city">Your primary city <span class="field-optional">Optional</span></label>
       <input id="join-city" name="city" placeholder="Washington" autocomplete="address-level2" maxlength="60" value="${escapeHTML(joinData.city||'')}"></div>`;
+if(s.type==='personal')return `
+    <div class="field"><label for="join-born">Your age <span class="field-optional">Optional</span></label>
+      <select id="join-born" name="birthYear"><option value="">Prefer not to say</option>${BIRTH_YEARS.map(y=>
+        `<option value="${y}"${joinData.birthYear==String(y)?' selected':''}>${YEAR_NOW-y} &mdash; born ${y}</option>`).join('')}</select>
+      <p class="field-eg"><p>Your profile shows the age, never the year.</p></p></div>
+    <fieldset class="join-set college-block">
+      <legend>Did you go to college?</legend>
+      <label class="check-box"><input type="checkbox" id="join-went" name="went"${joinData.college||joinData.collegeYear?' checked':''}><span>Yes, I went to college</span></label>
+      <div class="college-more">
+        <div class="field"><label for="join-college">Where</label>
+          <input id="join-college" name="college" maxlength="70" placeholder="Georgetown University" value="${escapeHTML(joinData.college||'')}"></div>
+        <div class="field"><label for="join-grad">Graduated</label>
+          <select id="join-grad" name="collegeYear"><option value="">Prefer not to say</option>${GRAD_YEARS.map(y=>
+            `<option value="${y}"${joinData.collegeYear==String(y)?' selected':''}>${y}</option>`).join('')}</select></div>
+      </div>
+    </fieldset>
+    <div class="field"><label for="join-industry">What industry do you work in? <span class="field-optional">Optional</span></label>
+      <input id="join-industry" name="industry" maxlength="50" placeholder="Corporate" value="${escapeHTML(joinData.industry||'')}"></div>`;
 if(s.type==='details')return `
   <div class="field"><label for="join-photo">Profile photo <span class="field-optional">Optional</span></label>
     <div class="photo-drop" id="join-drop" data-has="${joinData.photo?'1':'0'}">
@@ -927,6 +954,11 @@ bindPhoto();
     const picked=g=>[...f.querySelectorAll(`input[name="${g}"]:checked`)].map(i=>i.value);
     if(s.type==='training'){joinData.forms=picked('forms');joinData.times=picked('times');joinData.studios=picked('studios');}
     else if(s.type==='location'){joinData.region=String(fd.get('region')||'');joinData.city=String(fd.get('city')||'').trim();}
+    else if(s.type==='personal'){joinData.birthYear=String(fd.get('birthYear')||'');
+      const went=!!fd.get('went');
+      joinData.college=went?String(fd.get('college')||'').trim():'';
+      joinData.collegeYear=went?String(fd.get('collegeYear')||''):'';
+      joinData.industry=String(fd.get('industry')||'').trim();}
     else if(s.type==='details'){joinData.bio=String(fd.get('bio')||'').trim();photoCommit();}
     else joinData[s.key]=String(fd.get(s.key)||'').trim();
     if(s.required&&!joinData[s.key]){err.textContent=s.key==='email'?'Please enter an email address.':'Please enter your name.';return;}
@@ -938,7 +970,9 @@ bindPhoto();
       area:joinData.city||joinData.region||'Washington, DC',region:joinData.region,city:joinData.city,
       interests:forms,times:joinData.times,
       studios:joinData.studios.filter(x=>x!==JOIN_ANY.studios),
-      photo:joinData.photo,bio:joinData.bio};
+      photo:joinData.photo,bio:joinData.bio,
+      birthYear:joinData.birthYear,college:joinData.college,
+      collegeYear:joinData.collegeYear,industry:joinData.industry};
     /* the studios chosen here are the saved ones the profile already lists */
     state.saved=[...new Set([...state.saved,...studios.filter(x=>joinData.studios.includes(x.name)).map(x=>x.id)])];
     state.loggedOut=false;save();joinStep=0;toast('Account created. Welcome to your circle.');goTo('#/profile');
@@ -1089,6 +1123,9 @@ function settingsPage(){
       ${row('Name',escapeHTML(p.name))}
       ${row('Email',escapeHTML(p.email||'—'))}
       ${row('Where you train',escapeHTML([p.city,p.region].filter(Boolean).join(', ')||p.area||'—'))}
+      ${row('Age',ageOf(p.birthYear)?String(ageOf(p.birthYear)):'<span class="small">Not shared</span>')}
+      ${row('College',p.college?escapeHTML(p.college)+(p.collegeYear?', '+escapeHTML(p.collegeYear):''):'<span class="small">Not shared</span>')}
+      ${row('Industry',p.industry?escapeHTML(p.industry):'<span class="small">Not shared</span>')}
       <button class="button small outline" data-action="edit-profile">Edit these</button>
     </section>
     <section class="set-block">
@@ -1141,6 +1178,12 @@ function profilePage(){
         <div class="pf-bio">
           ${p.bio?`<p>${escapeHTML(p.bio)}</p>`:''}
           <p class="small">${escapeHTML(p.area||'Washington, DC')}${(p.times||[]).length?` &middot; ${escapeHTML(p.times.slice(0,2).join(', '))}`:''}</p>
+          ${(()=>{const bits=[];
+            const a=ageOf(p.birthYear); if(a)bits.push(a+'');
+            if(p.college)bits.push(escapeHTML(p.college)+(p.collegeYear?` \u2019${String(p.collegeYear).slice(-2)}`:''));
+            else if(p.collegeYear)bits.push('Class of '+escapeHTML(p.collegeYear));
+            if(p.industry)bits.push(escapeHTML(p.industry));
+            return bits.length?`<p class="pf-facts">${bits.join(' &middot; ')}</p>`:'';})()}
           ${(p.interests||[]).length?`<div class="pf-chips">${p.interests.map(c=>
             `<span>${escapeHTML(c)}</span>`).join('')}</div>`:''}
         </div>
@@ -1557,7 +1600,7 @@ function postActivity(pre){
      });
    });
 }
-function legalPage(privacy){return `<article class="article-detail"><p class="eyebrow">VIRI preview</p><h1>${privacy?'Your privacy':'About this preview'}</h1>${privacy?'<p>Your demo profile, saved studios, activities, connections, and posts are stored in this browser’s local storage. They are not sent to a VIRI account service.</p><p>The map loads from OpenStreetMap. Opening external studio and research links takes you to those websites, which have their own privacy practices.</p><p>This notice describes the prototype. A launch privacy policy will be provided before live accounts become available.</p><button class="button outline" data-action="clear-preview">Clear my preview data</button>':'<p>This website is an interactive preview of VIRI. Demo profiles, events, reviews, and attendance counts are illustrative. No class reservation, purchase, message, or live social connection is made through the preview.</p><p>Studio names and photographs identify the respective businesses. Listings do not imply a partnership or endorsement. Visit each studio’s official website to confirm schedules, prices, requirements, and bookings.</p><p>Launch terms will be provided before real accounts or bookings are available.</p>'}</article>`;}
+function legalPage(privacy){return `<article class="article-detail"><p class="eyebrow">VIRI preview</p><h1>${privacy?'Your privacy':'About this preview'}</h1>${privacy?'<p>Your demo profile, saved studios, activities, connections, and posts are stored in this browser’s local storage. They are not sent to a VIRI account service.</p><p>Sign-up can optionally collect your age, where and when you went to college, and the industry you work in, alongside your activities, usual training hours, neighbourhood, photograph and bio. Every one of those is optional and every one stays in this browser. Taken together they would identify a person fairly precisely, so before live accounts exist VIRI will have to say plainly who can see each field.</p><p>The sign-up form will not accept a birth year under 16.</p><p>The map loads from OpenStreetMap. Opening external studio and research links takes you to those websites, which have their own privacy practices.</p><p>This notice describes the prototype. A launch privacy policy will be provided before live accounts become available.</p><button class="button outline" data-action="clear-preview">Clear my preview data</button>':'<p>This website is an interactive preview of VIRI. Demo profiles, events, reviews, and attendance counts are illustrative. No class reservation, purchase, message, or live social connection is made through the preview.</p><p>Studio names and photographs identify the respective businesses. Listings do not imply a partnership or endorsement. Visit each studio’s official website to confirm schedules, prices, requirements, and bookings.</p><p>Launch terms will be provided before real accounts or bookings are available.</p>'}</article>`;}
 function notFound(){return `<section class="section wrap"><h1>Let’s find your way back.</h1><p style="margin:25px 0">This page isn’t part of your circle just yet.</p>${button('Back to VIRI','#/')}</section>`;}
 function initWordmark(){
   const mark=$('#mark');

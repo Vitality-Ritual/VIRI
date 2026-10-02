@@ -1481,6 +1481,12 @@ body:after{
 .check-box:focus-within{outline:1px solid var(--cocoa);outline-offset:2px}
 /* optional fields say so, rather than letting people guess from the absence
    of an error - the city and both personal details never block the step */
+/* the two college fields only mean anything once the box is ticked */
+.college-block .check-box{max-width:260px}
+.college-more{display:none;margin-top:14px}
+.college-block:has(#join-went:checked) .college-more{display:block}
+.college-more .field:last-child{margin-bottom:0}
+.pf-facts{margin:2px 0 0;font-size:12.5px;letter-spacing:.04em;color:var(--muted)}
 .field-optional{margin-left:8px;letter-spacing:.14em;color:var(--line-2)}
 .field-eg{margin:10px 0 0;font-size:12.5px;line-height:1.6;color:var(--muted)}
 .field-eg p{margin:0}
