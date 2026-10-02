@@ -1599,3 +1599,17 @@ omits the line rather than printing blanks. Settings says "Not shared" for each.
 
 19 routes, no console errors, 1280 and 375; the full six-step sign-up run twice, once filling
 everything and once skipping it all.
+
+## The contact form goes live (2 October 2026)
+
+`CONTACT_EMAIL` is no longer empty: it holds `hello@vitalityritual.org`, now that Google Workspace is
+on the domain. Both preview notices disappear by themselves, as designed — the one on the form and
+the one on the thank-you page were conditional on that constant being blank, so turning the inbox on
+was a one-line change and the page stopped claiming nothing was delivered.
+
+FormSubmit sends a one-off confirmation to the address on the first submission. Until someone clicks
+that link, nothing is forwarded — which means the first test will tell us whether the `hello@` group
+actually exists, and it fails safe rather than silently losing a message.
+
+This is the first of the nine preview notices in section 9 of the launch document to come down for
+real rather than for a demo.
