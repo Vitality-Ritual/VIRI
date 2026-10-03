@@ -447,10 +447,14 @@ async function dbDeleteAccount(){
    to triage — who, what kind, when — and the account itself stays in the
    database. Once mail goes out through our own domain this can carry the lot. */
 
-/* These two are read every day rather than on the two-day cycle, so the
-   notification says so in the subject line and the daily check is a glance
-   at an inbox rather than a query someone has to remember to run. */
-const URGENT_REASONS = ['harassment', 'safety'];
+/* Read every day rather than on the two-day cycle, so the notification says
+   so in the subject line and the daily check is a glance at an inbox rather
+   than a query someone has to remember to run.
+
+   Impersonation is here because it is usually spam but is also exactly what
+   catfishing looks like in the days before a first meeting, and the cost of
+   reading a spam report a day early is nothing. */
+const URGENT_REASONS = ['harassment', 'safety', 'impersonation'];
 
 const REPORT_REASONS = [
   ['harassment',   'Harassment or abuse'],
