@@ -110,7 +110,17 @@ async function dbLoadProfile(){
   if (!c || !authUser) return null;
   const { data, error } = await c.from('profiles')
     .select('*').eq('id', authUser.id).maybeSingle();
-  if (error || !data) return null;
+  if (error || !data) {
+    /* Leaving the previous value in place meant that when a profile could not
+       be read, the pages carried on showing whoever last used this browser —
+       another person's name, bio and neighbourhood, to someone who is not
+       them. Nothing loaded means nothing shown. */
+    state.profile = null;
+    state.connections = []; state.requests = []; state.incoming = [];
+    state.threads = {}; state.unread = []; state.feed = [];
+    state.saved = []; state.posts = []; state.plans = [];
+    return null;
+  }
   const saved = await c.from('saved_studios').select('studio_id').eq('profile_id', authUser.id);
   state.profile = {
     name: data.name || '',
