@@ -29,7 +29,14 @@ const seedEvents = [
 const defaultState={profile:null,loggedOut:false,plans:[],logged:[],joined:[],saved:[],created:[],posts:[],connections:[],requests:[],drafts:[]};
 let state;
 try {state={...defaultState,...JSON.parse(localStorage.getItem('viri-preview')||'{}')};}catch {state={...defaultState};}
-function save(){try{localStorage.setItem('viri-preview',JSON.stringify(state));}catch{toast('This browser cannot save changes. Your preview still works for this visit.');}}
+/* Anything the database owns is left out. Keeping a copy of threads,
+   connections or the feed in localStorage only creates ways to show
+   somebody a stale version of a conversation, or the same message twice. */
+const SERVER_OWNED=['threads','unread','feed','people','connections','requests','incoming','blocked','found'];
+function save(){try{
+  const keep={...state}; SERVER_OWNED.forEach(k=>{delete keep[k];});
+  localStorage.setItem('viri-preview',JSON.stringify(keep));
+}catch{toast('This browser cannot save changes. Your preview still works for this visit.');}}
 let studioIndex=0, revealObserver;
 let toastTimer;
 const allEvents=()=>[...seedEvents,...state.created];
@@ -769,9 +776,46 @@ const HEADER_OUT={
   menu:$('#menu-panel')?.innerHTML||''
 };
 const CHEV='<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
-const navItem=(href,label,here)=>`<a href="${href}"${here?' aria-current="page"':''}>${label}</a>`;
+const navItem=(href,label,here,count)=>`<a href="${href}"${here?' aria-current="page"':''}>${label}` +
+  `${count?`<span class="nav-dot" aria-label="${count} unread">${count}</span>`:''}</a>`;
+/* Nothing here was ever checked again after the page loaded, so a message or a
+   request only appeared if you happened to reload. This looks every half
+   minute, and only redraws when something actually changed — redrawing on a
+   timer would fight with whatever you were typing. */
+let pollTimer=null, lastSignature='';
+function signatureOf(){
+  return JSON.stringify([
+    (state.incoming||[]).slice().sort(),
+    (state.connections||[]).slice().sort(),
+    (state.unread||[]).slice().sort(),
+    Object.entries(state.threads||{}).map(([k,v])=>[k,v.length]).sort()
+  ]);
+}
+async function pollForNews(){
+  if(!signedIn()||document.hidden)return;
+  try{
+    await dbLoadConnections();
+    await dbLoadMessages();
+  }catch(e){return;}
+  const now=signatureOf();
+  if(now===lastSignature)return;
+  lastSignature=now;
+  /* Leave a half-written message alone. */
+  const typing=document.activeElement;
+  const guard=typing&&/^(INPUT|TEXTAREA)$/.test(typing.tagName)&&typing.value;
+  if(guard){syncAccountLinks();return;}
+  render(false);
+}
+function startPolling(){
+  if(pollTimer)return;
+  lastSignature=signatureOf();
+  pollTimer=setInterval(pollForNews,30000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)pollForNews();});
+}
+
 function syncAccountLinks(){
   const on=signedIn();
+  if(on)startPolling();
   const here=(location.hash.replace(/^#\/?/,'')||'').split('/')[0];
   const left=$('.nav-left'), right=$('.nav-right'),
         icon=$('#account-button'), panel=$('#account-panel'),
@@ -800,7 +844,7 @@ function syncAccountLinks(){
     make.setAttribute('aria-label',waiting?`Log a session \u2014 ${waiting} class${waiting===1?'':'es'} to confirm`:'Log a session');}
   if(left)left.innerHTML=on
     ? navItem('#/explore','Explore',here==='explore')
-      +navItem('#/messages','Messages',here==='messages')
+      +navItem('#/messages','Messages',here==='messages',(state.unread||[]).length)
     : HEADER_OUT.left;
   /* About is in the burger once signed in, so the lone right-hand link goes */
   if(right){right.innerHTML=on?'':HEADER_OUT.right;right.hidden=on;}
@@ -1037,14 +1081,25 @@ async function respondToRequest(id,what){
 /* Requests on their own, away from the friends list: two buttons, yes or no,
    nothing else to read. Both directions are here because "did she ever answer
    me?" is the other half of the question. */
+/* A name alone is not enough to decide whether to accept somebody. The face
+   and the line they wrote about themselves are the whole basis for it. */
+function personRow(id, actions){
+  const p = personById(id) || { name:'A member' };
+  const meta = [p.area, (p.interests||[]).slice(0,2).join(', ')].filter(Boolean).join(' · ');
+  return `<li>
+    <span class="av-md">${p.photo?`<img src="${escapeHTML(p.photo)}" alt="">`:escapeHTML(initials(p.name))}</span>
+    <div class="req-who">
+      <strong>${escapeHTML(p.name)}</strong>
+      ${meta?`<span class="small">${escapeHTML(meta)}</span>`:''}
+      ${p.bio?`<span class="req-bio">${escapeHTML(p.bio)}</span>`:''}
+    </div>${actions||''}</li>`;
+}
+
 function requestsModal(){
   const waiting=state.incoming||[], sent=state.requests||[];
   const line=id=>{const p=personById(id);
     return p?[p.area,(p.interests||[]).slice(0,2).join(', ')].filter(Boolean).join(' · '):'';};
-  const row=(id,actions)=>`<li>
-    <span class="av-md">${escapeHTML(initials(personById(id)?.name||'?'))}</span>
-    <div class="req-who"><strong>${escapeHTML(personById(id)?.name||'A member')}</strong>
-      <span class="small">${escapeHTML(line(id))}</span></div>${actions}</li>`;
+  const row=(id,actions)=>personRow(id,actions);
   openModal('Requests',
     `<h3 class="modal-sub">Waiting for you</h3>`+
     (waiting.length
@@ -1065,7 +1120,7 @@ function friendsModal(){
   const mine=state.connections||[], sent=state.requests||[], waiting=state.incoming||[];
   const nameOf=id=>personById(id)?.name||'A member';
   const lineOf=id=>{const p=personById(id);return p?[p.area,(p.interests||[]).slice(0,2).join(', ')].filter(Boolean).join(' · '):'';};
-  const row=(id,actions='')=>`<li><div><strong>${escapeHTML(nameOf(id))}</strong><span class="small">${escapeHTML(lineOf(id))}</span></div>${actions}</li>`;
+  const row=(id,actions='')=>personRow(id,actions);
   const list=(ids,actions=()=>'')=>`<ul class="friend-list">${ids.map(id=>row(id,actions(id))).join('')}</ul>`;
   openModal('Your friends',
     `<h3 class="modal-sub">Waiting for you</h3>`+
@@ -1586,12 +1641,28 @@ function feedPage(){
       ${waiting?`<div class="preview-note is-plain"><b>${waiting}</b> ${waiting===1?'person is':'people are'} waiting for you to answer. <button class="plain-link" data-action="show-friends">See ${waiting===1?'it':'them'}</button></div>`:''}
       ${feed.length
         ? `<div class="sessions">${feed.map(s=>sessionCard(s,s.by)).join('')}</div>`
-        : `<div class="feed-empty">
-             <p class="dialog-copy">${(state.connections||[]).length
-               ? 'Nothing from your friends yet. When they log a session it appears here.'
-               : 'Your feed fills up with sessions from the people you are friends with. Find someone who trains when you do and it starts here.'}</p>
-             <a class="button small" href="#/find">Find people ${arrow}</a>
-           </div>`}
+: (state.suggested||[]).length
+  ? `<div class="feed-suggest">
+       <p class="rail-label">People who train like you</p>
+       <p class="small feed-suggest-why">Your feed fills with sessions from your friends. These are members nearby whose week looks like yours.</p>
+       ${(state.suggested||[]).map(p=>`<div class="find-row">
+         <span class="av-md">${p.photo?`<img src="${escapeHTML(p.photo)}" alt="">`:escapeHTML(initials(p.name))}</span>
+         <div class="find-who">
+           <b>${escapeHTML(p.name)}</b>
+           <span class="small">${escapeHTML([p.area,(p.interests||[]).slice(0,2).join(', ')].filter(Boolean).join(' · '))}</span>
+           ${p.shared&&p.shared.length?`<span class="find-why">You both do ${escapeHTML(p.shared.slice(0,2).join(' and '))}</span>`:''}
+         </div>
+         <button class="button small" data-action="ex-connect" data-id="${escapeHTML(p.id)}">Connect</button>
+         ${safetyButton(p.id,p.name)}
+       </div>`).join('')}
+       <a class="text-link" href="#/find">See everyone ${arrow}</a>
+     </div>`
+  : `<div class="feed-empty">
+       <p class="dialog-copy">${(state.connections||[]).length
+         ? 'Nothing from your friends yet. When they log a session it appears here.'
+         : 'Nobody else has joined your area yet. When they do, they will show up here.'}</p>
+       <a class="button small" href="#/find">Find people ${arrow}</a>
+     </div>`}
     </section>
     <aside class="feed-rail">
       <div class="rail-box">
@@ -1622,7 +1693,9 @@ function findPage(){
       <div class="find-who">
         <b>${escapeHTML(m.name)}</b>
         <span class="small">${escapeHTML([m.area,m.age?m.age+'':''].filter(Boolean).join(' · '))}</span>
-        <span class="find-why">${escapeHTML((m.interests||[]).slice(0,3).join(', ')||'No activities listed')}${(m.times||[]).length?' &middot; '+escapeHTML(m.times.slice(0,2).join(', ')):''}</span>
+        <span class="find-why">${(m.shared&&m.shared.length)||(m.sharedTimes&&m.sharedTimes.length)
+          ? `You both do ${escapeHTML((m.shared||[]).slice(0,2).join(' and ')||'')}${(m.shared||[]).length&&(m.sharedTimes||[]).length?', ':''}${(m.sharedTimes||[]).length?escapeHTML((m.sharedTimes||[]).slice(0,1).join('')).toLowerCase():''}`
+          : escapeHTML((m.interests||[]).slice(0,3).join(', ')||'No activities listed')}</span>
       </div>
       ${st==='connected'?'<span class="tag">Friend</span>'
         :st==='incoming'?`<button class="button small" data-action="ex-connect" data-id="${escapeHTML(m.id)}">Accept</button>`
@@ -1639,9 +1712,10 @@ function findPage(){
     </form>
     ${chips.length?`<div class="find-chips">${chips.map(c=>
       `<button class="chip${findActivities.includes(c)?' is-on':''}" data-action="find-chip" data-id="${escapeHTML(c)}">${escapeHTML(c)}</button>`).join('')}</div>`:''}
+    ${results&&results.length?`<p class="rail-label find-head">Compatible with you</p>`:''}
     <div class="find-results">
       ${results===null
-        ? '<p class="small">Search to see who else is training near you. Your own activities are selected above &mdash; tap one to add or remove it.</p>'
+        ? '<p class="small">Finding people near you&hellip;</p>'
         : results.length
           ? results.map(card).join('')
           : '<p class="small">Nobody matched. Try removing a filter, or widening the city.</p>'}

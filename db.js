@@ -665,11 +665,17 @@ async function dbLoadConnections(){
   const rows = data || [];
   const other = r => r.requester_id === me ? r.addressee_id : r.requester_id;
 
-  state.connections = rows.filter(r => r.status === 'accepted').map(other);
+  /* Unique by person, not by row. Two people who requested each other before
+     either answered produce two rows for one friendship, which showed up as
+     a doubled friends count and the same thread listed twice in Messages. */
+  const uniq = xs => [...new Set(xs)];
+  state.connections = uniq(rows.filter(r => r.status === 'accepted').map(other));
   /* Sent by me and not yet answered. */
-  state.requests = rows.filter(r => r.status === 'pending' && r.requester_id === me).map(r => r.addressee_id);
+  state.requests = uniq(rows.filter(r => r.status === 'pending' && r.requester_id === me).map(r => r.addressee_id))
+    .filter(id => !state.connections.includes(id));
   /* Sent to me and waiting on an answer — the half the preview had no idea existed. */
-  state.incoming = rows.filter(r => r.status === 'pending' && r.addressee_id === me).map(r => r.requester_id);
+  state.incoming = uniq(rows.filter(r => r.status === 'pending' && r.addressee_id === me).map(r => r.requester_id))
+    .filter(id => !state.connections.includes(id));
 
   await dbPeople([...state.connections, ...state.requests, ...state.incoming]);
 }
@@ -683,6 +689,9 @@ async function dbRequestConnection(otherId){
   if ((state.incoming || []).includes(otherId)) return await dbAcceptConnection(otherId);
   const { error } = await c.from('connections')
     .insert({ requester_id: authUser.id, addressee_id: otherId, status: 'pending' });
+  /* 23505 means the pair index caught a row we could not see yet — they asked
+     at the same moment. Accepting is what the person meant either way. */
+  if (error && error.code === '23505') { await dbLoadConnections(); return await dbAcceptConnection(otherId); }
   if (error) return { error };
   state.requests = [...(state.requests || []), otherId];
   await dbPeople([otherId]);
@@ -737,6 +746,11 @@ async function dbLoadMessages(){
       body: m.body, at: m.created_at, readAt: m.read_at
     });
   }
+  /* Keyed by row id so the same message cannot appear twice. */
+  for (const k of Object.keys(threads)) {
+    const seen = new Set();
+    threads[k] = threads[k].filter(m => !m.id || (!seen.has(m.id) && seen.add(m.id)));
+  }
   state.threads = threads;
   state.unread = Object.entries(threads)
     .filter(([, ms]) => ms.some(m => !m.mine && !m.readAt)).map(([id]) => id);
@@ -788,15 +802,23 @@ async function dbSearchPeople({ activities = [], times = [], city = '' } = {}){
   const { data, error } = await q;
   if (error) return [];
   const out = [];
+  const mine = state.profile || {};
+  const shareOf = (a, b) => (a || []).filter(x => (b || []).includes(x));
   for (const row of data || []) {
     if ((state.blocked || []).includes(row.id)) continue;
     const p = rowToPerson(row);
     p.photo = await dbPhotoUrl(p.photoPath);
+    /* What you have in common, and how much of it. Ordering by overlap is
+       the product: the point is somebody whose week fits yours, not
+       whoever happens to have signed up most recently. */
+    p.shared = shareOf(p.interests, mine.interests);
+    p.sharedTimes = shareOf(p.times, mine.times);
+    p.score = p.shared.length * 2 + p.sharedTimes.length;
     state.people = state.people || {};
     state.people[p.id] = p;
     out.push(p);
   }
-  return out;
+  return out.sort((a, b) => b.score - a.score);
 }
 
 /* ----------------------------------------------------- other people's days */
@@ -806,10 +828,32 @@ async function dbSearchPeople({ activities = [], times = [], city = '' } = {}){
    is the one thing this product should be most careful with. Discovery belongs
    in search, where you choose to look; the feed is for people you have already
    agreed to share with. */
+/* Who to show somebody whose feed is empty.
+   People, not their sessions: a stranger's logged workouts would publish where
+   she trains and when, which is the thing the friends-only feed exists to
+   avoid. A profile is what search shows anyway. Ranked by how much of your
+   week overlaps theirs, because that is the whole proposition. */
+async function dbLoadSuggestions(){
+  const c = db(); if (!c || !authUser || !state.profile) { state.suggested = []; return []; }
+  const mine = state.profile;
+  const people = await dbSearchPeople({ city: mine.city || mine.area || '' });
+  const known = new Set([...(state.connections||[]), ...(state.requests||[]), ...(state.incoming||[])]);
+  const overlap = (a, b) => (a||[]).filter(x => (b||[]).includes(x)).length;
+  state.suggested = people
+    .filter(p => !known.has(p.id) && !(state.blocked||[]).includes(p.id))
+    .map(p => ({ ...p,
+      score: overlap(p.interests, mine.interests) * 2 + overlap(p.times, mine.times),
+      shared: (p.interests||[]).filter(x => (mine.interests||[]).includes(x)) }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 6);
+  return state.suggested;
+}
+
 async function dbLoadFeed(){
   const c = db(); if (!c || !authUser) { state.feed = []; return []; }
   const friends = (state.connections || []).filter(id => !(state.blocked || []).includes(id));
-  if (!friends.length) { state.feed = []; return []; }
+  if (!friends.length) { state.feed = []; await dbLoadSuggestions(); return []; }
+  state.suggested = [];
   const { data } = await c.from('sessions').select('*')
     .in('profile_id', friends)
     .order('happened_at', { ascending: false }).limit(40);
