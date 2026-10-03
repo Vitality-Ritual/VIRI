@@ -318,6 +318,7 @@ strong{font-weight:500}
 .feed-empty .button{margin-top:18px}
 .find-results{display:flex;flex-direction:column;gap:2px;margin-top:10px}
   .find-head{margin:26px 0 0}
+  .msg-face{display:block;overflow:hidden;flex:none}
 /* a few photographs, clickable */
 .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px;margin:22px 0 4px}
 .gallery-cell{position:relative;margin:0;aspect-ratio:3/4;overflow:hidden;background:var(--cream-2)}
