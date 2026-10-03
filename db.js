@@ -129,6 +129,7 @@ async function dbLoadProfile(){
     bio: data.bio || '',
     photo: '',   /* filled just below, once a signed link exists */
     birthYear: data.birth_year ? String(data.birth_year) : '',
+    birthDate: data.birth_date || '',
     college: data.college || '',
     collegeYear: data.college_year ? String(data.college_year) : '',
     industry: data.industry || '',
@@ -145,6 +146,7 @@ async function dbLoadProfile(){
   await dbClaimPendingStudios();
   await dbClaimPendingPhoto();
   await dbLoadBlocks();
+  await dbLoadGallery();
   await dbLoadConnections();
   await dbLoadMessages();
   await dbLoadFeed();
@@ -160,7 +162,8 @@ const dbProfileFields = j => ({
   region: j.region || '',
   city: j.city || '',
   bio: j.bio || '',
-  birth_year: j.birthYear || '',
+  birth_year: j.birthYear || (j.birthDate ? j.birthDate.slice(0,4) : ''),
+  birth_date: j.birthDate || null,
   college: j.college || '',
   college_year: j.collegeYear || '',
   industry: j.industry || '',
@@ -633,7 +636,7 @@ const rowToPerson = r => ({
   bio: r.bio || '',
   interests: r.activities || [],
   times: r.times || [],
-  age: r.show_age && r.birth_year ? new Date().getFullYear() - Number(r.birth_year) : null,
+  age: r.show_age ? (typeof ageOf === 'function' ? ageOf(r.birth_date || r.birth_year) : null) : null,
   photoPath: r.photo_path || '',
   photo: ''
 });
@@ -884,6 +887,50 @@ async function dbSubscribe(email, source){
   if (error && error.code === '23505') return { data: 'already' };
   if (error) return { error: { message: 'That did not save. Please try again in a moment.' } };
   return { data: 'added' };
+}
+
+/* Up to GALLERY_MAX photographs per profile, the way somebody decides whether
+   they would get on with you. Stored as rows rather than by listing the
+   storage folder, because order is part of what a person is choosing. */
+const GALLERY_MAX = 10;
+
+async function dbLoadGallery(profileId){
+  const c = db(); if (!c || !authUser) return [];
+  const who = profileId || authUser.id;
+  const { data } = await c.from('profile_photos').select('*')
+    .eq('profile_id', who).order('position').order('created_at');
+  const out = [];
+  for (const row of data || []) out.push({ id: row.id, path: row.path, url: await dbPhotoUrl(row.path) });
+  if (who === authUser.id) state.gallery = out;
+  else if (state.people && state.people[who]) state.people[who].gallery = out;
+  return out;
+}
+
+async function dbAddGalleryPhoto(dataUrl){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const have = (state.gallery || []).length;
+  if (have >= GALLERY_MAX) return { error: { message: `You can have ${GALLERY_MAX} photos. Remove one first.` } };
+  const path = await dbUploadPhoto(dataUrl, 'gallery');
+  if (!path) return { error: { message: 'That photo could not be uploaded.' } };
+  const { data, error } = await c.from('profile_photos')
+    .insert({ profile_id: authUser.id, path, position: have }).select().maybeSingle();
+  if (error) return { error };
+  state.gallery = [...(state.gallery || []), { id: data.id, path, url: await dbPhotoUrl(path) }];
+  return { data: true };
+}
+
+async function dbRemoveGalleryPhoto(photoId){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const row = (state.gallery || []).find(p => p.id === photoId);
+  const { data, error } = await c.from('profile_photos').delete()
+    .eq('id', photoId).eq('profile_id', authUser.id).select();
+  if (error) return { error };
+  if (!data || !data.length) return { error: { message: 'That photo could not be removed.' } };
+  /* The row is what the gallery reads, so the file goes too rather than
+     sitting in storage forever with nothing pointing at it. */
+  if (row) await c.storage.from('photos').remove([row.path]);
+  state.gallery = (state.gallery || []).filter(p => p.id !== photoId);
+  return { data: true };
 }
 
 async function dbSaveProfileEdits(patch){

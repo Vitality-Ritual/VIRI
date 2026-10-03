@@ -318,6 +318,28 @@ strong{font-weight:500}
 .feed-empty .button{margin-top:18px}
 .find-results{display:flex;flex-direction:column;gap:2px;margin-top:10px}
   .find-head{margin:26px 0 0}
+/* a few photographs, clickable */
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px;margin:22px 0 4px}
+.gallery-cell{position:relative;margin:0;aspect-ratio:3/4;overflow:hidden;background:var(--cream-2)}
+.gallery-open{display:block;width:100%;height:100%;padding:0;border:0;background:none;cursor:zoom-in}
+.gallery-open img{width:100%;height:100%;object-fit:cover;display:block}
+.gallery-x{position:absolute;top:5px;right:5px;width:22px;height:22px;border-radius:50%;
+  border:0;background:rgba(59,50,42,.62);color:#fff;font-size:10px;line-height:1;cursor:pointer;
+  opacity:0;transition:opacity .2s}
+.gallery-cell:hover .gallery-x,.gallery-x:focus-visible{opacity:1}
+.gallery-add{aspect-ratio:3/4;border:1px dashed var(--line-2);background:transparent;
+  color:var(--taupe-light);font-size:22px;cursor:pointer;transition:border-color .2s,color .2s}
+.gallery-add:hover{border-color:var(--taupe);color:var(--taupe)}
+.gallery-empty{margin:18px 0 4px}
+.lightbox img{width:100%;height:auto;display:block}
+.lightbox-nav{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:14px}
+@media (max-width:767px){.gallery{grid-template-columns:repeat(3,1fr)}.gallery-x{opacity:1}}
+  .person-link{color:inherit;text-decoration:none;border-bottom:1px solid transparent;transition:border-color .2s}
+  .person-link:hover{border-bottom-color:currentColor}
+  .pf-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+  .pf-tags{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+  .pf-tags span{font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+    border:1px solid var(--line);padding:4px 9px;border-radius:999px;color:var(--muted)}
   .feed-suggest{padding:6px 0 10px}
   .feed-suggest-why{margin:4px 0 16px;max-width:52ch}
   .feed-suggest .text-link{display:inline-block;margin-top:14px}
