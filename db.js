@@ -933,12 +933,27 @@ async function dbRemoveGalleryPhoto(photoId){
   return { data: true };
 }
 
+/* Everything sign-up asks for can be changed afterwards, so the mapping lives
+   in one place rather than growing a line per field each time. */
+const EDITABLE = {
+  name:'name', area:'area', region:'region', city:'city', bio:'bio',
+  college:'college', collegeYear:'college_year', industry:'industry',
+  interests:'activities', times:'times', birthDate:'birth_date', showAge:'show_age'
+};
+
 async function dbSaveProfileEdits(patch){
   const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
   const row = {};
-  if (patch.name !== undefined) row.name = patch.name;
-  if (patch.area !== undefined) row.area = patch.area;
-  if (patch.bio  !== undefined) row.bio  = patch.bio;
+  for (const [field, column] of Object.entries(EDITABLE)) {
+    if (patch[field] === undefined) continue;
+    row[column] = patch[field];
+  }
+  /* birth_year is derived, so it can never disagree with the date. */
+  if (patch.birthDate !== undefined) row.birth_year = patch.birthDate ? Number(String(patch.birthDate).slice(0,4)) : null;
+  if (!Object.keys(row).length) return { data: true };
   row.updated_at = new Date().toISOString();
-  return await c.from('profiles').update(row).eq('id', authUser.id);
+  const { data, error } = await c.from('profiles').update(row).eq('id', authUser.id).select();
+  if (error) return { error };
+  if (!data || !data.length) return { error: { message: 'Those changes could not be saved.' } };
+  return { data: true };
 }
