@@ -725,9 +725,9 @@ if(s.type==='account')return `
     <label class="check-box join-women"><input type="checkbox" id="join-woman" name="woman"${joinData.woman?' checked':''}><span>VIRI is for women. I confirm I am a woman.</span></label>
     <label class="check-box join-agree"><input type="checkbox" id="join-agree" name="agree"${joinData.agree?' checked':''}><span>I agree to the <a href="#/terms" target="_blank" rel="noopener">Terms</a> and <a href="#/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</span></label>`;
   if(s.type==='personal')return `
-    <div class="field"><label for="join-born">Your age</label>
-      <select id="join-born" name="birthYear" required><option value="">Select your age</option>${BIRTH_YEARS.map(y=>
-        `<option value="${y}"${joinData.birthYear==String(y)?' selected':''}>${YEAR_NOW-y} &mdash; born ${y}</option>`).join('')}</select>
+    <div class="field"><label for="join-born">Year you were born</label>
+      <select id="join-born" name="birthYear" required><option value="">Select a year</option>${BIRTH_YEARS.map(y=>
+        `<option value="${y}"${joinData.birthYear==String(y)?' selected':''}>${y}</option>`).join('')}</select>
       <label class="check-box show-age"><input type="checkbox" id="join-showage" name="showAge"${joinData.showAge?' checked':''}><span>Show my age on my profile</span></label>
       <p class="field-eg">We ask because VIRI is for over-18s. Whether anyone else sees it is up to you, and you can change this in Settings later.</p></div>
     <fieldset class="join-set college-block">
@@ -988,7 +988,7 @@ bindPhoto();
     else if(s.type==='location'){joinData.region=String(fd.get('region')||'');joinData.city=String(fd.get('city')||'').trim();}
     else if(s.type==='personal'){joinData.birthYear=String(fd.get('birthYear')||'');
       joinData.showAge=!!fd.get('showAge');
-      if(!joinData.birthYear){err.textContent='Please select your age.';return;}
+      if(!joinData.birthYear){err.textContent='Please select the year you were born.';return;}
       const went=!!fd.get('went');
       joinData.college=went?String(fd.get('college')||'').trim():'';
       joinData.collegeYear=went?String(fd.get('collegeYear')||''):'';
