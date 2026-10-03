@@ -88,8 +88,9 @@ be found, and when. Every one of those fields is optional.
 You can **block** anyone, which stops them messaging you or sending you a
 request, and **report** anyone to us.
 
-We read every report. Reports about harassment, or about feeling unsafe with
-someone, are read **every day**. Everything else we aim to act on within two
+We read every report. Reports about harassment, about feeling unsafe with
+someone, or about somebody pretending to be who they are not, are read **every
+day**. Everything else we aim to act on within two
 business days. We cannot undo harm that has already happened.
 
 **If you are in danger, contact the emergency services.** We are not an
