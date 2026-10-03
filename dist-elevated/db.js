@@ -125,11 +125,13 @@ async function dbLoadProfile(){
     interests: data.activities || [],
     times: data.times || [],
     showAge: !!data.show_age,
+    eligibilityConfirmedAt: data.eligibility_confirmed_at || null,
     studios: []
   };
   state.saved = (saved.data || []).map(r => r.studio_id);
   state.profile.photo = await dbPhotoUrl(data.photo_path);
   await dbClaimPendingShowAge();
+  await dbClaimPendingEligibility();
   await dbClaimPendingStudios();
   await dbClaimPendingPhoto();
   await dbLoadBlocks();
@@ -553,6 +555,25 @@ async function dbLoadBlocks(){
    this side can see. Rather than depend on it, the choice is parked locally and
    applied on the first authenticated load — the same approach the saved studios
    and the photograph already take. */
+/* Same reason as the age preference: a column added after the sign-up trigger
+   was written is not something this side can assume the trigger carries. The
+   confirmation is parked at sign-up and written on the first authenticated
+   load, and stays parked until it is written. */
+async function dbClaimPendingEligibility(){
+  const c = db(); if (!c || !authUser || !state.profile) return;
+  let pending = null;
+  try { pending = localStorage.getItem('viri-pending-eligibility'); } catch (e) {}
+  if (pending !== '1' || state.profile.eligibilityConfirmedAt) {
+    if (state.profile.eligibilityConfirmedAt) { try { localStorage.removeItem('viri-pending-eligibility'); } catch (e) {} }
+    return;
+  }
+  const when = new Date().toISOString();
+  const { error } = await c.from('profiles').update({ eligibility_confirmed_at: when }).eq('id', authUser.id);
+  if (error) return;
+  state.profile.eligibilityConfirmedAt = when;
+  try { localStorage.removeItem('viri-pending-eligibility'); } catch (e) {}
+}
+
 async function dbClaimPendingShowAge(){
   const c = db(); if (!c || !authUser || !state.profile) return;
   let pending = null;

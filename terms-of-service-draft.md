@@ -25,6 +25,15 @@ make an account.
 VIRI is for adults. You must be 18 or over. We ask your age when you join, and
 accounts we believe belong to someone under 18 are removed.
 
+## 2a. Who can join
+
+VIRI is for women. Trans women are women, and are welcome.
+
+We do not verify this, and we are not going to — gender cannot be checked
+reliably, and a document check would fall hardest on trans women. We ask you
+to confirm it honestly when you join, and we remove accounts that we believe
+do not belong here.
+
 ## 3. Your account
 
 Give us accurate information, and keep it accurate. Choose a password you do
@@ -181,13 +190,14 @@ If any part of this page turns out to be unenforceable, the rest still stands.
    that disclosure alone does not discharge, and whether any screening is
    expected as a standard of care.
 
-5. **Who may join.** VIRI is presented publicly as a service for women, but
-   nothing asks or records gender and nothing restricts sign-up. So the product
-   does not do what the marketing implies. Both directions need advice: if
-   membership is to be women-only, whether DC public accommodation law permits
-   it and how it would be enforced; if it is not, whether the marketing creates
-   a safety expectation that is being relied on. **This needs resolving before
-   launch** and is as much a product decision as a legal one.
+5. **Who may join — decided: women only.** Section 2a now states it, sign-up
+   requires an affirmative confirmation, and trans women are explicitly
+   included. Self-declared; nothing is verified, and the terms say so.
+   **This now needs clearance rather than a decision:** a stated membership
+   restriction engages the DC Human Rights Act's public accommodation
+   provisions in a way a mere statement of purpose does not. Please advise
+   whether it is permissible as drafted, and if not, what would be. Much
+   easier to adjust before launch than after.
 
 6. **Arbitration and class waiver — deliberately omitted.** Standard in consumer
    terms and would reduce exposure. Left out because forcing a woman harmed
