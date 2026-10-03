@@ -148,6 +148,7 @@ async function dbLoadProfile(){
   await dbLoadBlocks();
   await dbLoadGallery();
   await dbLoadRoutines();
+  await dbLoadGoals();
   await dbLoadConnections();
   await dbLoadMessages();
   await dbLoadFeed();
@@ -1012,6 +1013,113 @@ async function dbRoutineMatches(){
     .map(e => ({ ...(state.people[e.id] || { id: e.id, name: 'A member' }), slots: e.slots, exact: e.exact }))
     .sort((a, b) => b.exact - a.exact || b.slots.length - a.slots.length);
   state.roomMatches = out;
+  return out;
+}
+
+/* ===================== goals =====================
+   Three a week, three a month, and a question each morning about yesterday.
+   Progress is counted from the answers rather than held as a number, so
+   opening the site twice cannot advance a bar, and a day missed on Tuesday
+   can still be answered on Thursday. */
+
+const GOALS_PER_PERIOD = 3;
+const asDate = d => d.toISOString().slice(0,10);
+
+/* The week turns on Sunday, the month on the 1st. */
+function periodStart(period, when){
+  const d = when ? new Date(when) : new Date();
+  d.setHours(0,0,0,0);
+  if (period === 'month') return asDate(new Date(d.getFullYear(), d.getMonth(), 1));
+  d.setDate(d.getDate() - d.getDay());
+  return asDate(d);
+}
+
+async function dbLoadGoals(profileId){
+  const c = db(); if (!c || !authUser) return [];
+  const who = profileId || authUser.id;
+  const starts = [periodStart('week'), periodStart('month')];
+  const { data: goals } = await c.from('goals').select('*')
+    .eq('profile_id', who).in('period_start', starts);
+  const rows = goals || [];
+  let checks = [];
+  if (rows.length) {
+    const { data } = await c.from('goal_checkins').select('*').in('goal_id', rows.map(g => g.id));
+    checks = data || [];
+  }
+  const out = rows
+    .filter(g => g.period_start === periodStart(g.period))   /* this week's, this month's */
+    .map(g => {
+      const mine = checks.filter(k => k.goal_id === g.id);
+      const done = mine.filter(k => k.done).length;
+      return {
+        id: g.id, period: g.period, periodStart: g.period_start,
+        title: g.title, target: g.target, done,
+        pct: Math.min(100, Math.round((done / g.target) * 100)),
+        answered: mine.map(k => k.on_date)
+      };
+    });
+  if (who === authUser.id) state.goals = out;
+  else if (state.people && state.people[who]) state.people[who].goals = out;
+  return out;
+}
+
+async function dbAddGoal({ period, title, target }){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const text = String(title || '').trim();
+  if (!text) return { error: { message: 'Give the goal a name.' } };
+  const have = (state.goals || []).filter(g => g.period === period).length;
+  if (have >= GOALS_PER_PERIOD) return { error: { message: `Three ${period === 'week' ? 'weekly' : 'monthly'} goals is the limit. Remove one first.` } };
+  const { data, error } = await c.from('goals').insert({
+    profile_id: authUser.id, period, period_start: periodStart(period),
+    title: text, target: Number(target) || 1
+  }).select().maybeSingle();
+  if (error) return { error };
+  state.goals = [...(state.goals || []), {
+    id: data.id, period, periodStart: data.period_start, title: text,
+    target: Number(target) || 1, done: 0, pct: 0, answered: []
+  }];
+  return { data: true };
+}
+
+async function dbRemoveGoal(id){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const { data, error } = await c.from('goals').delete()
+    .eq('id', id).eq('profile_id', authUser.id).select();
+  if (error) return { error };
+  if (!data || !data.length) return { error: { message: 'That goal could not be removed.' } };
+  state.goals = (state.goals || []).filter(g => g.id !== id);
+  return { data: true };
+}
+
+/* One answer per goal per day. Answering again corrects it rather than
+   counting twice, which is what the unique index is there to guarantee. */
+async function dbCheckIn(goalId, onDate, done){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const { error } = await c.from('goal_checkins')
+    .upsert({ goal_id: goalId, profile_id: authUser.id, on_date: onDate, done: !!done },
+            { onConflict: 'goal_id,on_date' });
+  if (error) return { error };
+  const g = (state.goals || []).find(x => x.id === goalId);
+  if (g) {
+    if (!g.answered.includes(onDate)) g.answered.push(onDate);
+    g.done = Math.max(0, g.done + (done ? 1 : 0));
+    g.pct = Math.min(100, Math.round((g.done / g.target) * 100));
+  }
+  return { data: true };
+}
+
+/* The oldest day since a goal began that has not been answered yet, so the
+   prompt catches up rather than only ever asking about yesterday. */
+function goalsAwaitingAnswer(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const out = [];
+  for (const g of state.goals || []) {
+    const from = new Date(g.periodStart + 'T00:00:00');
+    for (let d = new Date(from); d < today; d.setDate(d.getDate() + 1)) {
+      const day = asDate(d);
+      if (!g.answered.includes(day)) { out.push({ goal: g, day }); break; }
+    }
+  }
   return out;
 }
 
