@@ -250,12 +250,21 @@ strong{font-weight:500}
 .preview-note.is-plain strong{display:none}
 .preview-note.is-plain{font-style:normal}
 .check-box.join-women{margin-bottom:10px}
+.nav-dot{display:inline-grid;place-items:center;min-width:15px;height:15px;padding:0 4px;
+  margin-left:6px;border-radius:999px;background:var(--grave);color:#fff;
+  font-size:9px;line-height:1;vertical-align:middle}
+.tabbar .tab-dot{position:absolute;top:8px;right:calc(50% - 14px);min-width:8px;height:8px;
+  border-radius:999px;background:var(--grave)}
 /* requests: two answers, nothing to read twice */
 .req-list{list-style:none;margin:0 0 6px;padding:0}
 .req-list li{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
 .req-list li:last-child{border-bottom:0}
 .req-who{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .req-who .small{color:var(--muted)}
+  .req-bio{font-size:12.5px;line-height:1.5;color:var(--ink);margin-top:3px}
+  .req-list .av-md img,.friend-list .av-md img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+  .friend-list li{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .friend-list li:last-child{border-bottom:0}
 .req-acts{display:flex;gap:8px;flex:none}
 .req-yes,.req-no{width:34px;height:34px;border-radius:50%;border:1px solid var(--line-2);
   background:transparent;font-size:14px;line-height:1;cursor:pointer;
@@ -307,7 +316,11 @@ strong{font-weight:500}
 .msg-none .button{margin-top:16px}
 .feed-empty{padding:34px 0;max-width:50ch}
 .feed-empty .button{margin-top:18px}
-.find-results{display:flex;flex-direction:column;gap:2px;margin-top:22px}
+.find-results{display:flex;flex-direction:column;gap:2px;margin-top:10px}
+  .find-head{margin:26px 0 0}
+  .feed-suggest{padding:6px 0 10px}
+  .feed-suggest-why{margin:4px 0 16px;max-width:52ch}
+  .feed-suggest .text-link{display:inline-block;margin-top:14px}
 .find-row .av-md img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 @media (max-width:767px){
   .friend-list li{flex-direction:column;align-items:flex-start;gap:9px}
