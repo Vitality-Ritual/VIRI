@@ -124,10 +124,12 @@ async function dbLoadProfile(){
     industry: data.industry || '',
     interests: data.activities || [],
     times: data.times || [],
+    showAge: !!data.show_age,
     studios: []
   };
   state.saved = (saved.data || []).map(r => r.studio_id);
   state.profile.photo = await dbPhotoUrl(data.photo_path);
+  await dbClaimPendingShowAge();
   await dbClaimPendingStudios();
   await dbClaimPendingPhoto();
   await dbLoadBlocks();
@@ -149,6 +151,7 @@ const dbProfileFields = j => ({
   industry: j.industry || '',
   activities: (j.forms || []).filter(x => x !== JOIN_ANY.forms),
   times: j.times || [],
+  show_age: !!j.showAge,
   /* Recorded only when somebody actually ticked the box. This used to be set on
      every sign-up regardless, which meant the database held a consent record for
      consent nobody had given — worse than holding none, if it were ever relied on. */
@@ -543,6 +546,32 @@ async function dbLoadBlocks(){
   const c = db(); if (!c || !authUser) return;
   const { data } = await c.from('blocks').select('blocked_id').eq('blocker_id', authUser.id);
   state.blocked = (data || []).map(r => r.blocked_id);
+}
+
+/* The sign-up trigger builds the profile row from the metadata passed at
+   registration, and whether it carries a column added later is not something
+   this side can see. Rather than depend on it, the choice is parked locally and
+   applied on the first authenticated load — the same approach the saved studios
+   and the photograph already take. */
+async function dbClaimPendingShowAge(){
+  const c = db(); if (!c || !authUser || !state.profile) return;
+  let pending = null;
+  try { pending = localStorage.getItem('viri-pending-showage'); } catch (e) {}
+  if (pending === null) return;
+  const want = pending === '1';
+  if (want !== state.profile.showAge) {
+    const { error } = await c.from('profiles').update({ show_age: want }).eq('id', authUser.id);
+    if (error) return;            /* keep it parked and try again next time */
+    state.profile.showAge = want;
+  }
+  try { localStorage.removeItem('viri-pending-showage'); } catch (e) {}
+}
+
+async function dbSetShowAge(on){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const { error } = await c.from('profiles').update({ show_age: !!on }).eq('id', authUser.id);
+  if (!error && state.profile) state.profile.showAge = !!on;
+  return { error };
 }
 
 async function dbSaveProfileEdits(patch){
