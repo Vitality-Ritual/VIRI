@@ -250,6 +250,25 @@ strong{font-weight:500}
 .preview-note.is-plain strong{display:none}
 .preview-note.is-plain{font-style:normal}
 .check-box.join-women{margin-bottom:10px}
+/* the social surfaces, once they hold real people */
+.friend-list li{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.friend-acts{display:flex;gap:7px;flex:none}
+.msg-row.is-unread b::after{content:'';display:inline-block;width:6px;height:6px;margin-left:7px;
+  border-radius:50%;background:var(--cocoa);vertical-align:middle}
+.msg-send{display:flex;gap:9px;padding:14px;border-top:1px solid var(--line)}
+.msg-send input{flex:1;min-width:0}
+.msg-empty{padding:22px 4px}
+.msg-none{padding:40px 0;max-width:46ch}
+.msg-none .button{margin-top:16px}
+.feed-empty{padding:34px 0;max-width:50ch}
+.feed-empty .button{margin-top:18px}
+.find-results{display:flex;flex-direction:column;gap:2px;margin-top:22px}
+.find-row .av-md img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+@media (max-width:767px){
+  .friend-list li{flex-direction:column;align-items:flex-start;gap:9px}
+  .friend-acts{width:100%}
+  .friend-acts .button{flex:1}
+}
 #report-form select,#report-form textarea{width:100%}
 #report-form textarea{min-height:110px;resize:vertical}
 .circle-button{width:38px;height:38px;border:1px solid var(--line-2);border-radius:50%;display:grid;place-items:center;background:transparent;color:var(--muted);font-size:16px;line-height:1;transition:.3s}

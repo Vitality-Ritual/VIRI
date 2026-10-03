@@ -1161,55 +1161,59 @@ let msgThread=null;
    No message is ever sent from here; the threads are drawn from the people you
    have actually connected to, so the page is yours rather than a mock-up, and
    the composer says plainly that it does not send. */
-const MSG_LINES=[
-  'Are you going Thursday? I can save you a bike.',
-  'That was brutal. Same time next week?',
-  'Coffee after on Saturday if you are around.',
-  'I booked the 7am. See you there.'
-];
 function messagesPage(){
   if(!signedIn())return authPage();
-  const ids=(state.connections||[]).filter(id=>exPerson(id));
+  /* Friends only. The commonest way a social product hurts women is letting a
+     stranger write to them, so the connection has to come first. */
+  const ids=(state.connections||[]).filter(id=>!isBlocked(id));
   const open=msgThread&&ids.includes(msgThread)?msgThread:ids[0];
-  const who=open?exPerson(open):null;
+  const who=open?personById(open):null;
+  const thread=(state.threads||{})[open]||[];
+  const preview=id=>{const t=(state.threads||{})[id]||[];const last=t[t.length-1];
+    return last?`${last.mine?'You: ':''}${last.body}`:'No messages yet';};
   return `<section class="page-head is-tight"><div class="wrap"><h1>Messages</h1></div></section>
   <div class="wrap msg">
-    ${note('Threads are drawn from the people you have connected to. Nothing is sent from this preview.')}
     ${ids.length?`<div class="msg-grid">
       <aside class="msg-list">
-        ${ids.map((id,i)=>{const p=exPerson(id);
-          return `<button class="msg-row${id===open?' is-on':''}" data-action="msg-open" data-id="${escapeHTML(id)}">
+        ${ids.map(id=>{const p=personById(id)||{name:'A member'};
+          return `<button class="msg-row${id===open?' is-on':''}${(state.unread||[]).includes(id)?' is-unread':''}" data-action="msg-open" data-id="${escapeHTML(id)}">
             <span class="av-md">${escapeHTML(initials(p.name))}</span>
             <span class="msg-who"><b>${escapeHTML(p.name)}</b>
-              <span class="small">${escapeHTML(MSG_LINES[i%MSG_LINES.length])}</span></span>
+              <span class="small">${escapeHTML(preview(id).slice(0,60))}</span></span>
           </button>`;}).join('')}
       </aside>
       <section class="msg-thread">
         <header class="msg-head"><span class="av-md">${escapeHTML(initials(who.name))}</span>
-          <span class="msg-who"><b>${escapeHTML(who.name)}</b><span class="small">${escapeHTML(who.area)} &middot; ${escapeHTML(who.line)}</span></span></header>
-        <div class="msg-body">
-          <p class="msg-bubble them">${escapeHTML(MSG_LINES[ids.indexOf(open)%MSG_LINES.length])}</p>
-          <p class="msg-bubble me">Yes — adding it to my plan now.</p>
-          <p class="msg-bubble them">Perfect. I will grab the two by the window.</p>
+          <span class="msg-who"><b>${escapeHTML(who.name)}</b><span class="small">${escapeHTML([who.area,(who.interests||[]).slice(0,2).join(', ')].filter(Boolean).join(' · '))}</span></span></header>
+        <div class="msg-body" id="msg-body">
+          ${thread.length?thread.map(m=>
+            `<p class="msg-bubble ${m.mine?'me':'them'}">${escapeHTML(m.body)}</p>`).join('')
+            :`<p class="small msg-empty">Nothing yet. Say hello &mdash; you are both going to the same places.</p>`}
         </div>
-        <form class="msg-send" id="msg-form">
-          <label class="visually-hidden" for="msg-input">Write a message</label>
-          <input id="msg-input" name="msg" placeholder="Messaging is not wired up in this preview" disabled>
-          <button class="button small" type="button" disabled>Send</button>
+        <form class="msg-send" id="msg-form" data-id="${escapeHTML(open)}">
+          <label class="visually-hidden" for="msg-input">Message ${escapeHTML(who.name)}</label>
+          <input id="msg-input" name="msg" placeholder="Write a message" maxlength="2000" autocomplete="off">
+          <button class="button small" type="submit">Send</button>
         </form>
       </section>
     </div>`
-    :`<p class="pf-empty">No one to write to yet. Connect with someone in your classes and the thread starts here.</p>${button('Find people','#/find','small outline')}`}
+    :`<div class="msg-none">
+       <p class="dialog-copy">You can message people once you are friends. It stops strangers writing to you.</p>
+       <a class="button small" href="#/find">Find people ${arrow}</a>
+     </div>`}
   </div>`;}
-/* ---- settings ---- */
-/* A copy of everything, as one file. The pictures are carried inside it rather
-   than linked, because a signed link stops working a week after it is made and
-   an export that expires is not really an export. */
-async function toggleShowAge(on){
-  const r=await dbSetShowAge(on);
-  if(r.error){toast(r.error.message);render(false);return;}
-  save();render(false);
-  toast(on?'Your age is now shown on your profile.':'Your age is hidden from your profile.');
+
+async function sendMessage(form){
+  const to=form.dataset.id, input=form.querySelector('#msg-input');
+  const text=input.value.trim(); if(!text)return;
+  const btn=form.querySelector('button[type=submit]');
+  btn.disabled=true; input.value='';
+  const r=await dbSendMessage(to,text);
+  btn.disabled=false;
+  if(r.error){input.value=text;toast(r.error.message);return;}
+  render(false);
+  const body=$('#msg-body'); if(body)body.scrollTop=body.scrollHeight;
+  $('#msg-input')?.focus();
 }
 
 async function exportMyData(btn){
@@ -1452,10 +1456,13 @@ function profilePage(){
         <a class="text-link" href="#/find">Add a class ${arrow}</a>
       </div>
       <div class="rail-box plain">
-        <p class="rail-label">In your classes this week</p>
-        ${(()=>{const m=findMatches().slice(0,2);return m.length?m.map(x=>peopleRow(x)).join('')
-          :'<p class="small">Add a class to your plan and the people in it appear here.</p>';})()}
-        <a class="text-link" href="#/find">See everyone ${arrow}</a>
+        <p class="rail-label">Waiting for you</p>
+        ${(state.incoming||[]).length
+          ? (state.incoming||[]).slice(0,3).map(id=>{const p=personById(id)||{name:'A member'};
+              return `<p class="rail-line"><b>${escapeHTML(p.name)}</b><br><span class="small">wants to connect</span></p>`;}).join('')
+            + '<button class="plain-link" data-action="show-friends">Answer them</button>'
+          : '<p class="small">No requests waiting.</p>'}
+        <a class="text-link" href="#/find">Find people ${arrow}</a>
       </div>
     </aside>
     </div>
@@ -1473,135 +1480,86 @@ const FEED_SHAPE=[
    place:'Barre3 14th Street',comments:0,
    note:'First time at this location. Everyone was lovely and nobody mentioned my form.'}
 ];
-const feedSessions=()=>{
-  const people=(VIRI.people||[]).filter(x=>x.city===(ex&&ex.city||'dc'));
-  return FEED_SHAPE.map((s,i)=>({s,by:people[i*3]||people[i]||null})).filter(x=>x.by);
-};
 function feedPage(){
   if(!signedIn())return authPage();
-  const p=state.profile;
-  const going=exClasses().filter(c=>state.joined.includes(c.id)).slice(0,2);
-  const near=findMatches().slice(0,2);
+  const feed=state.feed||[];
+  const waiting=(state.incoming||[]).length;
   return `<div class="wrap feed-wrap">
     <section class="feed-col">
       <div class="feed-top">
         <h1>This week, near you</h1>
         <a class="text-link" href="#/find">Find people ${arrow}</a>
       </div>
-      ${note('The sessions below are sample members, so the feed is never empty. Your own posts and plans are real and stay on this device.')}
-      <div class="sessions">${feedSessions().map(({s,by})=>sessionCard(s,by)).join('')}</div>
+      ${waiting?`<div class="preview-note is-plain"><b>${waiting}</b> ${waiting===1?'person is':'people are'} waiting for you to answer. <button class="plain-link" data-action="show-friends">See ${waiting===1?'it':'them'}</button></div>`:''}
+      ${feed.length
+        ? `<div class="sessions">${feed.map(s=>sessionCard(s,s.by)).join('')}</div>`
+        : `<div class="feed-empty">
+             <p class="dialog-copy">${(state.connections||[]).length
+               ? 'Nothing from your friends yet. When they log a session it appears here.'
+               : 'Your feed fills up with sessions from the people you are friends with. Find someone who trains when you do and it starts here.'}</p>
+             <a class="button small" href="#/find">Find people ${arrow}</a>
+           </div>`}
     </section>
     <aside class="feed-rail">
       <div class="rail-box">
-        <p class="rail-label">On your plan</p>
-        ${going.length?going.map(c=>{const v=exVenue(c.venue);
-          return `<p class="rail-line"><b>${prettyDate(c.start)} ${prettyTime(c.start)}</b><br>${escapeHTML(v?v.brand:'')} &middot; ${escapeHTML(c.area)}<br><span class="small">${c.going.length} going</span></p>`;}).join('')
-          :'<p class="small">Nothing yet. Add a class and it shows up here with the people going.</p>'}
-        <a class="text-link" href="#/find">Add a class ${arrow}</a>
+        <p class="rail-label">Your week</p>
+        ${(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start).slice(0,3).map(c=>
+          `<p class="rail-line"><b>${prettyDate(c.start)} ${prettyTime(c.start)}</b><br>${escapeHTML(c.place||c.title)}</p>`).join('')
+          || '<p class="small">Nothing booked. Add a class from Explore and it shows up here.</p>'}
+        <a class="text-link" href="#/explore">Explore classes ${arrow}</a>
       </div>
       <div class="rail-box plain">
-        <p class="rail-label">In your classes this week</p>
-        ${near.length?near.map(m=>peopleRow(m)).join('')
-          :'<p class="small">Add a class to your plan and the people in it appear here.</p>'}
-        <a class="text-link" href="#/find">See everyone ${arrow}</a>
+        <p class="rail-label">Your circle</p>
+        <p class="rail-line"><b>${(state.connections||[]).length}</b> friend${(state.connections||[]).length===1?'':'s'}</p>
+        <a class="text-link" href="#/find">Find more ${arrow}</a>
       </div>
     </aside>
-  </div>`;
-}
+  </div>`;}
 /* ---- find: people first, classes second ----
    A match is a real overlap, not a guess: either you are both booked into the
    same class, or the class is one your own answers say you would go to. */
-function findMatches(){
-  const p=state.profile, cats=(p&&p.interests)||[], seen={}, out=[];
-  /* Somebody you blocked should not come back as a suggestion. */
-  (state.blocked||[]).forEach(id=>{seen[id]=1;});
-  const mine=exClasses().filter(c=>state.joined.includes(c.id));
-  mine.forEach(c=>c.going.forEach(id=>{
-    if(seen[id])return; const who=exPerson(id); if(!who)return;
-    seen[id]=1; out.push({who,cls:c,why:'both'});
-  }));
-  if(out.length<6){
-    exClasses().filter(c=>!cats.length||cats.some(x=>x.toLowerCase().includes(c.cat.toLowerCase())||c.cat.toLowerCase().includes(x.toLowerCase())))
-      .forEach(c=>{let fromHere=0;c.going.forEach(id=>{
-        if(seen[id]||out.length>=6||fromHere>=2)return; const who=exPerson(id); if(!who)return;
-        seen[id]=1; fromHere++; out.push({who,cls:c,why:'same'});
-      });});
-  }
-  return out;
-}
-function peopleRow(m){
-  const st=exLinked(m.who.id), v=exVenue(m.cls.venue);
-  return `<div class="find-row">
-    <span class="av-md">${escapeHTML(initials(m.who.name))}</span>
-    <div class="find-who">
-      <b>${escapeHTML(m.who.name)}</b>
-      <span class="small">${escapeHTML(m.who.line)}</span>
-      <span class="find-why">${m.why==='both'?'Both booked':'Also goes'} &middot; ${prettyDate(m.cls.start)} ${prettyTime(m.cls.start)} &middot; ${escapeHTML(v?v.brand:m.cls.area)}</span>
-    </div>
-    ${st==='connected'?'<span class="tag">Friend</span>'
-      :st==='requested'?'<span class="tag">Requested</span>'
-      :`<button class="button small" data-action="ex-connect" data-id="${escapeHTML(m.who.id)}">Connect</button>`}
-    ${safetyButton(m.who.id,m.who.name)}
-  </div>`;
-}
 function findPage(){
   if(!signedIn())return authPage();
-  const p=state.profile, cats=(p&&p.interests)||[];
-  const matches=findMatches();
-  /* classes worth joining for the room, so the sort is by who is in them */
-  const rooms=exClasses()
-    .filter(c=>c.going.length&&(!cats.length||cats.some(x=>x.toLowerCase().includes(c.cat.toLowerCase())||c.cat.toLowerCase().includes(x.toLowerCase()))))
-    .sort((a,b)=>b.going.length-a.going.length).slice(0,3);
-  const waiting=(state.requests||[]).filter(id=>!state.connections.includes(id)).slice(0,2);
-  return `<section class="page-head"><div class="wrap"><p class="eyebrow">Find your people</p><h1>Who is already<br>in the room.</h1></div></section>
+  const p=state.profile;
+  const results=state.found||null;   /* null until a search has run */
+  const chips=(p&&p.interests||[]).slice(0,6);
+  const card=m=>{const st=exLinked(m.id);
+    return `<div class="find-row">
+      <span class="av-md">${m.photo?`<img src="${escapeHTML(m.photo)}" alt="">`:escapeHTML(initials(m.name))}</span>
+      <div class="find-who">
+        <b>${escapeHTML(m.name)}</b>
+        <span class="small">${escapeHTML([m.area,m.age?m.age+'':''].filter(Boolean).join(' · '))}</span>
+        <span class="find-why">${escapeHTML((m.interests||[]).slice(0,3).join(', ')||'No activities listed')}${(m.times||[]).length?' &middot; '+escapeHTML(m.times.slice(0,2).join(', ')):''}</span>
+      </div>
+      ${st==='connected'?'<span class="tag">Friend</span>'
+        :st==='incoming'?`<button class="button small" data-action="ex-connect" data-id="${escapeHTML(m.id)}">Accept</button>`
+        :st==='requested'?'<span class="tag">Requested</span>'
+        :`<button class="button small" data-action="ex-connect" data-id="${escapeHTML(m.id)}">Connect</button>`}
+      ${safetyButton(m.id,m.name)}
+    </div>`;};
+  return `<section class="page-head"><div class="wrap"><p class="eyebrow">Find your people</p><h1>Who else trains<br>the way you do.</h1></div></section>
   <div class="wrap find">
     <form class="find-bar" id="find-form">
-      <label class="visually-hidden" for="find-q">Search people, studios or classes</label>
-      <input id="find-q" name="q" type="search" placeholder="A studio, a class, a neighborhood, a name">
+      <label class="visually-hidden" for="find-q">Search by city</label>
+      <input id="find-q" name="q" type="search" placeholder="${escapeHTML(p&&p.city?p.city:'A city')}" value="${escapeHTML(findCity)}">
       <button class="button" type="submit">Search</button>
     </form>
-    <div class="find-chips">${(cats.length?cats:['Pilates','Running','Indoor cycling']).slice(0,5).map((c,i)=>
-      `<button class="chip${i<2?' is-on':''}" data-action="find-chip">${escapeHTML(c)}</button>`).join('')}
-      <button class="chip" data-action="find-chip">${escapeHTML((((p&&p.times)||[]).concat('This week'))[0])}</button></div>
-    <div class="find-grid">
-      <div class="find-main">
-        <div class="find-head"><h2>${matches.some(m=>m.why==='both')?'Already in a class with you':'In classes you would go to'}</h2><span class="small">${matches.length} this week</span></div>
-        ${matches.length?matches.slice(0,4).map(m=>peopleRow(m)).join('')
-          :`<p class="pf-empty">Add a class to your plan and everyone else going appears here.</p>`}
-        <div class="find-head"><h2>Classes worth joining for the room</h2><span class="small">Next 7 days</span></div>
-        ${rooms.map(c=>{const v=exVenue(c.venue);
-          const faces=c.going.slice(0,3).map(id=>{const w=exPerson(id);
-            return `<span>${escapeHTML(initials(w?w.name:'VIRI'))}</span>`;}).join('');
-          const first=exPerson(c.going[0]);
-          return `<div class="find-room">
-            <span class="find-room-cat">${escapeHTML(c.cat)}</span>
-            <div class="find-who">
-              <span class="find-why">${prettyDate(c.start)} ${prettyTime(c.start)} &middot; ${escapeHTML(v?v.brand:'')} &middot; ${escapeHTML(c.area)}</span>
-              <b class="find-room-title">${escapeHTML(c.title)}</b>
-              <span class="find-going"><span class="who-stack">${faces}</span>
-                <span class="small">${first?escapeHTML(first.name.split(' ')[0]):''}${c.going.length>1?` and ${c.going.length-1} other${c.going.length-1===1?'':'s'}`:''} going</span></span>
-            </div>
-            <a class="button small outline" href="#/book/${c.id}">Add to plan</a>
-          </div>`;}).join('')}
-      </div>
-      <aside class="find-rail">
-        <div class="rail-box">
-          <p class="rail-label">Why these people</p>
-          <p class="rail-copy">You are matched on what you already do: the studios you saved, the activities you picked and the hours you train. Nobody appears here who is outside the week you actually have.</p>
-          <p class="small">${escapeHTML((cats.slice(0,3).join(' · '))||'Add your activities to sharpen this')}</p>
-          <a class="button small outline" href="#/profile">Change what I match on</a>
-        </div>
-        ${waiting.length?`<div class="rail-box plain"><p class="rail-label">Waiting on you</p>
-          ${waiting.map(id=>{const w=exPerson(id);return `<div class="find-row compact"><span class="av-md">${escapeHTML(initials(w?w.name:'VIRI'))}</span>
-            <div class="find-who"><b>${escapeHTML(w?w.name:'A member')}</b><span class="small">Asked to connect</span></div>
-            <button class="button small" data-action="ex-connect" data-id="${escapeHTML(id)}">Accept</button></div>`;}).join('')}</div>`:''}
-        <div class="rail-box plain">
-          <p class="rail-label">Studios near you</p>
-          ${studios.slice(0,3).map(s=>`<a class="text-link" href="#/studios/${s.id}">${escapeHTML(s.name)} ${arrow}</a>`).join('')}
-        </div>
-      </aside>
+    ${chips.length?`<div class="find-chips">${chips.map(c=>
+      `<button class="chip${findActivities.includes(c)?' is-on':''}" data-action="find-chip" data-id="${escapeHTML(c)}">${escapeHTML(c)}</button>`).join('')}</div>`:''}
+    <div class="find-results">
+      ${results===null
+        ? '<p class="small">Search to see who else is training near you. Your own activities are selected above &mdash; tap one to add or remove it.</p>'
+        : results.length
+          ? results.map(card).join('')
+          : '<p class="small">Nobody matched. Try removing a filter, or widening the city.</p>'}
     </div>
-  </div>`;
+  </div>`;}
+
+let findCity='', findActivities=[], feedFetched=false;
+async function runSearch(){
+  const q=$('#find-q'); if(q)findCity=q.value.trim();
+  state.found=await dbSearchPeople({ city:findCity||((state.profile&&state.profile.city)||''), activities:findActivities });
+  render(false);
 }
 function authPage(){return `<section class="auth-layout"><div class="auth-image"><img src="${A}studio-entry.jpg" alt="Two women arriving at the studio together"><h2>A new ritual.<br>A new circle.<br>A little more you.</h2></div><div class="auth-form"><p class="eyebrow">Welcome back</p><h1>Back to your circle.</h1><p>Sign in to your VIRI account.</p><form id="auth-form"><div class="field"><label for="auth-email">Email address</label><input id="auth-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required></div><div class="field"><label for="auth-pass">Password</label><input id="auth-pass" name="password" type="password" autocomplete="current-password" required></div><p id="auth-error" class="field-error" role="alert"></p><button class="button" type="submit" style="margin-top:18px">Open my profile</button></form><p class="small">New here? <a href="#/signup">Join VIRI</a></p></div></section>`;}
 function bindAuth(){$('#auth-form')?.addEventListener('submit',async e=>{
@@ -2052,7 +2010,11 @@ function initPageMotion(){
   revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('is-revealed');revealObserver.unobserve(entry.target);}}),{threshold:.08,rootMargin:'0px 0px -30px 0px'});
   targets.forEach(el=>{el.classList.add('will-reveal');revealObserver.observe(el);});
 }
-function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':if(signedIn()){location.replace('#/feed');return;}html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'check-email':html=checkEmailPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'profile':html=profilePage();break;case 'feed':html=feedPage();break;case 'find':html=findPage();break;case 'messages':html=messagesPage();break;case 'settings':html=settingsPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=privacyPage();break;case 'terms':html=termsPage();break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you','check-email':'Check your email',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',profile:'Your circle',feed:'Feed',find:'Find your people',messages:'Messages',settings:'Settings',book:'Book this class',privacy:'Your privacy',terms:'Terms of service'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#auth-form'))bindAuth();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='find')$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();toast('Search runs over the sample roster in this preview.');});if(path==='join')bindJoin();
+function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':if(signedIn()){location.replace('#/feed');return;}html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'check-email':html=checkEmailPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'profile':html=profilePage();break;case 'feed':html=feedPage();break;case 'find':html=findPage();break;case 'messages':html=messagesPage();break;case 'settings':html=settingsPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=privacyPage();break;case 'terms':html=termsPage();break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you','check-email':'Check your email',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',profile:'Your circle',feed:'Feed',find:'Find your people',messages:'Messages',settings:'Settings',book:'Book this class',privacy:'Your privacy',terms:'Terms of service'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#auth-form'))bindAuth();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='find'){$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();runSearch();});if(state.found===undefined||state.found===null)runSearch();}if(path==='messages'){$('#msg-form')?.addEventListener('submit',e=>{e.preventDefault();sendMessage(e.target);});const b=$('#msg-body');if(b)b.scrollTop=b.scrollHeight;if(msgThread&&typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);}/* Fetch on arrival, not on every render — render() re-runs this block, so an
+   unguarded fetch-then-render is an infinite loop. The flag clears when you
+   leave, so coming back fetches again. */
+if(path!=='feed')feedFetched=false;
+else if(!feedFetched&&typeof dbLoadFeed==='function'){feedFetched=true;dbLoadFeed().then(()=>{if(location.hash==='#/feed')render(false);});}if(path==='join')bindJoin();
   $('#subscribe-form')?.addEventListener('submit',e=>{e.preventDefault();
     toast('Noted on this device. We are not sending email to this list yet.');e.target.reset();});if(path==='explore'){$('#ex-search').addEventListener('input',e=>{ex.query=e.target.value;exRefresh();});$('#ex-time').addEventListener('change',e=>{ex.time=e.target.value;exRefresh();});exBindMap();}}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-action]');if(!t)return;const {action,id,index,category,view,kind,name,channel}=t.dataset;switch(action){case 'video-toggle':{const v=$('#'+(t.dataset.video||'about-video'));if(v.paused)v.play().catch(()=>toast('Video playback is unavailable in this browser.'));else v.pause();break;}case 'close-modal':closeModal();break;case 'join-back':joinStep=Math.max(0,joinStep-1);render(false);break;case 'studio-prev':studioIndex=Math.max(0,studioIndex-1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'studio-next':studioIndex=Math.min(STUDIO_LAST(),studioIndex+1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'ex-city':ex={...ex,city:t.dataset.id,venue:null,cls:null};render(false);break;
@@ -2070,7 +2032,7 @@ case 'book-new':bookChoose(t.dataset.id,'new');break;
 case 'book-plan':bookChoose(t.dataset.id,'plan');break;
 case 'ex-zoom':exZoom(t.dataset.dir);break;
 case 'ex-reset':ex={...ex,cat:'All',time:'All',members:false,query:'',venue:null,cls:null};render(false);break;
-case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':{const nowOn=!state.saved.includes(id);state.saved=nowOn?[...state.saved,id]:state.saved.filter(x=>x!==id);if(typeof dbSetStudio==='function')dbPush(dbSetStudio(id,nowOn),'that studio');save();render(false);}toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':pendingPlans().length?attendModal():postActivity();break;case 'post-new':closeModal();postActivity();break;case 'attend-yes':logAttended(t.dataset.id);break;case 'attend-no':skipAttended(t.dataset.id);break;case 'finish-next':{const n=(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start)[0];if(n){n.start=Date.now()-(n.dur+5)*60000;save();render(false);toast('Moved into the past. The + now has something to ask you.');}break;}case 'attend-more':{const p=takePlan(t.dataset.id);closeModal();postActivity(p);break;}case 'show-friends':friendsModal();break;case 'accept-request':exConnect(t.dataset.id);break;case 'decline-request':respondToRequest(t.dataset.id,'declined');break;case 'withdraw-request':respondToRequest(t.dataset.id,'withdrawn');break;case 'remove-friend':respondToRequest(t.dataset.id,'removed');break;case 'msg-open':msgThread=t.dataset.id;render(false);break;case 'log-out':dbSignOut().then(()=>{$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Signed out.');location.hash='#/';render(false);});break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':toast('Added to your plan. In the live product this books you alongside them.');break;case 'session-talk':toast('Comments are part of this design. Writing one is not wired up in the preview yet.');break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':t.classList.toggle('is-on');break;case 'connect-sample':state.connections=state.connections.includes('alex')?[]:['alex'];save();render(false);toast(state.connections.length?'Sample connection added to your preview.':'Sample connection removed.');break;case 'edit-profile':openModal('Make your profile yours',`<form id="edit-form"><div class="field"><label for="edit-name">Your name</label><input id="edit-name" name="name" value="${escapeHTML(state.profile?.name)}" required maxlength="60"></div><div class="field"><label for="edit-area">Your neighborhood</label><input id="edit-area" name="area" value="${escapeHTML(state.profile?.area)}" required maxlength="70"></div><div class="field"><label for="edit-photo">Profile photo <span class="field-optional">Optional</span></label><div class="photo-drop" id="edit-drop" data-has="0"><input id="edit-photo" type="file" accept="image/*" class="visually-hidden"><div class="photo-empty"><p class="photo-lede">Drag a photo here, or <button type="button" class="plain-link" id="edit-pick">choose a file</button>.</p></div><div class="photo-editor"><figure class="post-shot"><img id="edit-preview" alt="Your photo"></figure><p class="photo-swap"><button type="button" class="plain-link" id="edit-repick">Choose another</button></p></div></div></div><p id="edit-error" class="field-error" role="alert"></p><div class="dialog-actions"><button class="button small" type="submit">Save profile</button></div></form>`,()=>{let newPhoto='';const drop=$('#edit-drop'),file=$('#edit-photo');const take=async f=>{const d=await shrinkImage(f,640);if(!d){$('#edit-error').textContent='That file could not be read as an image.';return;}newPhoto=d;$('#edit-preview').src=d;drop.dataset.has='1';};$('#edit-pick')?.addEventListener('click',()=>file.click());$('#edit-repick')?.addEventListener('click',()=>file.click());file.addEventListener('change',()=>{if(file.files?.[0])take(file.files[0]);});['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('is-over');}));['dragleave','dragend'].forEach(t=>drop.addEventListener(t,e=>{if(t==='dragleave'&&drop.contains(e.relatedTarget))return;drop.classList.remove('is-over');}));drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('is-over');const f=e.dataTransfer?.files?.[0];if(f)take(f);});$('#edit-form').addEventListener('submit',async ev=>{ev.preventDefault();const fd=Object.fromEntries(new FormData(ev.target));if(!fd.name.trim()||!fd.area.trim())return;const btn=ev.target.querySelector('button[type=submit]'),label=btn.innerHTML;btn.disabled=true;btn.textContent='Saving\u2026';state.profile={...state.profile,name:fd.name.trim(),area:fd.area.trim()};if(typeof dbSaveProfileEdits==='function')await dbSaveProfileEdits({name:fd.name.trim(),area:fd.area.trim()});if(newPhoto&&typeof dbSetAvatar==='function'){const r=await dbSetAvatar(newPhoto);if(r.error){btn.disabled=false;btn.innerHTML=label;$('#edit-error').textContent=r.error.message;return;}}save();closeModal();render(false);toast('Profile updated.');});});break;case 'person-menu':personMenu(t.dataset.id,t.dataset.name);break;case 'report-person':closeModal();reportModal(t.dataset.id,t.dataset.name);break;case 'block-person':closeModal();blockConfirm(t.dataset.id,t.dataset.name);break;case 'block-confirm':doBlock(t.dataset.id,t.dataset.name);break;case 'unblock-person':doUnblock(t.dataset.id,t.dataset.name);break;case 'toggle-show-age':toggleShowAge(t.checked);break;case 'export-data':exportMyData(t);break;case 'delete-account':deleteAccountModal();break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
+case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':{const nowOn=!state.saved.includes(id);state.saved=nowOn?[...state.saved,id]:state.saved.filter(x=>x!==id);if(typeof dbSetStudio==='function')dbPush(dbSetStudio(id,nowOn),'that studio');save();render(false);}toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':pendingPlans().length?attendModal():postActivity();break;case 'post-new':closeModal();postActivity();break;case 'attend-yes':logAttended(t.dataset.id);break;case 'attend-no':skipAttended(t.dataset.id);break;case 'finish-next':{const n=(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start)[0];if(n){n.start=Date.now()-(n.dur+5)*60000;save();render(false);toast('Moved into the past. The + now has something to ask you.');}break;}case 'attend-more':{const p=takePlan(t.dataset.id);closeModal();postActivity(p);break;}case 'show-friends':friendsModal();break;case 'accept-request':exConnect(t.dataset.id);break;case 'decline-request':respondToRequest(t.dataset.id,'declined');break;case 'withdraw-request':respondToRequest(t.dataset.id,'withdrawn');break;case 'remove-friend':respondToRequest(t.dataset.id,'removed');break;case 'msg-open':msgThread=t.dataset.id;render(false);if(typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);break;case 'log-out':dbSignOut().then(()=>{$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Signed out.');location.hash='#/';render(false);});break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':toast('Added to your plan. In the live product this books you alongside them.');break;case 'session-talk':toast('Comments are part of this design. Writing one is not wired up in the preview yet.');break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':{const v=t.dataset.id;findActivities=findActivities.includes(v)?findActivities.filter(x=>x!==v):[...findActivities,v];runSearch();break;}case 'connect-sample':state.connections=state.connections.includes('alex')?[]:['alex'];save();render(false);toast(state.connections.length?'Sample connection added to your preview.':'Sample connection removed.');break;case 'edit-profile':openModal('Make your profile yours',`<form id="edit-form"><div class="field"><label for="edit-name">Your name</label><input id="edit-name" name="name" value="${escapeHTML(state.profile?.name)}" required maxlength="60"></div><div class="field"><label for="edit-area">Your neighborhood</label><input id="edit-area" name="area" value="${escapeHTML(state.profile?.area)}" required maxlength="70"></div><div class="field"><label for="edit-photo">Profile photo <span class="field-optional">Optional</span></label><div class="photo-drop" id="edit-drop" data-has="0"><input id="edit-photo" type="file" accept="image/*" class="visually-hidden"><div class="photo-empty"><p class="photo-lede">Drag a photo here, or <button type="button" class="plain-link" id="edit-pick">choose a file</button>.</p></div><div class="photo-editor"><figure class="post-shot"><img id="edit-preview" alt="Your photo"></figure><p class="photo-swap"><button type="button" class="plain-link" id="edit-repick">Choose another</button></p></div></div></div><p id="edit-error" class="field-error" role="alert"></p><div class="dialog-actions"><button class="button small" type="submit">Save profile</button></div></form>`,()=>{let newPhoto='';const drop=$('#edit-drop'),file=$('#edit-photo');const take=async f=>{const d=await shrinkImage(f,640);if(!d){$('#edit-error').textContent='That file could not be read as an image.';return;}newPhoto=d;$('#edit-preview').src=d;drop.dataset.has='1';};$('#edit-pick')?.addEventListener('click',()=>file.click());$('#edit-repick')?.addEventListener('click',()=>file.click());file.addEventListener('change',()=>{if(file.files?.[0])take(file.files[0]);});['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('is-over');}));['dragleave','dragend'].forEach(t=>drop.addEventListener(t,e=>{if(t==='dragleave'&&drop.contains(e.relatedTarget))return;drop.classList.remove('is-over');}));drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('is-over');const f=e.dataTransfer?.files?.[0];if(f)take(f);});$('#edit-form').addEventListener('submit',async ev=>{ev.preventDefault();const fd=Object.fromEntries(new FormData(ev.target));if(!fd.name.trim()||!fd.area.trim())return;const btn=ev.target.querySelector('button[type=submit]'),label=btn.innerHTML;btn.disabled=true;btn.textContent='Saving\u2026';state.profile={...state.profile,name:fd.name.trim(),area:fd.area.trim()};if(typeof dbSaveProfileEdits==='function')await dbSaveProfileEdits({name:fd.name.trim(),area:fd.area.trim()});if(newPhoto&&typeof dbSetAvatar==='function'){const r=await dbSetAvatar(newPhoto);if(r.error){btn.disabled=false;btn.innerHTML=label;$('#edit-error').textContent=r.error.message;return;}}save();closeModal();render(false);toast('Profile updated.');});});break;case 'person-menu':personMenu(t.dataset.id,t.dataset.name);break;case 'report-person':closeModal();reportModal(t.dataset.id,t.dataset.name);break;case 'block-person':closeModal();blockConfirm(t.dataset.id,t.dataset.name);break;case 'block-confirm':doBlock(t.dataset.id,t.dataset.name);break;case 'unblock-person':doUnblock(t.dataset.id,t.dataset.name);break;case 'toggle-show-age':toggleShowAge(t.checked);break;case 'export-data':exportMyData(t);break;case 'delete-account':deleteAccountModal();break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
 $('#menu-button').addEventListener('click',()=>{const open=$('#menu-panel').hidden;$('#menu-panel').hidden=!open;$('#menu-button').setAttribute('aria-expanded',String(open));});
 bindAccountMenu();
 document.addEventListener('click',e=>{if(!e.target.closest('.site-header')){$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');}});
