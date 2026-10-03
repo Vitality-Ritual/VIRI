@@ -86,8 +86,14 @@ and the studios you attend on your profile. Together they describe where you can
 be found, and when. Every one of those fields is optional.
 
 You can **block** anyone, which stops them messaging you or sending you a
-request, and **report** anyone to us. We read every report. We cannot undo harm
-that has already happened.
+request, and **report** anyone to us.
+
+We read every report. We aim to act within two business days, and sooner where
+someone's safety is at stake. We cannot undo harm that has already happened.
+
+**If you are in danger, contact the emergency services.** We are not an
+emergency service, we are not monitoring VIRI around the clock, and we cannot
+respond like one.
 
 ## 6. What you post
 
@@ -209,16 +215,21 @@ If any part of this page turns out to be unenforceable, the rest still stands.
    entity behind it, consider whether it is worth anything or whether insurance
    is the real answer.
 
-8. **Insurance.** No cover is in place. General liability and tech E&O should be
+8. **The two-business-day commitment** in section 5 is published deliberately,
+   as a trust signal for a safety product, but it is a promise that can be
+   missed. Worded as an aim rather than a guarantee. Confirm that wording
+   is sufficient, and whether publishing any response time is wise at all.
+
+9. **Insurance.** No cover is in place. General liability and tech E&O should be
    priced before launch; a waiver and an insurance policy do different jobs.
 
-9. **Minors.** 18+ is enforced by a required birth-year field whose options
+10. **Minors.** 18+ is enforced by a required birth-year field whose options
    start at 18. Self-declared, no verification. Confirm that is sufficient.
 
-10. **Termination without notice** (section 8) is drafted broadly to allow fast
+11. **Termination without notice** (section 8) is drafted broadly to allow fast
     action on safety reports. Confirm it is not so broad as to be unfair-terms
     exposure.
 
-11. **Studio listings.** Named businesses and their photographs appear without
+12. **Studio listings.** Named businesses and their photographs appear without
     partnership. Section 4 disclaims affiliation; confirm that is adequate, and
     see the outstanding image-rights question separately.
