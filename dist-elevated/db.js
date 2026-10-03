@@ -815,6 +815,23 @@ async function dbLoadFeed(){
   return out;
 }
 
+/* The VIRI edit list.
+   Collected here rather than pushed straight to Resend, because adding a
+   contact to an audience needs the secret key and this page is readable by
+   anybody. Insert-only: the table has no select policy, so a subscriber can
+   add their address and nobody can download the list. */
+async function dbSubscribe(email, source){
+  const c = db(); if (!c) return { error: { message: 'Subscribing is unavailable right now.' } };
+  const addr = String(email || '').trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(addr)) return { error: { message: 'Please enter a valid email address.' } };
+  const { error } = await c.from('subscribers').insert({ email: addr, source: source || 'site' });
+  /* Already on the list is not a failure as far as the reader is concerned —
+     they asked to be subscribed and they are subscribed. */
+  if (error && error.code === '23505') return { data: 'already' };
+  if (error) return { error: { message: 'That did not save. Please try again in a moment.' } };
+  return { data: 'added' };
+}
+
 async function dbSaveProfileEdits(patch){
   const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
   const row = {};

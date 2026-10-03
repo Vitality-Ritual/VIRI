@@ -155,7 +155,7 @@ const subscribeBox=()=>`<form class="subscribe" id="subscribe-form">
   <label class="sr-only" for="sub-email">Email address</label>
   <input id="sub-email" name="email" type="email" placeholder="you@example.com" required>
   <button class="button small" type="submit">Subscribe</button>
-  <p class="subscribe-note">We are not collecting addresses yet &mdash; nothing is sent.</p>
+  <p class="subscribe-note">One letter now and then. Unsubscribe whenever you like.</p>
 </form>`;
 function readPage(id){if(id){const a=allArticles().find(x=>x.id===id);if(!a)return notFound();
   return `<article class="article">
@@ -567,12 +567,10 @@ function aboutPage(){return `<section class="about-hero is-placeholder"><div cla
   </div>
   <a class="button outline founders-cta" href="#/connect">Contact us ${arrow}</a>
 </div></section>${joinSection()}`;}
-/* Where the contact form delivers. The VIRI address does not exist yet; put it
-   here and the form starts sending with no other change. FormSubmit relays it
-   without a backend, which this static site has no way to provide - the first
-   submission sends a one-off confirmation link to that address, and nothing is
-   stored here. While this is empty the form still validates and still reaches
-   the thank-you page, and the page says plainly that nothing is delivered. */
+/* Where the contact form and the report notifications deliver. FormSubmit
+   relays them without a backend, which this static site has no way to
+   provide. The address is activated and sending; see relayDelivered in db.js
+   for why a 200 from this service does not mean a message went anywhere. */
 const CONTACT_EMAIL='info@vitalityritual.org';
 const contactEndpoint=()=>CONTACT_EMAIL?`https://formsubmit.co/ajax/${encodeURIComponent(CONTACT_EMAIL)}`:'';
 function contactPage(){return `<section class="page-head"><div class="wrap"><p class="eyebrow">Contact us</p><h1>Good things start<br>with a conversation.</h1><p>Questions, press, partnerships, or a studio that belongs on VIRI — write to us here.</p></div></section>
@@ -1799,6 +1797,7 @@ function privacyPage(){return `<article class="article-detail legal">
   <p><b>Your profile.</b> Your name and the neighbourhood and city where you train are required. A photograph, a short bio, your college and year, and your industry are all optional. Your age is the one thing we require, because VIRI is for over-18s &mdash; but whether it appears on your profile is your choice, and it is off unless you turn it on. The activities you do and the times of week you usually train are what the search matches you on.</p>
   <p><b>What you do on VIRI:</b> sessions you log (activity, place, how long, how far, any note or photograph, the date, who you were with), classes you add to your plan, studios you save, people you connect with, and messages you send.</p>
   <p><b>Safety records:</b> if you report someone, we keep what you told us. If you block someone, we keep that too.</p>
+  <p><b>If you subscribe to the VIRI edit</b> we keep your email address, and nothing else, so we can send it to you. You do not need an account to subscribe, and subscribing does not make one. Every letter has an unsubscribe link, and you can ask us to remove you at any time.</p>
   <p>We do <b>not</b> collect analytics. There is no tracking pixel, no advertising network, and no third-party script on this site other than the one that connects you to our database. Nobody is following you around the internet on our behalf.</p>
 
   <h2>Why the optional fields matter</h2>
@@ -2015,8 +2014,15 @@ function render(scroll=true){revealObserver?.disconnect();const [path,id]=(locat
    leave, so coming back fetches again. */
 if(path!=='feed')feedFetched=false;
 else if(!feedFetched&&typeof dbLoadFeed==='function'){feedFetched=true;dbLoadFeed().then(()=>{if(location.hash==='#/feed')render(false);});}if(path==='join')bindJoin();
-  $('#subscribe-form')?.addEventListener('submit',e=>{e.preventDefault();
-    toast('Noted on this device. We are not sending email to this list yet.');e.target.reset();});if(path==='explore'){$('#ex-search').addEventListener('input',e=>{ex.query=e.target.value;exRefresh();});$('#ex-time').addEventListener('change',e=>{ex.time=e.target.value;exRefresh();});exBindMap();}}
+  $('#subscribe-form')?.addEventListener('submit',async e=>{e.preventDefault();
+    const form=e.target, input=form.querySelector('#sub-email');
+    const btn=form.querySelector('button[type=submit]');
+    if(btn)btn.disabled=true;
+    const r=await dbSubscribe(input.value,'viri-edit');
+    if(btn)btn.disabled=false;
+    if(r.error){toast(r.error.message);return;}
+    form.reset();
+    toast(r.data==='already'?'You are already on the list.':'You are on the list. Look out for the next one.');});if(path==='explore'){$('#ex-search').addEventListener('input',e=>{ex.query=e.target.value;exRefresh();});$('#ex-time').addEventListener('change',e=>{ex.time=e.target.value;exRefresh();});exBindMap();}}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-action]');if(!t)return;const {action,id,index,category,view,kind,name,channel}=t.dataset;switch(action){case 'video-toggle':{const v=$('#'+(t.dataset.video||'about-video'));if(v.paused)v.play().catch(()=>toast('Video playback is unavailable in this browser.'));else v.pause();break;}case 'close-modal':closeModal();break;case 'join-back':joinStep=Math.max(0,joinStep-1);render(false);break;case 'studio-prev':studioIndex=Math.max(0,studioIndex-1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'studio-next':studioIndex=Math.min(STUDIO_LAST(),studioIndex+1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'ex-city':ex={...ex,city:t.dataset.id,venue:null,cls:null};render(false);break;
 case 'ex-day':ex={...ex,day:+t.dataset.day,cls:null};render(false);break;
 case 'ex-cat':ex={...ex,cat:t.dataset.cat,cls:null};render(false);break;

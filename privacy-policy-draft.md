@@ -39,6 +39,10 @@ plan, studios you save, people you connect with, and messages you send.
 **Safety records:** if you report someone, we keep what you told us. If you
 block someone, we keep that too.
 
+**If you subscribe to the VIRI edit** we keep your email address, and nothing
+else, so we can send it to you. You do not need an account to subscribe, and
+subscribing does not make one. Every letter has an unsubscribe link.
+
 We do **not** collect analytics. There is no tracking pixel, no advertising
 network, and no third-party script on the site other than the one that connects
 you to our database. Nobody is following you around the internet on our behalf.
