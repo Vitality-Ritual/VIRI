@@ -617,6 +617,7 @@ function signupPage(){return `<section class="signup-split">
     <div class="signup-split-inner">
       <p class="eyebrow">Join VIRI</p>
       <h1>Sign up now</h1>
+      <p class="signup-who">VIRI is a space for women. Trans women are women.</p>
       <form id="signup-form" novalidate>
         <div class="field"><label class="visually-hidden" for="su-first">First name</label>
           <input id="su-first" name="first" placeholder="First name" autocomplete="given-name" maxlength="40"></div>
@@ -702,6 +703,7 @@ if(s.type==='account')return `
     <div class="field"><label for="join-pass">Choose a password</label>
       <input id="join-pass" name="password" type="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" value="${escapeHTML(joinData.password||'')}">
       <p class="field-eg">Eight characters or more. You can also sign in with Google once that is switched on.</p></div>
+    <label class="check-box join-women"><input type="checkbox" id="join-woman" name="woman"${joinData.woman?' checked':''}><span>VIRI is for women. Trans women are women. I confirm I am a woman.</span></label>
     <label class="check-box join-agree"><input type="checkbox" id="join-agree" name="agree"${joinData.agree?' checked':''}><span>I agree to the <a href="#/terms" target="_blank" rel="noopener">Terms</a> and <a href="#/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</span></label>`;
   if(s.type==='personal')return `
     <div class="field"><label for="join-born">Your age</label>
@@ -975,12 +977,14 @@ bindPhoto();
       joinData.industry=String(fd.get('industry')||'').trim();}
     else if(s.type==='details'){joinData.bio=String(fd.get('bio')||'').trim();photoCommit();}
     else if(s.type==='account'){joinData.email=String(fd.get('email')||'').trim();
-      joinData.password=String(fd.get('password')||'');joinData.agree=!!fd.get('agree');}
+      joinData.password=String(fd.get('password')||'');joinData.agree=!!fd.get('agree');
+      joinData.woman=!!fd.get('woman');}
     else joinData[s.key]=String(fd.get(s.key)||'').trim();
     if(s.required&&!joinData[s.key]){err.textContent=s.key==='email'?'Please enter an email address.':'Please enter your name.';return;}
     if(s.type==='account'){
       if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(joinData.email)){err.textContent='Please enter a valid email address.';return;}
       if(joinData.password.length<8){err.textContent='Please choose a password of at least 8 characters.';return;}
+      if(!joinData.woman){err.textContent='VIRI is for women. Please confirm before continuing.';return;}
       if(!joinData.agree){err.textContent='Please accept the terms to continue.';return;}
     }
     err.textContent='';
@@ -994,7 +998,8 @@ bindPhoto();
     pendingStudios=studios.filter(x=>joinData.studios.includes(x.name)).map(x=>x.id);
     try{localStorage.setItem('viri-pending-studios',JSON.stringify(pendingStudios));
       if(joinData.photo)localStorage.setItem('viri-pending-photo',joinData.photo);
-      localStorage.setItem('viri-pending-showage',joinData.showAge?'1':'0');}catch(e){}
+      localStorage.setItem('viri-pending-showage',joinData.showAge?'1':'0');
+      if(joinData.woman)localStorage.setItem('viri-pending-eligibility','1');}catch(e){}
     joinStep=0; goTo('#/check-email'); return;
     const forms=joinData.forms.filter(x=>x!==JOIN_ANY.forms);
     state.profile={name:joinData.name,email:joinData.email.toLowerCase(),
@@ -1905,6 +1910,7 @@ function privacyPage(){return `<article class="article-detail legal">
 function termsPage(){return `<article class="article-detail legal">
   <p class="eyebrow">VIRI preview</p>
   <h1>About this preview</h1>
+  <p><b>VIRI is for women.</b> Trans women are women, and are welcome. We do not verify this and we are not going to &mdash; gender cannot be checked reliably, and a document check would fall hardest on trans women. We ask you to confirm it honestly when you join, and we remove accounts we believe do not belong here.</p>
   <p>Parts of this website are still an interactive preview. Demo profiles, events, reviews and attendance counts are illustrative. No class reservation, purchase or booking is made through it.</p>
   <p>Studio names and photographs identify the respective businesses. Listings do not imply a partnership or endorsement. Visit each studio&rsquo;s official website to confirm schedules, prices, requirements and bookings.</p>
   <p>Full terms of service, including the terms that apply to meeting other members in person, will be published before accounts are opened to the public.</p>
