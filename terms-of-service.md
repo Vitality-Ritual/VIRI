@@ -27,12 +27,10 @@ accounts we believe belong to someone under 18 are removed.
 
 ## 2a. Who can join
 
-VIRI is for women. Trans women are women, and are welcome.
+VIRI is for women. Trans women are women.
 
-We do not verify this, and we are not going to — gender cannot be checked
-reliably, and a document check would fall hardest on trans women. We ask you
-to confirm it honestly when you join, and we remove accounts that we believe
-do not belong here.
+We do not verify this. We ask you to confirm it honestly when you join, and we
+remove accounts that we believe do not belong here.
 
 ## 3. Your account
 
