@@ -361,7 +361,15 @@ strong{font-weight:500}
   color:var(--taupe-light);font-size:22px;cursor:pointer;transition:border-color .2s,color .2s}
 .gallery-add:hover{border-color:var(--taupe);color:var(--taupe)}
 .gallery-empty{margin:18px 0 4px}
-.lightbox img{width:100%;height:auto;display:block}
+/* Sized by the window, not the dialog. width:100% made a portrait photograph
+   about 700px tall inside a 590px box, so looking at your own picture meant
+   scrolling it. The height is the limit that matters for a photo. */
+.lightbox{display:flex;flex-direction:column;align-items:center}
+.lightbox img{max-width:100%;max-height:min(68vh,760px);width:auto;height:auto;
+  display:block;margin:0 auto;object-fit:contain}
+/* the lightbox has no heading, and an empty one still reserves its margin */
+dialog:has(.lightbox){width:min(760px,calc(100% - 28px));padding:clamp(18px,2vw,26px)}
+dialog h2:empty{display:none}
 .lightbox-nav{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:14px}
 @media (max-width:767px){.gallery{grid-template-columns:repeat(3,1fr)}.gallery-x{opacity:1}}
   .person-link{color:inherit;text-decoration:none;border-bottom:1px solid transparent;transition:border-color .2s}
