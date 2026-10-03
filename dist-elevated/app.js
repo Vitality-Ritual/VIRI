@@ -1604,6 +1604,86 @@ async function addGalleryPhoto(){
   input.click();
 }
 
+/* Everything sign-up asked for, in one place. The old version offered a name
+   and a neighbourhood, which left the answers that actually decide who you are
+   matched with unreachable once you had given them. The photograph is not here
+   because it has its own control on the avatar. */
+function editProfileModal(){
+  const p=state.profile||{};
+  const box=(group,value,checked)=>`<label class="check-box"><input type="checkbox" name="${group}" value="${escapeHTML(value)}"${checked?' checked':''}><span>${escapeHTML(value)}</span></label>`;
+  openModal('Edit your profile', `<form id="ep-form" class="ep-form">
+    <div class="field"><label for="ep-name">Your name</label>
+      <input id="ep-name" name="name" maxlength="60" required value="${escapeHTML(p.name||'')}"></div>
+
+    <div class="field"><label for="ep-region">State or territory</label>
+      <select id="ep-region" name="region"><option value="">Select one</option>${US_STATES.map(r=>
+        `<option${p.region===r?' selected':''}>${escapeHTML(r)}</option>`).join('')}</select></div>
+    <div class="field"><label for="ep-city">Your primary city</label>
+      <input id="ep-city" name="city" maxlength="60" placeholder="Washington" value="${escapeHTML(p.city||'')}"></div>
+    <div class="field"><label for="ep-area">Your neighbourhood</label>
+      <input id="ep-area" name="area" maxlength="70" placeholder="Logan Circle" value="${escapeHTML(p.area||'')}"></div>
+
+    <div class="field"><label for="ep-bio">A short bio <span class="field-optional">Optional</span></label>
+      <textarea id="ep-bio" name="bio" maxlength="160" rows="3" placeholder="${escapeHTML(BIO_PLACEHOLDER)}">${escapeHTML(p.bio||'')}</textarea></div>
+
+    <fieldset class="join-set"><legend>What are your primary forms of exercise?</legend>
+      <div class="check-grid">${JOIN_FORMS.map(x=>box('interests',x,(p.interests||[]).includes(x))).join('')}</div></fieldset>
+
+    <fieldset class="join-set"><legend>When do you usually train?</legend>
+      <div class="check-grid">${JOIN_TIMES.map(x=>box('times',x,(p.times||[]).includes(x))).join('')}</div></fieldset>
+
+    <div class="field"><label for="ep-born">Date of birth</label>
+      <input id="ep-born" name="birthDate" type="date" max="${OLDEST_MINOR()}" value="${escapeHTML(p.birthDate||'')}">
+      <label class="check-box show-age"><input type="checkbox" name="showAge"${p.showAge?' checked':''}><span>Show my age on my profile</span></label></div>
+
+    <fieldset class="join-set college-block"><legend>Did you go to college?</legend>
+      <label class="check-box"><input type="checkbox" id="ep-went" name="went"${p.college||p.collegeYear?' checked':''}><span>Yes, I went to college</span></label>
+      <div class="college-more">
+        <div class="field"><label for="ep-college">Where</label>
+          <input id="ep-college" name="college" maxlength="70" placeholder="Georgetown University" value="${escapeHTML(p.college||'')}"></div>
+        <div class="field"><label for="ep-grad">Graduated</label>
+          <select id="ep-grad" name="collegeYear"><option value="">Prefer not to say</option>${GRAD_YEARS.map(y=>
+            `<option${String(p.collegeYear)===String(y)?' selected':''}>${y}</option>`).join('')}</select></div>
+      </div></fieldset>
+
+    <div class="field"><label for="ep-industry">What industry do you work in? <span class="field-optional">Optional</span></label>
+      <input id="ep-industry" name="industry" maxlength="50" placeholder="Consulting" value="${escapeHTML(p.industry||'')}">
+      <div class="field-eg"><p>For example:</p><ul>${INDUSTRY_EXAMPLES.map(x=>`<li>${escapeHTML(x)}</li>`).join('')}</ul></div></div>
+
+    <p id="ep-error" class="field-error" role="alert"></p>
+    <div class="dialog-actions">
+      <button class="button outline small" type="button" data-action="close-modal">Cancel</button>
+      <button class="button small" type="submit">Save changes</button>
+    </div>
+  </form>`, () => {
+    $('#ep-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const form=ev.target, fd=new FormData(form);
+      const picked=g=>[...form.querySelectorAll(`input[name="${g}"]:checked`)].map(i=>i.value);
+      const name=String(fd.get('name')||'').trim();
+      if(!name){$('#ep-error').textContent='Please give a name.';return;}
+      const birthDate=String(fd.get('birthDate')||'');
+      if(birthDate&&ageOf(birthDate)<18){$('#ep-error').textContent='VIRI is for women aged 18 and over.';return;}
+      const went=!!fd.get('went');
+      const patch={
+        name, region:String(fd.get('region')||''), city:String(fd.get('city')||'').trim(),
+        area:String(fd.get('area')||'').trim(), bio:String(fd.get('bio')||'').trim(),
+        interests:picked('interests'), times:picked('times'),
+        birthDate:birthDate||null, showAge:!!fd.get('showAge'),
+        college:went?String(fd.get('college')||'').trim():'',
+        collegeYear:went?String(fd.get('collegeYear')||''):'',
+        industry:String(fd.get('industry')||'').trim()
+      };
+      const btn=form.querySelector('button[type=submit]'), label=btn.innerHTML;
+      btn.disabled=true; btn.textContent='Saving…';
+      const r=await dbSaveProfileEdits(patch);
+      if(r.error){btn.disabled=false;btn.innerHTML=label;$('#ep-error').textContent=r.error.message;return;}
+      state.profile={...state.profile,...patch};
+      save(); closeModal(); render(false); toast('Profile updated.');
+    });
+  });
+}
+
 function settingsPage(){
   if(!signedIn())return authPage();
   const p=state.profile;
@@ -2336,7 +2416,7 @@ case 'book-new':bookChoose(t.dataset.id,'new');break;
 case 'book-plan':bookChoose(t.dataset.id,'plan');break;
 case 'ex-zoom':exZoom(t.dataset.dir);break;
 case 'ex-reset':ex={...ex,cat:'All',time:'All',members:false,query:'',venue:null,cls:null};render(false);break;
-case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':{const nowOn=!state.saved.includes(id);state.saved=nowOn?[...state.saved,id]:state.saved.filter(x=>x!==id);if(typeof dbSetStudio==='function')dbPush(dbSetStudio(id,nowOn),'that studio');save();render(false);}toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':pendingPlans().length?attendModal():postActivity();break;case 'post-new':closeModal();postActivity();break;case 'attend-yes':logAttended(t.dataset.id);break;case 'attend-no':skipAttended(t.dataset.id);break;case 'finish-next':{const n=(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start)[0];if(n){n.start=Date.now()-(n.dur+5)*60000;save();render(false);toast('Moved into the past. The + now has something to ask you.');}break;}case 'attend-more':{const p=takePlan(t.dataset.id);closeModal();postActivity(p);break;}case 'show-friends':friendsModal();break;case 'show-requests':requestsModal();break;case 'edit-bio':bioModal();break;case 'add-gallery':addGalleryPhoto();break;case 'open-photo':{const who=(location.hash||'').startsWith('#/member/')?personById(location.hash.split('/')[2]):null;openLightbox(who?(who.gallery||[]):(state.gallery||[]),Number(t.dataset.index)||0);break;}case 'photo-prev':lightboxAt=(lightboxAt-1+lightboxOf.length)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'photo-next':lightboxAt=(lightboxAt+1)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'remove-photo':removeGalleryPhoto(t.dataset.id);break;case 'edit-photo':photoModal();break;case 'accept-request':exConnect(t.dataset.id);break;case 'decline-request':respondToRequest(t.dataset.id,'declined');break;case 'withdraw-request':respondToRequest(t.dataset.id,'withdrawn');break;case 'remove-friend':respondToRequest(t.dataset.id,'removed');break;case 'msg-open':msgThread=t.dataset.id;render(false);if(typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);break;case 'log-out':dbSignOut().then(()=>{$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Signed out.');location.hash='#/';render(false);});break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':toast('Added to your plan. In the live product this books you alongside them.');break;case 'session-talk':toast('Comments are part of this design. Writing one is not wired up in the preview yet.');break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':{const v=t.dataset.id;findActivities=findActivities.includes(v)?findActivities.filter(x=>x!==v):[...findActivities,v];runSearch();break;}case 'connect-sample':state.connections=state.connections.includes('alex')?[]:['alex'];save();render(false);toast(state.connections.length?'Sample connection added to your preview.':'Sample connection removed.');break;case 'edit-profile':openModal('Make your profile yours',`<form id="edit-form"><div class="field"><label for="edit-name">Your name</label><input id="edit-name" name="name" value="${escapeHTML(state.profile?.name)}" required maxlength="60"></div><div class="field"><label for="edit-area">Your neighborhood</label><input id="edit-area" name="area" value="${escapeHTML(state.profile?.area)}" required maxlength="70"></div><div class="field"><label for="edit-photo">Profile photo <span class="field-optional">Optional</span></label><div class="photo-drop" id="edit-drop" data-has="0"><input id="edit-photo" type="file" accept="image/*" class="visually-hidden"><div class="photo-empty"><p class="photo-lede">Drag a photo here, or <button type="button" class="plain-link" id="edit-pick">choose a file</button>.</p></div><div class="photo-editor"><figure class="post-shot"><img id="edit-preview" alt="Your photo"></figure><p class="photo-swap"><button type="button" class="plain-link" id="edit-repick">Choose another</button></p></div></div></div><p id="edit-error" class="field-error" role="alert"></p><div class="dialog-actions"><button class="button small" type="submit">Save profile</button></div></form>`,()=>{let newPhoto='';const drop=$('#edit-drop'),file=$('#edit-photo');const take=async f=>{const d=await shrinkImage(f,640);if(!d){$('#edit-error').textContent='That file could not be read as an image.';return;}newPhoto=d;$('#edit-preview').src=d;drop.dataset.has='1';};$('#edit-pick')?.addEventListener('click',()=>file.click());$('#edit-repick')?.addEventListener('click',()=>file.click());file.addEventListener('change',()=>{if(file.files?.[0])take(file.files[0]);});['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('is-over');}));['dragleave','dragend'].forEach(t=>drop.addEventListener(t,e=>{if(t==='dragleave'&&drop.contains(e.relatedTarget))return;drop.classList.remove('is-over');}));drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('is-over');const f=e.dataTransfer?.files?.[0];if(f)take(f);});$('#edit-form').addEventListener('submit',async ev=>{ev.preventDefault();const fd=Object.fromEntries(new FormData(ev.target));if(!fd.name.trim()||!fd.area.trim())return;const btn=ev.target.querySelector('button[type=submit]'),label=btn.innerHTML;btn.disabled=true;btn.textContent='Saving\u2026';state.profile={...state.profile,name:fd.name.trim(),area:fd.area.trim()};if(typeof dbSaveProfileEdits==='function')await dbSaveProfileEdits({name:fd.name.trim(),area:fd.area.trim()});if(newPhoto&&typeof dbSetAvatar==='function'){const r=await dbSetAvatar(newPhoto);if(r.error){btn.disabled=false;btn.innerHTML=label;$('#edit-error').textContent=r.error.message;return;}}save();closeModal();render(false);toast('Profile updated.');});});break;case 'person-menu':personMenu(t.dataset.id,t.dataset.name);break;case 'report-person':closeModal();reportModal(t.dataset.id,t.dataset.name);break;case 'block-person':closeModal();blockConfirm(t.dataset.id,t.dataset.name);break;case 'block-confirm':doBlock(t.dataset.id,t.dataset.name);break;case 'unblock-person':doUnblock(t.dataset.id,t.dataset.name);break;case 'toggle-show-age':toggleShowAge(t.checked);break;case 'export-data':exportMyData(t);break;case 'delete-account':deleteAccountModal();break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
+case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':{const nowOn=!state.saved.includes(id);state.saved=nowOn?[...state.saved,id]:state.saved.filter(x=>x!==id);if(typeof dbSetStudio==='function')dbPush(dbSetStudio(id,nowOn),'that studio');save();render(false);}toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':pendingPlans().length?attendModal():postActivity();break;case 'post-new':closeModal();postActivity();break;case 'attend-yes':logAttended(t.dataset.id);break;case 'attend-no':skipAttended(t.dataset.id);break;case 'finish-next':{const n=(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start)[0];if(n){n.start=Date.now()-(n.dur+5)*60000;save();render(false);toast('Moved into the past. The + now has something to ask you.');}break;}case 'attend-more':{const p=takePlan(t.dataset.id);closeModal();postActivity(p);break;}case 'show-friends':friendsModal();break;case 'show-requests':requestsModal();break;case 'edit-bio':bioModal();break;case 'add-gallery':addGalleryPhoto();break;case 'open-photo':{const who=(location.hash||'').startsWith('#/member/')?personById(location.hash.split('/')[2]):null;openLightbox(who?(who.gallery||[]):(state.gallery||[]),Number(t.dataset.index)||0);break;}case 'photo-prev':lightboxAt=(lightboxAt-1+lightboxOf.length)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'photo-next':lightboxAt=(lightboxAt+1)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'remove-photo':removeGalleryPhoto(t.dataset.id);break;case 'edit-photo':photoModal();break;case 'accept-request':exConnect(t.dataset.id);break;case 'decline-request':respondToRequest(t.dataset.id,'declined');break;case 'withdraw-request':respondToRequest(t.dataset.id,'withdrawn');break;case 'remove-friend':respondToRequest(t.dataset.id,'removed');break;case 'msg-open':msgThread=t.dataset.id;render(false);if(typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);break;case 'log-out':dbSignOut().then(()=>{$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Signed out.');location.hash='#/';render(false);});break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':toast('Added to your plan. In the live product this books you alongside them.');break;case 'session-talk':toast('Comments are part of this design. Writing one is not wired up in the preview yet.');break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':{const v=t.dataset.id;findActivities=findActivities.includes(v)?findActivities.filter(x=>x!==v):[...findActivities,v];runSearch();break;}case 'connect-sample':state.connections=state.connections.includes('alex')?[]:['alex'];save();render(false);toast(state.connections.length?'Sample connection added to your preview.':'Sample connection removed.');break;case 'edit-profile':editProfileModal();break;case 'person-menu':personMenu(t.dataset.id,t.dataset.name);break;case 'report-person':closeModal();reportModal(t.dataset.id,t.dataset.name);break;case 'block-person':closeModal();blockConfirm(t.dataset.id,t.dataset.name);break;case 'block-confirm':doBlock(t.dataset.id,t.dataset.name);break;case 'unblock-person':doUnblock(t.dataset.id,t.dataset.name);break;case 'toggle-show-age':toggleShowAge(t.checked);break;case 'export-data':exportMyData(t);break;case 'delete-account':deleteAccountModal();break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
 $('#menu-button').addEventListener('click',()=>{const open=$('#menu-panel').hidden;$('#menu-panel').hidden=!open;$('#menu-button').setAttribute('aria-expanded',String(open));});
 bindAccountMenu();
 document.addEventListener('click',e=>{if(!e.target.closest('.site-header')){$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');}});
