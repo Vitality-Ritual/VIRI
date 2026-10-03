@@ -669,11 +669,13 @@ const JOIN_STEPS=[
   {type:'personal',q:'A little more about you.',hint:'All optional, and all of it helps us put you next to people you would actually get on with.'},
   {type:'details',q:'A little about you.',hint:'Both are optional. You can add these later from your profile.'}
 ];
-/* The floor is 16 rather than open-ended: a birth year that can express a
-   child is an obligation (COPPA under 13, GDPR consent rules under 16) that
-   this product has no way to meet, so the form cannot express one. */
+/* VIRI is 18+. Not only because the form introduces strangers who then meet
+   alone, but because a minor can generally disaffirm a contract — including
+   the liability waiver in the terms, which is the only thing standing behind
+   this product. A waiver that a 16-year-old can walk away from protects
+   nobody, so the form cannot express an age that could rely on it. */
 const YEAR_NOW=new Date().getFullYear();
-const BIRTH_YEARS=Array.from({length:75},(_,i)=>YEAR_NOW-16-i);
+const BIRTH_YEARS=Array.from({length:75},(_,i)=>YEAR_NOW-18-i);
 const GRAD_YEARS=Array.from({length:77},(_,i)=>YEAR_NOW+6-i);
 const ageOf=y=>y?YEAR_NOW-Number(y):null;
 let joinStep=0, joinData={name:'',email:'',password:'',forms:[],times:[],studios:[],region:'',city:'',
@@ -699,7 +701,8 @@ if(s.type==='account')return `
       <input id="join-input" name="email" type="email" autocomplete="email" placeholder="you@example.com" value="${escapeHTML(joinData.email||'')}"></div>
     <div class="field"><label for="join-pass">Choose a password</label>
       <input id="join-pass" name="password" type="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" value="${escapeHTML(joinData.password||'')}">
-      <p class="field-eg">Eight characters or more. You can also sign in with Google once that is switched on.</p></div>`;
+      <p class="field-eg">Eight characters or more. You can also sign in with Google once that is switched on.</p></div>
+    <label class="check-box join-agree"><input type="checkbox" id="join-agree" name="agree"${joinData.agree?' checked':''}><span>I am 18 or over, and I agree to the <a href="#/terms" target="_blank" rel="noopener">Terms</a> and <a href="#/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</span></label>`;
   if(s.type==='personal')return `
     <div class="field"><label for="join-born">Your age <span class="field-optional">Optional</span></label>
       <select id="join-born" name="birthYear"><option value="">Prefer not to say</option>${BIRTH_YEARS.map(y=>
@@ -969,12 +972,13 @@ bindPhoto();
       joinData.industry=String(fd.get('industry')||'').trim();}
     else if(s.type==='details'){joinData.bio=String(fd.get('bio')||'').trim();photoCommit();}
     else if(s.type==='account'){joinData.email=String(fd.get('email')||'').trim();
-      joinData.password=String(fd.get('password')||'');}
+      joinData.password=String(fd.get('password')||'');joinData.agree=!!fd.get('agree');}
     else joinData[s.key]=String(fd.get(s.key)||'').trim();
     if(s.required&&!joinData[s.key]){err.textContent=s.key==='email'?'Please enter an email address.':'Please enter your name.';return;}
     if(s.type==='account'){
       if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(joinData.email)){err.textContent='Please enter a valid email address.';return;}
       if(joinData.password.length<8){err.textContent='Please choose a password of at least 8 characters.';return;}
+      if(!joinData.agree){err.textContent='Please confirm you are 18 or over and accept the terms.';return;}
     }
     err.textContent='';
     if(joinStep<JOIN_STEPS.length-1){joinStep++;render(false);return;}
@@ -1820,6 +1824,66 @@ function postActivity(pre){
      });
    });
 }
+/* The real privacy policy, replacing the preview notice that claimed nothing
+   left the browser — untrue from the moment the database went in. Every claim
+   below describes what the code actually does; if the code changes, this has
+   to change with it. */
+function privacyPage(){return `<article class="article-detail legal">
+  <p class="eyebrow">VIRI</p>
+  <h1>Your privacy</h1>
+  <p class="legal-date">Last updated 3 October 2026</p>
+
+  <h2>Who we are</h2>
+  <p>VIRI (Vitality Ritual) is a service for finding people to work out with. It is run by Margaret Cole, in Washington, DC. You can reach us about anything on this page at <a href="mailto:info@vitalityritual.org">info@vitalityritual.org</a>, and we will give you a postal address if you ask for one.</p>
+  <p>VIRI is not a company. It is run by one person, and that person is responsible for your data. If that changes, this page will say so.</p>
+
+  <h2>What we collect</h2>
+  <p><b>When you make an account:</b> your email address and a password. The password is stored hashed &mdash; we never see it and cannot recover it for you.</p>
+  <p><b>Your profile.</b> Your name and the neighbourhood and city where you train are required. A photograph, a short bio, your age, your college and year, and your industry are all optional. The activities you do and the times of week you usually train are what the search matches you on.</p>
+  <p><b>What you do on VIRI:</b> sessions you log (activity, place, how long, how far, any note or photograph, the date, who you were with), classes you add to your plan, studios you save, people you connect with, and messages you send.</p>
+  <p><b>Safety records:</b> if you report someone, we keep what you told us. If you block someone, we keep that too.</p>
+  <p>We do <b>not</b> collect analytics. There is no tracking pixel, no advertising network, and no third-party script on this site other than the one that connects you to our database. Nobody is following you around the internet on our behalf.</p>
+
+  <h2>Why the optional fields matter</h2>
+  <p>Your neighbourhood, your usual training times, the studios you save and the sessions you log together describe where you are likely to be, and when. That is the point of the product &mdash; it is how you find someone to train with &mdash; but it is genuinely sensitive, more so than it first appears.</p>
+  <p>So every one of those fields is optional, and you can remove any of them at any time. Think about what you are comfortable with other members seeing before you fill them in.</p>
+
+  <h2>Who else touches your data</h2>
+  <p>We use four other companies to run VIRI. They handle data on our behalf and are not allowed to use it for anything else.</p>
+  <ul>
+    <li><b>Supabase</b> &mdash; the database, your login, and your photographs</li>
+    <li><b>Resend</b> &mdash; sends your confirmation and password-reset emails</li>
+    <li><b>FormSubmit</b> &mdash; relays the contact form and report notifications to our inbox</li>
+    <li><b>GitHub Pages</b> &mdash; serves this website</li>
+  </ul>
+  <p>The Explore map loads its tiles from OpenStreetMap. Links to studios and articles take you to other companies&rsquo; websites, which have their own policies.</p>
+  <p><b>We do not sell your data, and we do not share it for advertising.</b> We would disclose information if the law required it, or to protect someone from harm.</p>
+
+  <h2>Your photographs</h2>
+  <p>Photographs are stored privately. They are not at a public address that can be guessed or passed around &mdash; each view is a link that expires. When you upload a photograph it is re-encoded, which strips embedded location data, so a picture taken at your gym does not carry your gym&rsquo;s coordinates into VIRI.</p>
+
+  <h2>What you can do</h2>
+  <p>In <a href="#/settings">Settings</a>, at any time, without asking us:</p>
+  <ul>
+    <li><b>Download my data</b> gives you one file containing everything VIRI holds about you, with your photographs inside it rather than as links that expire.</li>
+    <li><b>Delete my account</b> removes your profile, sessions, plans, saved studios, messages, connections and photographs. It is immediate and we cannot undo it.</li>
+  </ul>
+  <p>Depending on where you live you may have further rights &mdash; to correct information, to object to how it is used, or to complain to a regulator. Write to us and we will help.</p>
+
+  <h2>What we keep after you leave</h2>
+  <p>When you delete your account, everything above goes immediately.</p>
+  <p>One exception: if somebody reported you, that report stays. Letting an account deletion erase the record of harm done to another member would make reporting worthless. Reports <i>you</i> filed about other people are deleted with your account.</p>
+
+  <h2>Age</h2>
+  <p>VIRI is for adults. You must be 18 or over to make an account, and we do not knowingly keep data about anyone younger. If you believe someone under 18 has an account, write to us and we will remove it.</p>
+
+  <h2>Security</h2>
+  <p>Your password is hashed. Photographs are private and reachable only by expiring links. Access to every table is controlled at the database itself, so one member&rsquo;s account cannot read another&rsquo;s data even if something goes wrong in the app. No system is perfect, and we will tell you promptly if something happens that affects you.</p>
+
+  <h2>Changes</h2>
+  <p>If we change this page in a way that matters, we will tell you rather than quietly updating it.</p>
+</article>`;}
+
 function legalPage(privacy){return `<article class="article-detail"><p class="eyebrow">VIRI preview</p><h1>${privacy?'Your privacy':'About this preview'}</h1>${privacy?'<p>Your demo profile, saved studios, activities, connections, and posts are stored in this browser’s local storage. They are not sent to a VIRI account service.</p><p>Sign-up can optionally collect your age, where and when you went to college, and the industry you work in, alongside your activities, usual training hours, neighbourhood, photograph and bio. Every one of those is optional and every one stays in this browser. Taken together they would identify a person fairly precisely, so before live accounts exist VIRI will have to say plainly who can see each field.</p><p>The sign-up form will not accept a birth year under 16.</p><p>The map loads from OpenStreetMap. Opening external studio and research links takes you to those websites, which have their own privacy practices.</p><p>This notice describes the prototype. A launch privacy policy will be provided before live accounts become available.</p><button class="button outline" data-action="clear-preview">Clear my preview data</button>':'<p>This website is an interactive preview of VIRI. Demo profiles, events, reviews, and attendance counts are illustrative. No class reservation, purchase, message, or live social connection is made through the preview.</p><p>Studio names and photographs identify the respective businesses. Listings do not imply a partnership or endorsement. Visit each studio’s official website to confirm schedules, prices, requirements, and bookings.</p><p>Launch terms will be provided before real accounts or bookings are available.</p>'}</article>`;}
 function notFound(){return `<section class="section wrap"><h1>Let’s find your way back.</h1><p style="margin:25px 0">This page isn’t part of your circle just yet.</p>${button('Back to VIRI','#/')}</section>`;}
 function initWordmark(){
@@ -1895,7 +1959,7 @@ function initPageMotion(){
   revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('is-revealed');revealObserver.unobserve(entry.target);}}),{threshold:.08,rootMargin:'0px 0px -30px 0px'});
   targets.forEach(el=>{el.classList.add('will-reveal');revealObserver.observe(el);});
 }
-function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':if(signedIn()){location.replace('#/feed');return;}html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'check-email':html=checkEmailPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'profile':html=profilePage();break;case 'feed':html=feedPage();break;case 'find':html=findPage();break;case 'messages':html=messagesPage();break;case 'settings':html=settingsPage();break;case 'setup':html=setupPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=legalPage(true);break;case 'terms':html=legalPage(false);break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you','check-email':'Check your email',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',profile:'Your circle',feed:'Feed',find:'Find your people',messages:'Messages',settings:'Settings',setup:'Your profile',book:'Book this class',privacy:'Your privacy',terms:'Preview terms'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#auth-form'))bindAuth();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='find')$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();toast('Search runs over the sample roster in this preview.');});if(path==='join')bindJoin();if(path==='setup')bindSetup();
+function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':if(signedIn()){location.replace('#/feed');return;}html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'check-email':html=checkEmailPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'profile':html=profilePage();break;case 'feed':html=feedPage();break;case 'find':html=findPage();break;case 'messages':html=messagesPage();break;case 'settings':html=settingsPage();break;case 'setup':html=setupPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=privacyPage();break;case 'terms':html=legalPage(false);break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you','check-email':'Check your email',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',profile:'Your circle',feed:'Feed',find:'Find your people',messages:'Messages',settings:'Settings',setup:'Your profile',book:'Book this class',privacy:'Your privacy',terms:'Preview terms'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#auth-form'))bindAuth();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='find')$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();toast('Search runs over the sample roster in this preview.');});if(path==='join')bindJoin();if(path==='setup')bindSetup();
   $('#subscribe-form')?.addEventListener('submit',e=>{e.preventDefault();
     toast('Saved on this device only \u2014 the preview does not send email.');e.target.reset();});if(path==='explore'){$('#ex-search').addEventListener('input',e=>{ex.query=e.target.value;exRefresh();});$('#ex-time').addEventListener('change',e=>{ex.time=e.target.value;exRefresh();});exBindMap();}}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-action]');if(!t)return;const {action,id,index,category,view,kind,name,channel}=t.dataset;switch(action){case 'video-toggle':{const v=$('#'+(t.dataset.video||'about-video'));if(v.paused)v.play().catch(()=>toast('Video playback is unavailable in this browser.'));else v.pause();break;}case 'close-modal':closeModal();break;case 'join-back':joinStep=Math.max(0,joinStep-1);render(false);break;case 'studio-prev':studioIndex=Math.max(0,studioIndex-1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'studio-next':studioIndex=Math.min(STUDIO_LAST(),studioIndex+1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'ex-city':ex={...ex,city:t.dataset.id,venue:null,cls:null};render(false);break;
