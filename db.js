@@ -147,6 +147,7 @@ async function dbLoadProfile(){
   await dbClaimPendingPhoto();
   await dbLoadBlocks();
   await dbLoadGallery();
+  await dbLoadRoutines();
   await dbLoadConnections();
   await dbLoadMessages();
   await dbLoadFeed();
@@ -940,6 +941,79 @@ const EDITABLE = {
   college:'college', collegeYear:'college_year', industry:'industry',
   interests:'activities', times:'times', birthDate:'birth_date', showAge:'show_age'
 };
+
+/* ===================== routines =====================
+   A routine is what somebody says they do in a week, which replaces the
+   generated class schedule Explore used to invent. Everything downstream —
+   your week, the did-you-go prompt, who you are matched with — now rests on
+   a member's own statement rather than on made-up data. */
+
+const WEEKDAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+async function dbLoadRoutines(profileId){
+  const c = db(); if (!c || !authUser) return [];
+  const who = profileId || authUser.id;
+  const { data } = await c.from('routines').select('*')
+    .eq('profile_id', who).order('weekday').order('time_band');
+  const out = (data || []).map(r => ({
+    id: r.id, venueId: r.venue_id, venue: r.venue_label,
+    activity: r.activity || '', weekday: r.weekday, band: r.time_band
+  }));
+  if (who === authUser.id) state.routines = out;
+  else if (state.people && state.people[who]) state.people[who].routines = out;
+  return out;
+}
+
+async function dbAddRoutine({ venueId, venueLabel, activity, weekday, band }){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const { data, error } = await c.from('routines').insert({
+    profile_id: authUser.id, venue_id: venueId, venue_label: venueLabel,
+    activity: activity || null, weekday: Number(weekday), time_band: band
+  }).select().maybeSingle();
+  if (error && error.code === '23505') return { error: { message: 'That is already in your week.' } };
+  if (error) return { error };
+  state.routines = [...(state.routines || []), {
+    id: data.id, venueId, venue: venueLabel, activity: activity || '',
+    weekday: Number(weekday), band
+  }].sort((a,b) => a.weekday - b.weekday);
+  return { data: true };
+}
+
+async function dbRemoveRoutine(id){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const { data, error } = await c.from('routines').delete()
+    .eq('id', id).eq('profile_id', authUser.id).select();
+  if (error) return { error };
+  if (!data || !data.length) return { error: { message: 'That could not be removed.' } };
+  state.routines = (state.routines || []).filter(r => r.id !== id);
+  return { data: true };
+}
+
+/* Who else says they are in the same room at the same sort of time. Matching
+   on the routine rather than on a shared interest is the difference between
+   "you both like pilates" and "you are both at Logan Circle on Tuesdays". */
+async function dbRoutineMatches(){
+  const c = db(); if (!c || !authUser) return [];
+  const mine = state.routines || [];
+  if (!mine.length) { state.roomMatches = []; return []; }
+  const { data } = await c.from('routines').select('*')
+    .in('venue_id', [...new Set(mine.map(r => r.venueId))])
+    .neq('profile_id', authUser.id);
+  const byPerson = {};
+  for (const r of data || []) {
+    if ((state.blocked || []).includes(r.profile_id)) continue;
+    const sameSlot = mine.some(m => m.venueId === r.venue_id && m.weekday === r.weekday && m.band === r.time_band);
+    const entry = byPerson[r.profile_id] || (byPerson[r.profile_id] = { id: r.profile_id, slots: [], exact: 0 });
+    entry.slots.push({ venue: r.venue_label, weekday: r.weekday, band: r.time_band, exact: sameSlot });
+    if (sameSlot) entry.exact++;
+  }
+  await dbPeople(Object.keys(byPerson));
+  const out = Object.values(byPerson)
+    .map(e => ({ ...(state.people[e.id] || { id: e.id, name: 'A member' }), slots: e.slots, exact: e.exact }))
+    .sort((a, b) => b.exact - a.exact || b.slots.length - a.slots.length);
+  state.roomMatches = out;
+  return out;
+}
 
 async function dbSaveProfileEdits(patch){
   const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };

@@ -1532,6 +1532,7 @@ function memberPage(id){
         </div>
       </div>
     </header>
+    ${(p.routines||[]).length?`<section class="pf-week"><p class="rail-label">Her week</p>${weekList(p.routines)}</section>`:''}
     ${galleryStrip(p.gallery)}
     <div class="pf-main">
       ${friends
@@ -1550,6 +1551,7 @@ async function ensureMember(id){
   memberFetching=id;
   await dbPeople([id]);
   if(typeof dbLoadGallery==='function')await dbLoadGallery(id);
+  if(typeof dbLoadRoutines==='function')await dbLoadRoutines(id);
   memberFetching='';
   if((location.hash||'').includes(id))render(false);
 }
@@ -1687,6 +1689,68 @@ function editProfileModal(){
   });
 }
 
+/* Your week, in your own words. This is what replaces the generated class
+   schedule: rather than VIRI inventing a 6am Tuesday at Logan Circle and
+   hoping it matches reality, you say that is when you go. Everything built on
+   it is then true, and two people who say the same thing are in the same room. */
+function weekList(routines,{own=false}={}){
+  const rs=[...(routines||[])].sort((a,b)=>a.weekday-b.weekday||a.band.localeCompare(b.band));
+  if(!rs.length)return own
+    ? `<p class="small week-empty">Tell VIRI where you train and roughly when. That is how it finds the people who are there with you. <button class="plain-link" data-action="add-routine">Add to my week</button></p>`
+    : '<p class="small">Nothing shared yet.</p>';
+  return `<ul class="week-list">${rs.map(r=>`<li>
+    <div><strong>${escapeHTML(r.venue)}</strong>
+      <span class="small">${escapeHTML(WEEKDAYS[r.weekday])}s &middot; ${escapeHTML(r.band)}${r.activity?' · '+escapeHTML(r.activity):''}</span></div>
+    ${own?`<button class="plain-link" data-action="remove-routine" data-id="${escapeHTML(r.id)}">Remove</button>`:''}
+  </li>`).join('')}</ul>
+  ${own?`<button class="button small outline" data-action="add-routine">Add another</button>`:''}`;}
+
+function routineModal(presetVenue){
+  const venues=(window.VIRI&&VIRI.venues)||[];
+  const city=(state.profile&&state.profile.city)||'';
+  const near=venues.filter(v=>!city||((VIRI.cities||[]).find(c=>c.id===v.city)||{}).name===city);
+  const list=(near.length?near:venues).slice(0,80);
+  openModal('Add to your week', `<form id="rt-form">
+    <div class="field"><label for="rt-venue">Where do you train?</label>
+      <select id="rt-venue" name="venueId" required>
+        <option value="">Choose a studio</option>
+        ${list.map(v=>`<option value="${escapeHTML(v.id)}"${presetVenue===v.id?' selected':''}>${escapeHTML(v.brand)} &mdash; ${escapeHTML(v.area)}</option>`).join('')}
+      </select></div>
+    <div class="field"><label for="rt-day">Which day?</label>
+      <select id="rt-day" name="weekday" required>${WEEKDAYS.map((d,i)=>`<option value="${i}"${i===new Date().getDay()?' selected':''}>${d}</option>`).join('')}</select></div>
+    <div class="field"><label for="rt-band">Roughly when?</label>
+      <select id="rt-band" name="band" required>${JOIN_TIMES.map(t=>`<option>${escapeHTML(t)}</option>`).join('')}</select>
+      <p class="field-eg">A rough window, not a clock time &mdash; enough to find the people who are there with you.</p></div>
+    <p id="rt-error" class="field-error" role="alert"></p>
+    <div class="dialog-actions">
+      <button class="button outline small" type="button" data-action="close-modal">Cancel</button>
+      <button class="button small" type="submit">Add it</button>
+    </div>
+  </form>`, () => {
+    $('#rt-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const fd=new FormData(ev.target);
+      const vid=String(fd.get('venueId')||'');
+      const v=venues.find(x=>x.id===vid);
+      if(!v){$('#rt-error').textContent='Please choose a studio.';return;}
+      const btn=ev.target.querySelector('button[type=submit]'), label=btn.innerHTML;
+      btn.disabled=true; btn.textContent='Adding…';
+      const r=await dbAddRoutine({ venueId:v.id, venueLabel:`${v.brand} — ${v.area}`,
+        activity:v.cat, weekday:fd.get('weekday'), band:String(fd.get('band')) });
+      if(r.error){btn.disabled=false;btn.innerHTML=label;$('#rt-error').textContent=r.error.message;return;}
+      if(typeof dbRoutineMatches==='function')await dbRoutineMatches();
+      save(); closeModal(); render(false); toast('Added to your week.');
+    });
+  });
+}
+
+async function removeRoutine(id){
+  const r=await dbRemoveRoutine(id);
+  if(r.error){toast(r.error.message);return;}
+  if(typeof dbRoutineMatches==='function')await dbRoutineMatches();
+  save(); render(false); toast('Removed.');
+}
+
 function settingsPage(){
   if(!signedIn())return authPage();
   const p=state.profile;
@@ -1786,6 +1850,7 @@ function profilePage(){
         </div>
       </div>
     </header>
+    <section class="pf-week"><p class="rail-label">Your week</p>${weekList(state.routines,{own:true})}</section>
     ${galleryStrip(state.gallery,{own:true})}
     <nav class="pf-tabs" aria-label="Your profile">
       ${[['sessions','Sessions'],['studios','Saved studios'],['going','Going to']].map(([k,label])=>
@@ -1924,7 +1989,23 @@ function findPage(){
     </form>
     ${chips.length?`<div class="find-chips">${chips.map(c=>
       `<button class="chip${findActivities.includes(c)?' is-on':''}" data-action="find-chip" data-id="${escapeHTML(c)}">${escapeHTML(c)}</button>`).join('')}</div>`:''}
-    ${results&&results.length?`<p class="rail-label find-head">Compatible with you</p>`:''}
+    ${(state.roomMatches||[]).length?`<p class="rail-label find-head">In the room with you</p>
+      <div class="find-results">${(state.roomMatches||[]).slice(0,6).map(m=>{
+        const exact=(m.slots||[]).filter(s=>s.exact);
+        const why=exact.length
+          ? `${escapeHTML(exact[0].venue)} on ${escapeHTML(WEEKDAYS[exact[0].weekday])}s, ${escapeHTML(exact[0].band)}`
+          : `Also goes to ${escapeHTML((m.slots||[])[0]?.venue||'')}`;
+        const st=exLinked(m.id);
+        return `<div class="find-row">
+          <span class="av-md">${faceOf(m)}</span>
+          <div class="find-who"><b><a class="person-link" href="#/member/${escapeHTML(m.id)}">${escapeHTML(m.name)}</a></b>
+            <span class="find-why">${why}</span></div>
+          ${st==='connected'?'<span class="tag">Friend</span>'
+            :st==='requested'?'<span class="tag">Requested</span>'
+            :`<button class="button small" data-action="ex-connect" data-id="${escapeHTML(m.id)}">Connect</button>`}
+          ${safetyButton(m.id,m.name)}
+        </div>`;}).join('')}</div>`:''}
+    ${results&&results.length?`<p class="rail-label find-head">Others nearby</p>`:''}
     <div class="find-results">
       ${results===null
         ? '<p class="small">Finding people near you&hellip;</p>'
@@ -2390,7 +2471,7 @@ function initPageMotion(){
   revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('is-revealed');revealObserver.unobserve(entry.target);}}),{threshold:.08,rootMargin:'0px 0px -30px 0px'});
   targets.forEach(el=>{el.classList.add('will-reveal');revealObserver.observe(el);});
 }
-function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':if(signedIn()){location.replace('#/feed');return;}html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'check-email':html=checkEmailPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'profile':html=profilePage();break;case 'member':html=memberPage(id);if(typeof ensureMember==='function')ensureMember(id);break;case 'feed':html=feedPage();break;case 'find':html=findPage();break;case 'messages':html=messagesPage();break;case 'settings':html=settingsPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=privacyPage();break;case 'terms':html=termsPage();break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you','check-email':'Check your email',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',profile:'Your circle',member:'A member',feed:'Feed',find:'Find your people',messages:'Messages',settings:'Settings',book:'Book this class',privacy:'Your privacy',terms:'Terms of service'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#auth-form'))bindAuth();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='find'){$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();runSearch();});if(state.found===undefined||state.found===null)runSearch();}if(path==='messages'){$('#msg-form')?.addEventListener('submit',e=>{e.preventDefault();sendMessage(e.target);});const b=$('#msg-body');if(b)b.scrollTop=b.scrollHeight;if(msgThread&&typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);}/* Fetch on arrival, not on every render — render() re-runs this block, so an
+function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':if(signedIn()){location.replace('#/feed');return;}html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'check-email':html=checkEmailPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'profile':html=profilePage();break;case 'member':html=memberPage(id);if(typeof ensureMember==='function')ensureMember(id);break;case 'feed':html=feedPage();break;case 'find':html=findPage();break;case 'messages':html=messagesPage();break;case 'settings':html=settingsPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=privacyPage();break;case 'terms':html=termsPage();break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you','check-email':'Check your email',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',profile:'Your circle',member:'A member',feed:'Feed',find:'Find your people',messages:'Messages',settings:'Settings',book:'Book this class',privacy:'Your privacy',terms:'Terms of service'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#auth-form'))bindAuth();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='find'){$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();runSearch();});if(typeof dbRoutineMatches==='function'&&state.roomMatches===undefined){state.roomMatches=[];dbRoutineMatches().then(()=>{if(location.hash==='#/find')render(false);});}if(state.found===undefined||state.found===null)runSearch();}if(path==='messages'){$('#msg-form')?.addEventListener('submit',e=>{e.preventDefault();sendMessage(e.target);});const b=$('#msg-body');if(b)b.scrollTop=b.scrollHeight;if(msgThread&&typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);}/* Fetch on arrival, not on every render — render() re-runs this block, so an
    unguarded fetch-then-render is an infinite loop. The flag clears when you
    leave, so coming back fetches again. */
 if(path!=='feed')feedFetched=false;
@@ -2419,7 +2500,7 @@ case 'book-new':bookChoose(t.dataset.id,'new');break;
 case 'book-plan':bookChoose(t.dataset.id,'plan');break;
 case 'ex-zoom':exZoom(t.dataset.dir);break;
 case 'ex-reset':ex={...ex,cat:'All',time:'All',members:false,query:'',venue:null,cls:null};render(false);break;
-case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':{const nowOn=!state.saved.includes(id);state.saved=nowOn?[...state.saved,id]:state.saved.filter(x=>x!==id);if(typeof dbSetStudio==='function')dbPush(dbSetStudio(id,nowOn),'that studio');save();render(false);}toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':pendingPlans().length?attendModal():postActivity();break;case 'post-new':closeModal();postActivity();break;case 'attend-yes':logAttended(t.dataset.id);break;case 'attend-no':skipAttended(t.dataset.id);break;case 'finish-next':{const n=(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start)[0];if(n){n.start=Date.now()-(n.dur+5)*60000;save();render(false);toast('Moved into the past. The + now has something to ask you.');}break;}case 'attend-more':{const p=takePlan(t.dataset.id);closeModal();postActivity(p);break;}case 'show-friends':friendsModal();break;case 'show-requests':requestsModal();break;case 'edit-bio':bioModal();break;case 'add-gallery':addGalleryPhoto();break;case 'open-photo':{const who=(location.hash||'').startsWith('#/member/')?personById(location.hash.split('/')[2]):null;openLightbox(who?(who.gallery||[]):(state.gallery||[]),Number(t.dataset.index)||0);break;}case 'photo-prev':lightboxAt=(lightboxAt-1+lightboxOf.length)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'photo-next':lightboxAt=(lightboxAt+1)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'remove-photo':removeGalleryPhoto(t.dataset.id);break;case 'edit-photo':photoModal();break;case 'accept-request':exConnect(t.dataset.id);break;case 'decline-request':respondToRequest(t.dataset.id,'declined');break;case 'withdraw-request':respondToRequest(t.dataset.id,'withdrawn');break;case 'remove-friend':respondToRequest(t.dataset.id,'removed');break;case 'msg-open':msgThread=t.dataset.id;render(false);if(typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);break;case 'log-out':dbSignOut().then(()=>{$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Signed out.');location.hash='#/';render(false);});break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':toast('Added to your plan. In the live product this books you alongside them.');break;case 'session-talk':toast('Comments are part of this design. Writing one is not wired up in the preview yet.');break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':{const v=t.dataset.id;findActivities=findActivities.includes(v)?findActivities.filter(x=>x!==v):[...findActivities,v];runSearch();break;}case 'connect-sample':state.connections=state.connections.includes('alex')?[]:['alex'];save();render(false);toast(state.connections.length?'Sample connection added to your preview.':'Sample connection removed.');break;case 'edit-profile':editProfileModal();break;case 'person-menu':personMenu(t.dataset.id,t.dataset.name);break;case 'report-person':closeModal();reportModal(t.dataset.id,t.dataset.name);break;case 'block-person':closeModal();blockConfirm(t.dataset.id,t.dataset.name);break;case 'block-confirm':doBlock(t.dataset.id,t.dataset.name);break;case 'unblock-person':doUnblock(t.dataset.id,t.dataset.name);break;case 'toggle-show-age':toggleShowAge(t.checked);break;case 'export-data':exportMyData(t);break;case 'delete-account':deleteAccountModal();break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
+case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':{const nowOn=!state.saved.includes(id);state.saved=nowOn?[...state.saved,id]:state.saved.filter(x=>x!==id);if(typeof dbSetStudio==='function')dbPush(dbSetStudio(id,nowOn),'that studio');save();render(false);}toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':pendingPlans().length?attendModal():postActivity();break;case 'post-new':closeModal();postActivity();break;case 'attend-yes':logAttended(t.dataset.id);break;case 'attend-no':skipAttended(t.dataset.id);break;case 'finish-next':{const n=(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start)[0];if(n){n.start=Date.now()-(n.dur+5)*60000;save();render(false);toast('Moved into the past. The + now has something to ask you.');}break;}case 'attend-more':{const p=takePlan(t.dataset.id);closeModal();postActivity(p);break;}case 'show-friends':friendsModal();break;case 'show-requests':requestsModal();break;case 'edit-bio':bioModal();break;case 'add-gallery':addGalleryPhoto();break;case 'add-routine':routineModal(t.dataset.id);break;case 'remove-routine':removeRoutine(t.dataset.id);break;case 'open-photo':{const who=(location.hash||'').startsWith('#/member/')?personById(location.hash.split('/')[2]):null;openLightbox(who?(who.gallery||[]):(state.gallery||[]),Number(t.dataset.index)||0);break;}case 'photo-prev':lightboxAt=(lightboxAt-1+lightboxOf.length)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'photo-next':lightboxAt=(lightboxAt+1)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'remove-photo':removeGalleryPhoto(t.dataset.id);break;case 'edit-photo':photoModal();break;case 'accept-request':exConnect(t.dataset.id);break;case 'decline-request':respondToRequest(t.dataset.id,'declined');break;case 'withdraw-request':respondToRequest(t.dataset.id,'withdrawn');break;case 'remove-friend':respondToRequest(t.dataset.id,'removed');break;case 'msg-open':msgThread=t.dataset.id;render(false);if(typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);break;case 'log-out':dbSignOut().then(()=>{$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Signed out.');location.hash='#/';render(false);});break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':toast('Added to your plan. In the live product this books you alongside them.');break;case 'session-talk':toast('Comments are part of this design. Writing one is not wired up in the preview yet.');break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':{const v=t.dataset.id;findActivities=findActivities.includes(v)?findActivities.filter(x=>x!==v):[...findActivities,v];runSearch();break;}case 'connect-sample':state.connections=state.connections.includes('alex')?[]:['alex'];save();render(false);toast(state.connections.length?'Sample connection added to your preview.':'Sample connection removed.');break;case 'edit-profile':editProfileModal();break;case 'person-menu':personMenu(t.dataset.id,t.dataset.name);break;case 'report-person':closeModal();reportModal(t.dataset.id,t.dataset.name);break;case 'block-person':closeModal();blockConfirm(t.dataset.id,t.dataset.name);break;case 'block-confirm':doBlock(t.dataset.id,t.dataset.name);break;case 'unblock-person':doUnblock(t.dataset.id,t.dataset.name);break;case 'toggle-show-age':toggleShowAge(t.checked);break;case 'export-data':exportMyData(t);break;case 'delete-account':deleteAccountModal();break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
 $('#menu-button').addEventListener('click',()=>{const open=$('#menu-panel').hidden;$('#menu-panel').hidden=!open;$('#menu-button').setAttribute('aria-expanded',String(open));});
 bindAccountMenu();
 document.addEventListener('click',e=>{if(!e.target.closest('.site-header')){$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');}});
