@@ -318,6 +318,13 @@ strong{font-weight:500}
 .feed-empty .button{margin-top:18px}
 .find-results{display:flex;flex-direction:column;gap:2px;margin-top:10px}
   .find-head{margin:26px 0 0}
+.pf-week{margin:24px 0 4px}
+.week-list{list-style:none;margin:10px 0 14px;padding:0}
+.week-list li{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:10px 0;border-bottom:1px solid var(--line)}
+.week-list li:last-child{border-bottom:0}
+.week-list .small{display:block;color:var(--muted);margin-top:2px}
+.week-empty{max-width:54ch;margin:10px 0 0;line-height:1.6}
   .msg-face{display:block;overflow:hidden;flex:none}
 /* a few photographs, clickable */
 .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px;margin:22px 0 4px}
