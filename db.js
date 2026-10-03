@@ -149,9 +149,13 @@ const dbProfileFields = j => ({
   industry: j.industry || '',
   activities: (j.forms || []).filter(x => x !== JOIN_ANY.forms),
   times: j.times || [],
-  terms_version: TERMS_VERSION
+  /* Recorded only when somebody actually ticked the box. This used to be set on
+     every sign-up regardless, which meant the database held a consent record for
+     consent nobody had given — worse than holding none, if it were ever relied on. */
+  terms_version: j.agree ? TERMS_VERSION : null,
+  terms_accepted_at: j.agree ? new Date().toISOString() : null
 });
-const TERMS_VERSION = '2026-10-02-preview';
+const TERMS_VERSION = '2026-10-03';
 
 /* ===================== sessions, plans and saved studios =====================
    Column names and the app's own field names differ, so every translation lives
