@@ -378,7 +378,7 @@ function exZoom(dir){
 /* ---- people ---- */
 function exAvatars(ids,max){
   const shown=ids.slice(0,max||4);
-  return `<span class="av-stack">${shown.map(id=>{const p=exPerson(id);
+  return `<span class="av-stack">${shown.map(id=>{const p=personById(id);
     return `<span class="av" title="${escapeHTML(p?p.name:'')}">${escapeHTML(initials(p?p.name:'V'))}</span>`;}).join('')}${
     ids.length>shown.length?`<span class="av av-more">+${ids.length-shown.length}</span>`:''}</span>`;
 }
@@ -494,7 +494,7 @@ function exRefresh(both){
   if(p&&both!==false){p.innerHTML=exPanel();exBindMap();}
 }
 function exPersonModal(id){
-  const p=exPerson(id); if(!p)return;
+  const p=personById(id); if(!p)return;
   const upcoming=exClasses().filter(c=>c.going.includes(id)&&c.start>Date.now()).slice(0,4);
   openModal(escapeHTML(p.name),`<p class="modal-meta">${escapeHTML(p.area)} &middot; ${escapeHTML((VIRI.cities.find(c=>c.id===p.city)||{}).name||'')}</p>
     <p>${escapeHTML(p.line)}</p>
@@ -1180,7 +1180,7 @@ const SAMPLE_SESSIONS=[
    shape of the page is visible before you have logged anything */
 const mySessions=()=>state.posts.length
   ? state.posts.slice().reverse().map(p=>{
-      const tags=(p.withIds||[]).map(id=>exPerson(id)).filter(Boolean);
+      const tags=(p.withIds||[]).map(id=>personById(id)).filter(Boolean);
       return {title:p.title,cat:p.activity||'',place:p.place||'',
         dur:Number(p.duration)||0,went:p.went||1+tags.length,
         ago:prettyDate(p.date),note:p.description||'',img:p.photo||'',
@@ -1192,7 +1192,7 @@ const avatarFor=p=>p&&p.photo
   : escapeHTML(initials((p&&p.name)||'VIRI'));
 /* faces of the people who were there, overlapped the way a roster reads */
 const whoStack=ids=>!ids||!ids.length?'':`<span class="who-stack">${ids.slice(0,3).map(id=>{
-  const p=exPerson(id);
+  const p=personById(id);
   return `<span>${escapeHTML(initials(p?p.name:'VIRI'))}</span>`;}).join('')}</span>`;
 function sessionStats(s){
   const cells=[];
@@ -1726,7 +1726,7 @@ function settingsPage(){
       <h2>People you have blocked</h2>
       <p class="set-note">They cannot message you or send you a friend request, and you do not appear to each other. They were never told.</p>
       ${(state.blocked||[]).length
-        ? (state.blocked||[]).map(id=>{const who=(typeof exPerson==='function'&&exPerson(id))||null;
+        ? (state.blocked||[]).map(id=>{const who=(typeof exPerson==='function'&&personById(id))||null;
             return `<div class="set-row"><span class="set-k">${escapeHTML(who?who.name:id)}</span><span class="set-v"><button class="button small outline" data-action="unblock-person" data-id="${escapeHTML(id)}" data-name="${escapeHTML(who?who.name:'')}">Unblock</button></span></div>`;}).join('')
         : '<p class="small">You have not blocked anyone.</p>'}
     </section>
@@ -2086,7 +2086,7 @@ function shrinkImage(file,maxW=900){return new Promise(res=>{
   fr.onerror=()=>res('');fr.readAsDataURL(file);});}
 function postActivity(pre){
   postPhoto='';
-  const friends=(state.connections||[]).map(id=>exPerson(id)).filter(Boolean);
+  const friends=(state.connections||[]).map(id=>personById(id)).filter(Boolean);
   const v=(x)=>escapeHTML(x||'');
   openModal(pre?'Log this session':'Log a session',
    `<p class="small" style="margin-bottom:20px">${pre?'Everything from your plan is filled in. Change anything you like.':'This is saved to your profile.'}</p>
