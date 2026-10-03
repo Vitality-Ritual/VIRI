@@ -1023,6 +1023,17 @@ async function dbRoutineMatches(){
    can still be answered on Thursday. */
 
 const GOALS_PER_PERIOD = 3;
+
+/* Progress is the answers, counted. Keeping a tally instead meant an answer
+   that was later corrected could not take its point back — say yes on
+   Tuesday, change it to no, and the bar stayed where it was until a reload.
+   The answers live in a map keyed by date so there is one of each, and this
+   is the only place a goal's numbers are worked out. */
+function scoreGoal(g){
+  g.done = Object.values(g.answers || {}).filter(Boolean).length;
+  g.pct  = Math.min(100, Math.round((g.done / g.target) * 100));
+  return g;
+}
 const asDate = d => d.toISOString().slice(0,10);
 
 /* The week turns on Sunday, the month on the 1st. */
@@ -1050,13 +1061,11 @@ async function dbLoadGoals(profileId){
     .filter(g => g.period_start === periodStart(g.period))   /* this week's, this month's */
     .map(g => {
       const mine = checks.filter(k => k.goal_id === g.id);
-      const done = mine.filter(k => k.done).length;
-      return {
+      return scoreGoal({
         id: g.id, period: g.period, periodStart: g.period_start,
-        title: g.title, target: g.target, done,
-        pct: Math.min(100, Math.round((done / g.target) * 100)),
-        answered: mine.map(k => k.on_date)
-      };
+        title: g.title, target: g.target,
+        answers: Object.fromEntries(mine.map(k => [k.on_date, !!k.done]))
+      });
     });
   if (who === authUser.id) state.goals = out;
   else if (state.people && state.people[who]) state.people[who].goals = out;
@@ -1074,10 +1083,10 @@ async function dbAddGoal({ period, title, target }){
     title: text, target: Number(target) || 1
   }).select().maybeSingle();
   if (error) return { error };
-  state.goals = [...(state.goals || []), {
+  state.goals = [...(state.goals || []), scoreGoal({
     id: data.id, period, periodStart: data.period_start, title: text,
-    target: Number(target) || 1, done: 0, pct: 0, answered: []
-  }];
+    target: Number(target) || 1, answers: {}
+  })];
   return { data: true };
 }
 
@@ -1100,11 +1109,9 @@ async function dbCheckIn(goalId, onDate, done){
             { onConflict: 'goal_id,on_date' });
   if (error) return { error };
   const g = (state.goals || []).find(x => x.id === goalId);
-  if (g) {
-    if (!g.answered.includes(onDate)) g.answered.push(onDate);
-    g.done = Math.max(0, g.done + (done ? 1 : 0));
-    g.pct = Math.min(100, Math.round((g.done / g.target) * 100));
-  }
+  /* Record the answer and recount. Changing yesterday's answer now moves
+     the bar in whichever direction is true. */
+  if (g) { (g.answers = g.answers || {})[onDate] = !!done; scoreGoal(g); }
   return { data: true };
 }
 
@@ -1117,7 +1124,7 @@ function goalsAwaitingAnswer(){
     const from = new Date(g.periodStart + 'T00:00:00');
     for (let d = new Date(from); d < today; d.setDate(d.getDate() + 1)) {
       const day = asDate(d);
-      if (!g.answered.includes(day)) { out.push({ goal: g, day }); break; }
+      if ((g.answers || {})[day] === undefined) { out.push({ goal: g, day }); break; }
     }
   }
   return out;
