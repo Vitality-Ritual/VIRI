@@ -967,15 +967,18 @@ async function dbLoadRoutines(profileId){
 
 async function dbAddRoutine({ venueId, venueLabel, activity, weekday, band }){
   const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  if (!activity) return { error: { message: 'What are you doing?' } };
   const { data, error } = await c.from('routines').insert({
-    profile_id: authUser.id, venue_id: venueId, venue_label: venueLabel,
-    activity: activity || null, weekday: Number(weekday), time_band: band
+    profile_id: authUser.id,
+    venue_id: venueId || null,
+    venue_label: (venueLabel || '').trim() || null,
+    activity, weekday: Number(weekday), time_band: band
   }).select().maybeSingle();
   if (error && error.code === '23505') return { error: { message: 'That is already in your week.' } };
   if (error) return { error };
   state.routines = [...(state.routines || []), {
-    id: data.id, venueId, venue: venueLabel, activity: activity || '',
-    weekday: Number(weekday), band
+    id: data.id, venueId: venueId || '', venue: (venueLabel || '').trim(),
+    activity, weekday: Number(weekday), band
   }].sort((a,b) => a.weekday - b.weekday);
   return { data: true };
 }
@@ -997,13 +1000,22 @@ async function dbRoutineMatches(){
   const c = db(); if (!c || !authUser) return [];
   const mine = state.routines || [];
   if (!mine.length) { state.roomMatches = []; return []; }
+  /* Match on the studio where there is one, and on the activity where there
+     is not — two people running on Tuesday mornings are as much in the same
+     room as two people at the same barre class. */
+  const venues = [...new Set(mine.map(r => r.venueId).filter(Boolean))];
+  const acts   = [...new Set(mine.map(r => r.activity).filter(Boolean))];
+  const ors = [];
+  if (venues.length) ors.push(`venue_id.in.(${venues.join(',')})`);
+  if (acts.length)   ors.push(`activity.in.(${acts.map(x => `"${x}"`).join(',')})`);
+  if (!ors.length) { state.roomMatches = []; return []; }
   const { data } = await c.from('routines').select('*')
-    .in('venue_id', [...new Set(mine.map(r => r.venueId))])
-    .neq('profile_id', authUser.id);
+    .or(ors.join(',')).neq('profile_id', authUser.id);
   const byPerson = {};
   for (const r of data || []) {
     if ((state.blocked || []).includes(r.profile_id)) continue;
-    const sameSlot = mine.some(m => m.venueId === r.venue_id && m.weekday === r.weekday && m.band === r.time_band);
+    const sameSlot = mine.some(m => m.weekday === r.weekday && m.band === r.time_band &&
+      (m.venueId && r.venue_id ? m.venueId === r.venue_id : m.activity === r.activity));
     const entry = byPerson[r.profile_id] || (byPerson[r.profile_id] = { id: r.profile_id, slots: [], exact: 0 });
     entry.slots.push({ venue: r.venue_label, weekday: r.weekday, band: r.time_band, exact: sameSlot });
     if (sameSlot) entry.exact++;
@@ -1128,6 +1140,23 @@ function goalsAwaitingAnswer(){
     }
   }
   return out;
+}
+
+/* How many members train at each studio. A count, never names: it is the
+   signal that makes a directory worth browsing, and it says nothing about
+   who is in the room on a Tuesday. */
+async function dbVenueCounts(){
+  const c = db(); if (!c || !authUser) { state.venueCounts = {}; return {}; }
+  const { data } = await c.from('routines').select('venue_id,profile_id');
+  const seen = {}, counts = {};
+  for (const r of data || []) {
+    const key = r.venue_id + '|' + r.profile_id;
+    if (seen[key]) continue;
+    seen[key] = 1;
+    counts[r.venue_id] = (counts[r.venue_id] || 0) + 1;
+  }
+  state.venueCounts = counts;
+  return counts;
 }
 
 async function dbSaveProfileEdits(patch){
