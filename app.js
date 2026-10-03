@@ -189,7 +189,9 @@ function readPage(id){if(id){const a=allArticles().find(x=>x.id===id);if(!a)retu
   </article>`;}
   return `<section class="page-head"><div class="wrap"><p class="eyebrow">The VIRI edit</p><h1>A little inspiration<br>for your everyday.</h1><p>Movement, community, and the rituals that bring us together.</p></div></section><section class="wrap" style="padding-bottom:80px"><div class="cards-three">${allArticles().map((a,i)=>articleCard(a,i)).join('')}</div></section><section class="edit-note"><div class="wrap"><div class="edit-note-inner"><h2>Choosing between your workout and your friends</h2><div class="edit-note-cols"><p>Friendships take upkeep, and upkeep takes time, which is often in short supply. Work takes most of the day. Whatever time is left tends to be stretched thin.</p><p>This shows up in the data. Researchers have found a real drop in the number of close friends Americans report having compared to a few decades ago. Longer hours, more moves, and more time spent alone. Some people manage to stay connected anyway, usually because they&rsquo;ve built specific time for it rather than waiting for it to happen.</p><p>We grew up in Colorado, where being active and being social were rarely separate plans, a hike doubled as a catch-up, a group ride doubled as how you met people. That&rsquo;s part of what got us thinking about this. But the real starting point was DC itself. The city is full of women showing up to the same studios, the same classes, week after week, often multiple times. The network already exists. What&rsquo;s been missing is a way to actually connect the people in it. Everyone&rsquo;s in the room together, and most people leave still strangers, straight past each other and on to the next thing.</p><h3>What VIRI is for</h3><p>VIRI is built to close that gap: a way to actually meet the people already showing up alongside you, on purpose, often enough that they stop being strangers. Staying active and staying connected don&rsquo;t have to compete for the same hour. Given the right setup, they can be the same hour.</p></div></div></div></section>`;}
 /* ===================== Explore: map, classes, rosters ===================== */
-let ex={city:'dc',cat:'All',day:0,time:'All',members:false,query:'',venue:null,cls:null};
+/* No day, no time of day, no class: Explore lists studios now, and when
+   somebody trains is something they tell us, not something we invent. */
+let ex={city:'dc',cat:'All',members:false,query:'',venue:null};
 const exCity=()=>VIRI.cities.find(c=>c.id===ex.city)||VIRI.cities[0];
 const exVenue=id=>VIRI.venues.find(v=>v.id===id);
 const exPerson=id=>VIRI.people.find(p=>p.id===id);
@@ -197,26 +199,19 @@ const exPerson=id=>VIRI.people.find(p=>p.id===id);
    Pages should not have to know which they are holding. */
 const personById=id=>(state.people&&state.people[id])||exPerson(id)||null;
 let exAll=null;
-const exClasses=()=>(exAll||(exAll=VIRI.buildClasses()));
-const DAYBANDS={Early:[0,9],Midday:[9,16],Evening:[16,24]};
+/* buildClasses is gone. Studios are real; their timetables were not. */
+const exVenues=()=>((window.VIRI&&VIRI.venues)||[]);
 
-function exDays(){const out=[];for(let i=0;i<7;i++){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+i);
-  out.push({i,label:i===0?'Today':i===1?'Tomorrow':d.toLocaleDateString('en-US',{weekday:'short'}),
-    sub:d.toLocaleDateString('en-US',{month:'short',day:'numeric'})});}return out;}
 
-function exMatch(c){
-  if(c.city!==ex.city)return false;
-  const d=new Date(c.start), t=new Date(); t.setHours(0,0,0,0); t.setDate(t.getDate()+ex.day);
-  if(d.toDateString()!==t.toDateString())return false;
-  if(ex.cat!=='All'&&c.cat!==ex.cat)return false;
-  if(ex.venue&&c.venue!==ex.venue)return false;
-  if(ex.members&&!c.going.length)return false;
-  if(ex.time!=='All'){const h=d.getHours()+d.getMinutes()/60,b=DAYBANDS[ex.time];if(h<b[0]||h>=b[1])return false;}
-  if(ex.query){const v=exVenue(c.venue),q=ex.query.toLowerCase();
-    if(!((c.title+' '+v.brand+' '+c.area+' '+c.cat).toLowerCase().includes(q)))return false;}
+function exMatch(v){
+  if(v.city!==ex.city)return false;
+  if(ex.cat!=='All'&&v.cat!==ex.cat)return false;
+  if(ex.members&&!((state.venueCounts||{})[v.id]))return false;
+  if(ex.query){const q=ex.query.toLowerCase();
+    if(!((v.brand+' '+v.area+' '+v.cat).toLowerCase().includes(q)))return false;}
   return true;
 }
-const exFiltered=()=>exClasses().filter(exMatch);
+const exFiltered=()=>exVenues().filter(exMatch);
 
 /* ---- map geometry ---- */
 function exBox(city){
@@ -405,133 +400,7 @@ function exPersonCard(p,cls){
 }
 
 /* ---- class detail ---- */
-function exDetail(id){
-  const c=exClasses().find(x=>x.id===id); if(!c)return exMap();
-  const v=exVenue(c.venue), d=new Date(c.start);
-  const going=c.going.map(exPerson).filter(Boolean);
-  return `<div class="cls-detail">
-    <button class="plain-link" data-action="ex-back">&larr; Back to the map</button>
-    <p class="eyebrow">${escapeHTML(v.brand)} &middot; ${escapeHTML(c.area)}</p>
-    <h2>${escapeHTML(c.title)}</h2>
-    <p class="cls-when">${d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}
-      &middot; ${prettyTime(c.start)} &middot; ${c.dur} min &middot; with ${escapeHTML(c.coach)}</p>
-    <p class="small">${c.spots} spot${c.spots===1?'':'s'} left of ${c.cap} &middot; sample availability</p>
-    <div class="cls-actions">
-      ${state.joined.includes(c.id)?`<button class="button small outline" data-action="join-event" data-id="${c.id}" aria-pressed="true">On your plan &#10003;</button>`
-      :`<a class="button small" href="#/book/${c.id}">Add to my plan</a>`}
-      <a class="text-link" href="#/studios">About ${escapeHTML(v.brand)} ${arrow}</a>
-    </div>
-    <div class="roster">
-      <div class="roster-head">
-        <h3>${going.length?`${going.length} VIRI member${going.length===1?'':'s'} going`:'No members going yet'}</h3>
-        ${going.length?`<p class="small">Reach out before class so you already know a face.</p>`
-          :`<p class="small">Add it to your plan and you will be the first &mdash; anyone browsing this class will see you here.</p>`}
-      </div>
-      ${going.map(p=>exPersonCard(p,c)).join('')}
-    </div>
-  </div>`;
-}
 
-function exPanel(){return ex.cls?exDetail(ex.cls):exMap();}
-
-/* ---- class list ---- */
-function exRow(c){
-  const v=exVenue(c.venue);
-  return `<button class="cls-row ${ex.cls===c.id?'is-on':''}" data-action="ex-class" data-id="${c.id}">
-    <span class="cls-time"><b>${prettyTime(c.start)}</b><span>${c.dur} min</span></span>
-    <span class="cls-main">
-      <span class="cls-title">${escapeHTML(c.title)}</span>
-      <span class="cls-sub">${escapeHTML(v.brand)} &middot; ${escapeHTML(c.area)} &middot; ${escapeHTML(c.coach)}</span>
-    </span>
-    <span class="cls-going">${c.going.length?exAvatars(c.going,3)+`<span class="cls-n">${c.going.length} going</span>`
-      :`<span class="cls-n cls-none">Be the first</span>`}</span>
-  </button>`;
-}
-function exList(){
-  const list=exFiltered();
-  const head=`<p class="small ex-count" role="status">${list.length} class${list.length===1?'':'es'}${
-    ex.venue?` at ${escapeHTML(exVenue(ex.venue).brand)}, ${escapeHTML(exVenue(ex.venue).area)}`:''}
-    ${ex.venue?`<button class="plain-link" data-action="ex-venue" data-id="">Clear studio</button>`:''}</p>`;
-  if(!list.length)return head+`<div class="empty-state">
-    <h3>Nothing on this day yet.</h3><p>Try another day, another activity, or clear the studio filter.</p>
-    <button class="button small outline" data-action="ex-reset" style="margin-top:18px">Clear filters</button></div>`;
-  return head+`<div class="cls-list">${list.map(exRow).join('')}</div>`;
-}
-
-/* ---- page ---- */
-function explorePage(){
-  return `<section class="page-head"><div class="wrap"><div class="page-head-row">
-    <div>
-    <h1>Add your classes. Find the people in them.</h1>
-    <p>Every studio near you, every class this week, and who from VIRI is already going.</p></div>
-  </div></div></section>
-  <div class="wrap">
-    ${note('Studio locations are approximate and every class time, instructor, roster and member profile in this preview is sample data. Adding a class saves a plan on this device; it does not book anything.')}
-    <div class="ex-cities" role="tablist" aria-label="City">${VIRI.cities.map(c=>
-      `<button role="tab" class="city-tab ${c.id===ex.city?'active':''}" data-action="ex-city" data-id="${c.id}"
-        aria-selected="${c.id===ex.city}">${escapeHTML(c.name)}</button>`).join('')}</div>
-    <div class="ex-days">${exDays().map(d=>
-      `<button class="day-tab ${d.i===ex.day?'active':''}" data-action="ex-day" data-day="${d.i}"
-        aria-pressed="${d.i===ex.day}"><b>${d.label}</b><span>${d.sub}</span></button>`).join('')}</div>
-    <div class="toolbar">
-      <label class="search-field"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="m15 15 6 6"/></svg>
-        <input type="search" id="ex-search" aria-label="Search classes" placeholder="Search a class, studio or neighborhood" value="${escapeHTML(ex.query)}"></label>
-      <select id="ex-time" aria-label="Time of day">${['All','Early','Midday','Evening'].map(t=>
-        `<option value="${t}" ${t===ex.time?'selected':''}>${t==='All'?'Any time':t==='Early'?'Before 9am':t==='Midday'?'9am – 4pm':'After 4pm'}</option>`).join('')}</select>
-      <button class="chip ${ex.members?'active':''}" data-action="ex-members" aria-pressed="${ex.members}">Members going</button>
-    </div>
-    <div class="chips" aria-label="Activity">${['All'].concat(VIRI.categories).map(c=>
-      `<button class="chip ${ex.cat===c?'active':''}" data-action="ex-cat" data-cat="${c}" aria-pressed="${ex.cat===c}">${c}</button>`).join('')}</div>
-    <div class="ex-layout">
-      <div class="ex-panel" id="ex-panel">${exPanel()}</div>
-      <div class="ex-side" id="ex-side">${exList()}</div>
-    </div>
-  </div>`;
-}
-function exRefresh(both){
-  const p=$('#ex-panel'), s=$('#ex-side');
-  if(s)s.innerHTML=exList();
-  if(p&&both!==false){p.innerHTML=exPanel();exBindMap();}
-}
-function exPersonModal(id){
-  const p=personById(id); if(!p)return;
-  const upcoming=exClasses().filter(c=>c.going.includes(id)&&c.start>Date.now()).slice(0,4);
-  openModal(escapeHTML(p.name),`<p class="modal-meta">${escapeHTML(p.area)} &middot; ${escapeHTML((VIRI.cities.find(c=>c.id===p.city)||{}).name||'')}</p>
-    <p>${escapeHTML(p.line)}</p>
-    <p class="person-cats">${p.cats.map(c=>`<span class="tag">${escapeHTML(c)}</span>`).join('')}</p>
-    <p class="small">${p.months} month${p.months===1?'':'s'} on VIRI &middot; ${p.classes} classes logged &middot; illustrative profile</p>
-    ${upcoming.length?`<h3 class="modal-sub">Also going to</h3><ul class="modal-list">${upcoming.map(c=>{
-      const v=exVenue(c.venue);return `<li>${escapeHTML(c.title)} &middot; ${escapeHTML(v.brand)} &middot; ${prettyDate(c.start)} ${prettyTime(c.start)}</li>`;}).join('')}</ul>`:''}
-    <div class="dialog-actions">${exConnectBtn(p)}
-      <button class="button small outline" data-action="close-modal">Close</button></div>`);
-}
-async function exConnect(id){
-  if(!signedIn()){toast('Create your profile first so they know who is reaching out.');location.hash='#/signup';return;}
-  const p=personById(id);
-  /* The sample roster has no accounts behind it, so a request would have
-     nowhere to go. Say so rather than pretending it was sent. */
-  if(!isRealAccount(id)){toast('This is a sample member, so there is no one to send a request to.');return;}
-  const linked=exLinked(id);
-  if(linked==='connected')return;
-  if(linked==='incoming'){
-    const r=await dbAcceptConnection(id);
-    if(r.error){toast(r.error.message);return;}
-    toast(`You and ${p?p.name:'they'} are now friends.`);
-  }else if(linked==='requested'){
-    const r=await dbRemoveConnection(id);
-    if(r.error){toast(r.error.message);return;}
-    toast('Request withdrawn.');
-  }else{
-    const r=await dbRequestConnection(id);
-    if(r.error){toast(r.error.message);return;}
-    toast(`Request sent to ${p?p.name:'them'}.`);
-  }
-  save();render(false);if($('#modal').open)requestsModal();
-}
-
-
-function eventDetails(id){const e=allEvents().find(x=>x.id===id);if(!e)return;const s=studios.find(s=>s.id===e.studio);openModal(escapeHTML(e.title),`<p class="eyebrow">${escapeHTML(e.category)} · ${e.type==='club'?'Community club':'Group activity'}</p><p class="dialog-copy">${prettyDate(e.date)} at ${prettyTime(e.date)}<br>${e.duration} minutes · ${escapeHTML(e.place)}</p>${e.description?`<p style="margin-top:20px">${escapeHTML(e.description)}</p>`:''}<div class="notice-box small">${e.custom?'This activity was created in your local preview. It has not been posted to a live network.':'Example activity and approximate location. This is not a real class schedule or a confirmed booking.'}</div>${s?`<p>Interested in ${s.name}? Check its official site for actual locations, schedules, and booking.</p><p style="margin-top:10px"><a class="text-link" href="${s.url}" target="_blank" rel="noopener">Visit ${s.name} ${arrow}</a></p>`:''}<div class="dialog-actions"><button class="button outline small" data-action="show-map" data-id="${e.id}">Show on map</button><button class="button small" data-action="join-event" data-id="${e.id}">${state.joined.includes(e.id)?'Leave activity':'Join activity'}</button></div>`);}
-function toggleJoin(id){const known=allEvents().some(e=>e.id===id)||(typeof exClasses==='function'&&exClasses().some(c=>c.id===id));if(!known)return;const joined=state.joined.includes(id);state.joined=joined?state.joined.filter(x=>x!==id):[...state.joined,id];if(!joined&&typeof exClasses==='function')snapshotPlan(exClasses().find(c=>c.id===id));save();if($('#modal').open)closeModal();render(false);toast(joined?'Removed from your plans.':'Added to your plans. This preview does not make a booking.');}
 function studiosPage(id){if(id){const s=studios.find(s=>s.id===id);if(!s)return notFound();return `<section class="page-head"><div class="wrap"><a class="text-link" href="#/studios">${arrowLeft} All studios</a><p class="eyebrow" style="margin-top:28px">${s.category}</p><h1>${s.name}</h1></div></section><div class="wrap studio-detail"><img src="${A+studioPhoto(s)}" alt="A studio space of the kind ${s.name} runs"><div class="studio-description"><h2>${s.intro}</h2><p>${s.description}</p><div class="studio-facts"><div><span class="small">The movement</span><br>${s.focus}</div></div><p class="small"><strong>Before you go</strong><br>${s.bring} Locations, formats, and amenities vary; confirm with the studio.</p><div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:20px"><a class="button" href="${s.url}" target="_blank" rel="noopener">Visit studio website ${arrow}</a><button class="button outline" data-action="save-studio" data-id="${s.id}" aria-pressed="${state.saved.includes(s.id)}">${state.saved.includes(s.id)?'Saved ✓':'Save studio'}</button></div></div></div><div class="wrap">${info('Studio listings are for discovery. VIRI has no booking integration or confirmed partnership with these brands.')}<div class="community-banner"><div><h3>Find someone to go with.</h3><p>Explore shared plans and people who enjoy ${s.category.toLowerCase()}.</p></div><a href="#/explore" class="button" data-action="studio-explore" data-category="${s.category}">Explore ${s.category.toLowerCase()} ${arrow}</a></div></div>`;}return `<section class="page-head"><div class="wrap"><p class="eyebrow">Discover a new ritual</p><h1>A studio for every kind of you.</h1><p>Add your favorite places to move, then find your people.</p></div></section><section class="wrap" style="padding-bottom:80px"><div class="explore-grid">${studios.map(studioCard).join('')}</div></section>`;}
 const phMark=()=>`<svg viewBox="0 0 48 40" aria-hidden="true"><rect x="1" y="1" width="46" height="38" rx="1"/><circle cx="16" cy="14" r="4.2"/><path d="M4 33l12-11 8 7 7-6 13 11"/></svg>`;
 function aboutPage(){return `<section class="about-hero is-placeholder"><div class="about-hero-ph" aria-hidden="true"><span class="ph-mark">${phMark()}</span><span class="ph-cap">Hero photograph<br>to come</span></div><div class="wrap"><p class="eyebrow">Vitality Ritual</p><h1>Build Community<br>Around What<br>Moves You.</h1>${button('join now','#/signup','light')}</div></section><section class="section"><div class="wrap about-story"><h2>Make a big city<br>feel a little smaller.</h2><div class="prose"><p>VIRI is a social network for people who want to live actively and connect locally. Build your own circle by discovering people in your area who share your interests, attend the same studios, take similar classes, follow similar routines, or have similar schedules.</p><p>Whether it’s finding a Pilates or yoga class, a new weight lifting buddy, or a partner to train for your next marathon with, VIRI helps you connect with people outside your existing network from across your city. Meet new people, build your community, and create your own corner of the city.</p></div></div></section>
@@ -635,6 +504,111 @@ function bindContact(){
     location.hash='#/thanks';
   });
 }
+/* the sign-up screen takes the name only; the rest is asked one question at a
+   time on #/join, which starts on the email step because the name is in hand */
+function exPanel(){return exMap();}
+
+/* ---- class list ---- */
+/* A studio, what it is, and how many members say they train there. The count
+   is the only thing VIRI knows that a map would not tell you. */
+function exRow(v){
+  const n=(state.venueCounts||{})[v.id]||0;
+  const saved=(state.saved||[]).includes(v.id);
+  const mine=(state.routines||[]).filter(r=>r.venueId===v.id);
+  return `<article class="cls-row">
+    <div class="cls-main">
+      <h3>${escapeHTML(v.brand)}</h3>
+      <p class="small">${escapeHTML(v.area)} &middot; ${escapeHTML(v.cat)}</p>
+      ${n?`<p class="cls-going">${n} member${n===1?'':'s'} train${n===1?'s':''} here</p>`:''}
+      ${mine.length?`<p class="cls-going">In your week: ${mine.map(r=>escapeHTML(WEEKDAYS[r.weekday]+'s, '+r.band)).join('; ')}</p>`:''}
+    </div>
+    <div class="cls-actions">
+      <button class="button small" data-action="add-routine" data-id="${escapeHTML(v.id)}">Add to my week</button>
+      <button class="button small outline" data-action="save-studio" data-id="${escapeHTML(v.id)}">${saved?'Saved':'Save'}</button>
+    </div>
+  </article>`;
+}
+function exList(){
+  const list=exFiltered();
+  const head=`<p class="small ex-count" role="status">${list.length} studio${list.length===1?'':'s'}</p>`;
+  if(!list.length)return head+`<div class="empty-state">
+    <h3>Nothing here yet.</h3><p>Try another activity, or clear the filters.</p>
+    <button class="button small outline" data-action="ex-reset" style="margin-top:18px">Clear filters</button></div>`;
+  return head+`<div class="cls-list">${list.map(exRow).join('')}</div>`;
+}
+
+/* ---- page ---- */
+function explorePage(){
+  return `<section class="page-head"><div class="wrap"><div class="page-head-row">
+    <div>
+    <h1>Every studio near you.<br>And who trains there.</h1>
+    <p>Add the ones you go to, and VIRI finds the women who are in the room with you.</p></div>
+  </div></div></section>
+  <div class="wrap">
+    ${info('Studio locations are approximate and listings do not imply a partnership. Check schedules and prices with the studio itself.')}
+    <div class="ex-cities" role="tablist" aria-label="City">${VIRI.cities.map(c=>
+      `<button role="tab" class="city-tab ${c.id===ex.city?'active':''}" data-action="ex-city" data-id="${c.id}"
+        aria-selected="${c.id===ex.city}">${escapeHTML(c.name)}</button>`).join('')}</div>
+    <div class="toolbar">
+      <label class="search-field"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="m15 15 6 6"/></svg>
+        <input type="search" id="ex-search" aria-label="Search studios" placeholder="A studio or a neighbourhood" value="${escapeHTML(ex.query)}"></label>
+      <button class="chip ${ex.members?'active':''}" data-action="ex-members" aria-pressed="${ex.members}">Where members train</button>
+    </div>
+    <div class="chips" aria-label="Activity">${['All'].concat(VIRI.categories).map(c=>
+      `<button class="chip ${ex.cat===c?'active':''}" data-action="ex-cat" data-cat="${c}" aria-pressed="${ex.cat===c}">${c}</button>`).join('')}</div>
+    <div class="ex-layout">
+      <div class="ex-panel" id="ex-panel">${exPanel()}</div>
+      <div class="ex-side" id="ex-side">${exList()}</div>
+    </div>
+  </div>`;
+}
+function exRefresh(both){
+  const p=$('#ex-panel'), s=$('#ex-side');
+  if(s)s.innerHTML=exList();
+  if(p&&both!==false){p.innerHTML=exPanel();exBindMap();}
+}
+function exPersonModal(id){
+  const p=personById(id); if(!p)return;
+  /* What she said her week looks like, rather than classes we invented for her. */
+  const upcoming=((personById(id)||{}).routines||[]).slice(0,4);
+  openModal(escapeHTML(p.name),`<p class="modal-meta">${escapeHTML(p.area)} &middot; ${escapeHTML((VIRI.cities.find(c=>c.id===p.city)||{}).name||'')}</p>
+    <p>${escapeHTML(p.line)}</p>
+    <p class="person-cats">${p.cats.map(c=>`<span class="tag">${escapeHTML(c)}</span>`).join('')}</p>
+    <p class="small">${p.months} month${p.months===1?'':'s'} on VIRI &middot; ${p.classes} classes logged &middot; illustrative profile</p>
+    ${upcoming.length?`<h3 class="modal-sub">Also going to</h3><ul class="modal-list">${upcoming.map(c=>{
+      const v=exVenue(c.venue);return `<li>${escapeHTML(c.title)} &middot; ${escapeHTML(v.brand)} &middot; ${prettyDate(c.start)} ${prettyTime(c.start)}</li>`;}).join('')}</ul>`:''}
+    <div class="dialog-actions">${exConnectBtn(p)}
+      <button class="button small outline" data-action="close-modal">Close</button></div>`);
+}
+async function exConnect(id){
+  if(!signedIn()){toast('Create your profile first so they know who is reaching out.');location.hash='#/signup';return;}
+  const p=personById(id);
+  /* The sample roster has no accounts behind it, so a request would have
+     nowhere to go. Say so rather than pretending it was sent. */
+  if(!isRealAccount(id)){toast('This is a sample member, so there is no one to send a request to.');return;}
+  const linked=exLinked(id);
+  if(linked==='connected')return;
+  if(linked==='incoming'){
+    const r=await dbAcceptConnection(id);
+    if(r.error){toast(r.error.message);return;}
+    toast(`You and ${p?p.name:'they'} are now friends.`);
+  }else if(linked==='requested'){
+    const r=await dbRemoveConnection(id);
+    if(r.error){toast(r.error.message);return;}
+    toast('Request withdrawn.');
+  }else{
+    const r=await dbRequestConnection(id);
+    if(r.error){toast(r.error.message);return;}
+    toast(`Request sent to ${p?p.name:'them'}.`);
+  }
+  save();render(false);if($('#modal').open)requestsModal();
+}
+
+
+function eventDetails(id){const e=allEvents().find(x=>x.id===id);if(!e)return;const s=studios.find(s=>s.id===e.studio);openModal(escapeHTML(e.title),`<p class="eyebrow">${escapeHTML(e.category)} · ${e.type==='club'?'Community club':'Group activity'}</p><p class="dialog-copy">${prettyDate(e.date)} at ${prettyTime(e.date)}<br>${e.duration} minutes · ${escapeHTML(e.place)}</p>${e.description?`<p style="margin-top:20px">${escapeHTML(e.description)}</p>`:''}<div class="notice-box small">${e.custom?'This activity was created in your local preview. It has not been posted to a live network.':'Example activity and approximate location. This is not a real class schedule or a confirmed booking.'}</div>${s?`<p>Interested in ${s.name}? Check its official site for actual locations, schedules, and booking.</p><p style="margin-top:10px"><a class="text-link" href="${s.url}" target="_blank" rel="noopener">Visit ${s.name} ${arrow}</a></p>`:''}<div class="dialog-actions"><button class="button outline small" data-action="show-map" data-id="${e.id}">Show on map</button><button class="button small" data-action="join-event" data-id="${e.id}">${state.joined.includes(e.id)?'Leave activity':'Join activity'}</button></div>`);}
+/* Joining applied to a class VIRI had invented. Studios are added to your
+   week instead, which is a statement you make rather than a booking. */
+function toggleJoin(id){ routineModal(id); }
 /* the sign-up screen takes the name only; the rest is asked one question at a
    time on #/join, which starts on the email step because the name is in hand */
 function polaroidPage(){return `<section class="pola-page"><div class="pola-field" aria-hidden="true"><span class="pola" style="--l:0%;--t:2%;--r:-8deg;--d:1.0s"><span class="pola-shot"></span></span><span class="pola" style="--l:17%;--t:22%;--r:6deg;--d:3.0s"><span class="pola-shot"></span></span><span class="pola" style="--l:34%;--t:0%;--r:-5deg;--d:0.0s"><span class="pola-shot"></span></span><span class="pola" style="--l:52%;--t:20%;--r:7deg;--d:2.33s"><span class="pola-shot"></span></span><span class="pola" style="--l:70%;--t:2%;--r:-6deg;--d:1.67s"><span class="pola-shot"></span></span><span class="pola" style="--l:78%;--t:46%;--r:5deg;--d:0.67s"><span class="pola-shot"></span></span><span class="pola" style="--l:56%;--t:54%;--r:-7deg;--d:1.33s"><span class="pola-shot"></span></span><span class="pola" style="--l:34%;--t:44%;--r:6deg;--d:2.67s"><span class="pola-shot"></span></span><span class="pola" style="--l:13%;--t:56%;--r:-4deg;--d:0.33s"><span class="pola-shot"></span></span><span class="pola" style="--l:-3%;--t:38%;--r:8deg;--d:2.0s"><span class="pola-shot"></span></span></div><a class="pola-join" href="#/signup" aria-label="Join now"><span class="pola-word" aria-hidden="true"><span style="--i:0">J</span><span style="--i:1">O</span><span style="--i:2">I</span><span style="--i:3">N</span><span class="pola-sp"> </span><span style="--i:4">N</span><span style="--i:5">O</span><span style="--i:6">W</span></span></a><p class="pola-foot">Already have a profile? <a href="#/login">Log in</a></p></section>`;}
@@ -1702,23 +1676,40 @@ function weekList(routines,{own=false}={}){
     ? `<p class="small week-empty">Tell VIRI where you train and roughly when. That is how it finds the people who are there with you. <button class="plain-link" data-action="add-routine">Add to my week</button></p>`
     : '<p class="small">Nothing shared yet.</p>';
   return `<ul class="week-list">${rs.map(r=>`<li>
-    <div><strong>${escapeHTML(r.venue)}</strong>
-      <span class="small">${escapeHTML(WEEKDAYS[r.weekday])}s &middot; ${escapeHTML(r.band)}${r.activity?' · '+escapeHTML(r.activity):''}</span></div>
+    <div><strong>${escapeHTML(r.activity||r.venue||'Training')}</strong>
+      <span class="small">${escapeHTML(WEEKDAYS[r.weekday])}s &middot; ${escapeHTML(r.band)}${r.venue?' · '+escapeHTML(r.venue):''}</span></div>
     ${own?`<button class="plain-link" data-action="remove-routine" data-id="${escapeHTML(r.id)}">Remove</button>`:''}
   </li>`).join('')}</ul>
   ${own?`<button class="button small outline" data-action="add-routine">Add another</button>`:''}`;}
 
+/* Activity first, place second and optional. A week of runs is a complete
+   answer; so is a week of runs with one barre class in it. Requiring a studio
+   made the whole feature useless to anyone who mostly trains outdoors. */
 function routineModal(presetVenue){
   const venues=(window.VIRI&&VIRI.venues)||[];
-  const city=(state.profile&&state.profile.city)||'';
-  const near=venues.filter(v=>!city||((VIRI.cities||[]).find(c=>c.id===v.city)||{}).name===city);
-  const list=(near.length?near:venues).slice(0,80);
+  const cityName=(state.profile&&state.profile.city)||'';
+  const near=venues.filter(v=>{
+    const c=(VIRI.cities||[]).find(x=>x.id===v.city);
+    return !cityName||(c&&cityName.toLowerCase().includes(c.name.split(',')[0].toLowerCase()));
+  });
+  const list=(near.length?near:venues);
+  const preset=presetVenue?venues.find(v=>v.id===presetVenue):null;
   openModal('Add to your week', `<form id="rt-form">
-    <div class="field"><label for="rt-venue">Where do you train?</label>
-      <select id="rt-venue" name="venueId" required>
-        <option value="">Choose a studio</option>
-        ${list.map(v=>`<option value="${escapeHTML(v.id)}"${presetVenue===v.id?' selected':''}>${escapeHTML(v.brand)} &mdash; ${escapeHTML(v.area)}</option>`).join('')}
+    <div class="field"><label for="rt-act">What do you do?</label>
+      <select id="rt-act" name="activity" required>
+        ${JOIN_FORMS.filter(x=>x!=='No preference').map(x=>
+          `<option${preset&&preset.cat===x?' selected':''}>${escapeHTML(x)}</option>`).join('')}
       </select></div>
+
+    <div class="field"><label for="rt-place">Where? <span class="field-optional">Optional</span></label>
+      <input id="rt-place" name="venueLabel" list="rt-venues" maxlength="80"
+        placeholder="A studio, a gym, a park &mdash; or leave it blank"
+        value="${preset?escapeHTML(preset.brand+' — '+preset.area):''}">
+      <input type="hidden" name="venueId" id="rt-vid" value="${preset?escapeHTML(preset.id):''}">
+      <datalist id="rt-venues">${list.map(v=>
+        `<option data-id="${escapeHTML(v.id)}" value="${escapeHTML(v.brand+' — '+v.area)}"></option>`).join('')}</datalist>
+      <p class="field-eg">Leave it blank for a run, a walk, or anything without a fixed place. If your gym is not in the list, just type it.</p></div>
+
     <div class="field"><label for="rt-day">Which day?</label>
       <select id="rt-day" name="weekday" required>${WEEKDAYS.map((d,i)=>`<option value="${i}"${i===new Date().getDay()?' selected':''}>${d}</option>`).join('')}</select></div>
     <div class="field"><label for="rt-band">Roughly when?</label>
@@ -1730,16 +1721,21 @@ function routineModal(presetVenue){
       <button class="button small" type="submit">Add it</button>
     </div>
   </form>`, () => {
+    const place=$('#rt-place'), vid=$('#rt-vid');
+    /* if what they typed matches a studio we know, keep its id so matching is
+       exact rather than by spelling */
+    place.addEventListener('input',()=>{
+      const hit=list.find(v=>(v.brand+' — '+v.area)===place.value);
+      vid.value=hit?hit.id:'';
+    });
     $('#rt-form').addEventListener('submit', async ev => {
       ev.preventDefault();
       const fd=new FormData(ev.target);
-      const vid=String(fd.get('venueId')||'');
-      const v=venues.find(x=>x.id===vid);
-      if(!v){$('#rt-error').textContent='Please choose a studio.';return;}
       const btn=ev.target.querySelector('button[type=submit]'), label=btn.innerHTML;
       btn.disabled=true; btn.textContent='Adding…';
-      const r=await dbAddRoutine({ venueId:v.id, venueLabel:`${v.brand} — ${v.area}`,
-        activity:v.cat, weekday:fd.get('weekday'), band:String(fd.get('band')) });
+      const r=await dbAddRoutine({ venueId:String(fd.get('venueId')||''),
+        venueLabel:String(fd.get('venueLabel')||''), activity:String(fd.get('activity')||''),
+        weekday:fd.get('weekday'), band:String(fd.get('band')) });
       if(r.error){btn.disabled=false;btn.innerHTML=label;$('#rt-error').textContent=r.error.message;return;}
       if(typeof dbRoutineMatches==='function')await dbRoutineMatches();
       save(); closeModal(); render(false); toast('Added to your week.');
@@ -1907,7 +1903,7 @@ function profilePage(){
   const p=state.profile;
   if(!signedIn())return authPage();
   const saved=studios.filter(s=>state.saved.includes(s.id));
-  const going=exClasses().filter(c=>state.joined.includes(c.id));
+  const going=state.routines||[];
   const list=mySessions();
   const tab=profileTab;
   return `<div class="wrap pf">
@@ -1968,11 +1964,11 @@ function profilePage(){
     }</div>
     <aside class="pf-rail">
       <div class="rail-box">
-        <p class="rail-label">On your plan</p>
-        ${going.length?going.slice(0,3).map(c=>{const v=exVenue(c.venue);
-          return `<p class="rail-line"><b>${prettyDate(c.start)} ${prettyTime(c.start)}</b><br>${escapeHTML(v?v.brand:'')} &middot; ${escapeHTML(c.area)}<br><span class="small">${c.going.length} going</span></p>`;}).join('')
-          :'<p class="small">Nothing yet. Add a class and it shows up here with the people going.</p>'}
-        <a class="text-link" href="#/find">Add a class ${arrow}</a>
+<p class="rail-label">Your week</p>
+${going.length?going.slice(0,4).map(r=>
+  `<p class="rail-line"><b>${escapeHTML(WEEKDAYS[r.weekday])}s</b> &middot; ${escapeHTML(r.band)}<br>${escapeHTML(r.activity||'Training')}${r.venue?`<br><span class="small">${escapeHTML(r.venue)}</span>`:''}</p>`).join('')
+  :'<p class="small">Nothing yet. Tell VIRI what your week looks like and the people in it appear.</p>'}
+<a class="text-link" href="#/explore">Find studios ${arrow}</a>
       </div>
       <div class="rail-box plain">
         <p class="rail-label">Waiting for you</p>
@@ -2187,29 +2183,40 @@ function bookChoose(id,kind){
 /* ===================== profile setup ===================== */
 const SETUP_TIMES=['Before work','Mornings','Lunchtime','After work','Evenings','Weekends'];
 /* ===================== did you go? =====================
-   exClasses() is rebuilt on every load and only ever holds the NEXT seven days,
-   so a class drops out of it the moment it starts. state.joined held ids alone,
-   which meant that an hour after your class there was nothing left to ask you
-   about. A plan is a record now: enough of the class is copied at the moment you
-   add it that the prompt can be built from memory, not from a lookup. */
-function snapshotPlan(c){
-  if(!c)return;
-  state.plans=state.plans||[];
-  if(state.plans.some(p=>p.id===c.id))return;
-  const v=exVenue(c.venue);
-  state.plans=[...state.plans,{id:c.id,title:c.title,cat:c.cat,dur:c.dur,start:c.start,
-    place:[v&&v.brand,c.area].filter(Boolean).join(' · '),going:(c.going||[]).slice(0,8)}];
-  if(typeof dbAddPlan==='function')dbPush(dbAddPlan(state.plans[state.plans.length-1]),'your plan');
+   This used to work off a plan snapshotted from a generated class, because
+   those classes were rebuilt each load and vanished the moment they started.
+   The source is a routine now — something the member said about her own week
+   — so the occurrences are derived rather than remembered, and they are true.
+
+   A band is turned into a nominal hour only so an occurrence can be ordered
+   and known to have passed. Nobody is told you were there at 6:00 sharp. */
+const BAND_HOUR={'Before 5am':4,'5–7am':6,'8–10am':9,'10–12pm':11,'12–3pm':13,'3–5pm':16,'5–7pm':18,'8pm Onward':20};
+
+function routineOccurrences(){
+  const out=[], now=new Date();
+  for(const r of state.routines||[]){
+    const hour=BAND_HOUR[r.band]??7;
+    /* the last seven days, so a week away still has something to answer */
+    for(let back=1;back<=7;back++){
+      const d=new Date(); d.setHours(hour,0,0,0); d.setDate(d.getDate()-back);
+      if(d.getDay()!==r.weekday)continue;
+      if(d>now)continue;
+      const where=(r.venue||'').split(' — ')[0];
+      out.push({ id:`${r.id}:${d.toISOString().slice(0,10)}`,
+        title:where?`${r.activity||'Training'} at ${where}`:(r.activity||'Training'),
+        cat:r.activity||'', dur:60, start:d.getTime(), place:r.venue||'', going:[] });
+    }
+  }
+  return out.sort((x,y)=>x.start-y.start);
 }
 const planEnd=p=>p.start+((p.dur||45)*60000);
-const pendingPlans=()=>(state.plans||[])
-  .filter(p=>planEnd(p)<Date.now()&&!(state.logged||[]).includes(p.id))
-  .sort((a,b)=>a.start-b.start);
+const pendingPlans=()=>routineOccurrences()
+  .filter(p=>planEnd(p)<Date.now()&&!(state.logged||[]).includes(p.id));
 function attendModal(){
   const list=pendingPlans();
   if(!list.length)return postActivity();
   openModal(list.length===1?'Did you go?':'Did you go to these?',
-    `<p class="dialog-copy">${list.length===1?'This was on your plan.':'These were on your plan.'} Logging takes one tap &mdash; everything is already known.</p>
+    `<p class="dialog-copy">${list.length===1?'This is in your week.':'These are in your week.'} Logging takes one tap &mdash; everything is already known.</p>
      <div class="attend-list">${list.map(p=>`<div class="attend-row">
        <div class="attend-what"><b>${escapeHTML(p.title)}</b>
          <span class="small">${prettyDate(p.start)} ${prettyTime(p.start)} &middot; ${escapeHTML(p.place)} &middot; ${p.dur} min</span></div>
@@ -2223,7 +2230,7 @@ function attendModal(){
        <button class="button small outline" data-action="close-modal">Not now</button>
      </div>`);
 }
-const takePlan=id=>(state.plans||[]).find(p=>p.id===id);
+const takePlan=id=>routineOccurrences().find(p=>p.id===id);
 function logAttended(id){
   const p=takePlan(id); if(!p)return;
   state.posts.push({title:p.title,activity:p.cat,place:p.place,duration:p.dur,
@@ -2232,6 +2239,7 @@ function logAttended(id){
   state.logged=[...(state.logged||[]),id];
   if(typeof dbAddSession==='function'){
     dbPush(dbAddSession(state.posts[state.posts.length-1]),'that session');
+    dbPush(dbAddPlan({id,title:p.title,cat:p.cat,place:p.place,start:p.start,dur:p.dur}),'your week');
     dbPush(dbAnswerPlan(id),'the answer');
   }
   save();closeModal();render(false);
@@ -2239,7 +2247,8 @@ function logAttended(id){
 }
 function skipAttended(id){
   state.logged=[...(state.logged||[]),id];
-  state.joined=state.joined.filter(x=>x!==id);
+  const p=takePlan(id);
+  if(typeof dbAddPlan==='function'&&p)dbPush(dbAddPlan({id,title:p.title,cat:p.cat,place:p.place,start:p.start,dur:p.dur}),'your week');
   if(typeof dbAnswerPlan==='function')dbPush(dbAnswerPlan(id),'the answer');
   save();closeModal();render(false);toast('Left off your sessions.');
 }
@@ -2578,9 +2587,9 @@ else if(!feedFetched&&typeof dbLoadFeed==='function'){feedFetched=true;dbLoadFee
     if(btn)btn.disabled=false;
     if(r.error){toast(r.error.message);return;}
     form.reset();
-    toast(r.data==='already'?'You are already on the list.':'You are on the list. Look out for the next one.');});if(path==='explore'){$('#ex-search').addEventListener('input',e=>{ex.query=e.target.value;exRefresh();});$('#ex-time').addEventListener('change',e=>{ex.time=e.target.value;exRefresh();});exBindMap();}}
-document.addEventListener('click',e=>{const t=e.target.closest('[data-action]');if(!t)return;const {action,id,index,category,view,kind,name,channel}=t.dataset;switch(action){case 'video-toggle':{const v=$('#'+(t.dataset.video||'about-video'));if(v.paused)v.play().catch(()=>toast('Video playback is unavailable in this browser.'));else v.pause();break;}case 'close-modal':closeModal();break;case 'join-back':joinStep=Math.max(0,joinStep-1);render(false);break;case 'studio-prev':studioIndex=Math.max(0,studioIndex-1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'studio-next':studioIndex=Math.min(STUDIO_LAST(),studioIndex+1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'ex-city':ex={...ex,city:t.dataset.id,venue:null,cls:null};render(false);break;
-case 'ex-day':ex={...ex,day:+t.dataset.day,cls:null};render(false);break;
+    toast(r.data==='already'?'You are already on the list.':'You are on the list. Look out for the next one.');});if(path==='explore'){$('#ex-search').addEventListener('input',e=>{ex.query=e.target.value;exRefresh();});exBindMap();}}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-action]');if(!t)return;const {action,id,index,category,view,kind,name,channel}=t.dataset;switch(action){case 'video-toggle':{const v=$('#'+(t.dataset.video||'about-video'));if(v.paused)v.play().catch(()=>toast('Video playback is unavailable in this browser.'));else v.pause();break;}case 'close-modal':closeModal();break;case 'join-back':joinStep=Math.max(0,joinStep-1);render(false);break;case 'studio-prev':studioIndex=Math.max(0,studioIndex-1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'studio-next':studioIndex=Math.min(STUDIO_LAST(),studioIndex+1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'ex-city':ex={...ex,city:t.dataset.id,venue:null};render(false);break;
+
 case 'ex-cat':ex={...ex,cat:t.dataset.cat,cls:null};render(false);break;
 case 'ex-members':ex={...ex,members:!ex.members,cls:null};render(false);break;
 case 'ex-time-set':ex={...ex,time:t.dataset.time};exRefresh();break;
@@ -2593,7 +2602,7 @@ case 'book-existing':bookChoose(t.dataset.id,'existing');break;
 case 'book-new':bookChoose(t.dataset.id,'new');break;
 case 'book-plan':bookChoose(t.dataset.id,'plan');break;
 case 'ex-zoom':exZoom(t.dataset.dir);break;
-case 'ex-reset':ex={...ex,cat:'All',time:'All',members:false,query:'',venue:null,cls:null};render(false);break;
+case 'ex-reset':ex={...ex,cat:'All',members:false,query:'',venue:null};render(false);break;
 case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':{const nowOn=!state.saved.includes(id);state.saved=nowOn?[...state.saved,id]:state.saved.filter(x=>x!==id);if(typeof dbSetStudio==='function')dbPush(dbSetStudio(id,nowOn),'that studio');save();render(false);}toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':pendingPlans().length?attendModal():postActivity();break;case 'post-new':closeModal();postActivity();break;case 'attend-yes':logAttended(t.dataset.id);break;case 'attend-no':skipAttended(t.dataset.id);break;case 'finish-next':{const n=(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start)[0];if(n){n.start=Date.now()-(n.dur+5)*60000;save();render(false);toast('Moved into the past. The + now has something to ask you.');}break;}case 'attend-more':{const p=takePlan(t.dataset.id);closeModal();postActivity(p);break;}case 'show-friends':friendsModal();break;case 'show-requests':requestsModal();break;case 'edit-bio':bioModal();break;case 'add-gallery':addGalleryPhoto();break;case 'add-routine':routineModal(t.dataset.id);break;case 'add-goal':goalModal(t.dataset.id);break;case 'remove-goal':removeGoal(t.dataset.id);break;case 'goal-yes':answerGoal(t.dataset.id,t.dataset.day,true);break;case 'goal-no':answerGoal(t.dataset.id,t.dataset.day,false);break;case 'remove-routine':removeRoutine(t.dataset.id);break;case 'open-photo':{const who=(location.hash||'').startsWith('#/member/')?personById(location.hash.split('/')[2]):null;openLightbox(who?(who.gallery||[]):(state.gallery||[]),Number(t.dataset.index)||0);break;}case 'photo-prev':lightboxAt=(lightboxAt-1+lightboxOf.length)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'photo-next':lightboxAt=(lightboxAt+1)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'remove-photo':removeGalleryPhoto(t.dataset.id);break;case 'edit-photo':photoModal();break;case 'accept-request':exConnect(t.dataset.id);break;case 'decline-request':respondToRequest(t.dataset.id,'declined');break;case 'withdraw-request':respondToRequest(t.dataset.id,'withdrawn');break;case 'remove-friend':respondToRequest(t.dataset.id,'removed');break;case 'msg-open':msgThread=t.dataset.id;render(false);if(typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);break;case 'log-out':dbSignOut().then(()=>{$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Signed out.');location.hash='#/';render(false);});break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':toast('Added to your plan. In the live product this books you alongside them.');break;case 'session-talk':toast('Comments are part of this design. Writing one is not wired up in the preview yet.');break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':{const v=t.dataset.id;findActivities=findActivities.includes(v)?findActivities.filter(x=>x!==v):[...findActivities,v];runSearch();break;}case 'connect-sample':state.connections=state.connections.includes('alex')?[]:['alex'];save();render(false);toast(state.connections.length?'Sample connection added to your preview.':'Sample connection removed.');break;case 'edit-profile':editProfileModal();break;case 'person-menu':personMenu(t.dataset.id,t.dataset.name);break;case 'report-person':closeModal();reportModal(t.dataset.id,t.dataset.name);break;case 'block-person':closeModal();blockConfirm(t.dataset.id,t.dataset.name);break;case 'block-confirm':doBlock(t.dataset.id,t.dataset.name);break;case 'unblock-person':doUnblock(t.dataset.id,t.dataset.name);break;case 'toggle-show-age':toggleShowAge(t.checked);break;case 'export-data':exportMyData(t);break;case 'delete-account':deleteAccountModal();break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
 $('#menu-button').addEventListener('click',()=>{const open=$('#menu-panel').hidden;$('#menu-panel').hidden=!open;$('#menu-button').setAttribute('aria-expanded',String(open));});
 bindAccountMenu();
