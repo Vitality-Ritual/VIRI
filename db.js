@@ -135,6 +135,8 @@ async function dbLoadProfile(){
   await dbClaimPendingStudios();
   await dbClaimPendingPhoto();
   await dbLoadBlocks();
+  await dbLoadConnections();
+  await dbLoadMessages();
   await dbLoadSessions();
   await dbLoadPlans();
   return state.profile;
@@ -602,6 +604,198 @@ async function dbSetShowAge(on){
   const { error } = await c.from('profiles').update({ show_age: !!on }).eq('id', authUser.id);
   if (!error && state.profile) state.profile.showAge = !!on;
   return { error };
+}
+
+/* ===================== real people, connections and messages =====================
+   Everything above this point concerned one member and her own rows. This is
+   the part where members can see each other, which is the product.
+
+   state.people is a registry keyed by account id, filled on demand rather than
+   by reading every profile: fine at today's size either way, but a habit worth
+   keeping before the table is large. */
+
+const rowToPerson = r => ({
+  id: r.id,
+  name: r.name || 'A member',
+  area: r.area || r.city || '',
+  city: r.city || '',
+  bio: r.bio || '',
+  interests: r.activities || [],
+  times: r.times || [],
+  age: r.show_age && r.birth_year ? new Date().getFullYear() - Number(r.birth_year) : null,
+  photoPath: r.photo_path || '',
+  photo: ''
+});
+
+async function dbPeople(ids){
+  const c = db(); if (!c || !authUser) return {};
+  state.people = state.people || {};
+  const want = [...new Set(ids)].filter(id => id && id !== authUser.id && !state.people[id]);
+  if (!want.length) return state.people;
+  const { data } = await c.from('profiles').select('*').in('id', want);
+  for (const row of data || []) {
+    const p = rowToPerson(row);
+    p.photo = await dbPhotoUrl(p.photoPath);
+    state.people[p.id] = p;
+  }
+  /* Anyone asked for but not returned has deleted their account. Remembering
+     that stops us asking again on every render. */
+  for (const id of want) if (!state.people[id]) state.people[id] = { id, name: 'A former member', gone: true, interests: [], times: [] };
+  return state.people;
+}
+
+/* ------------------------------------------------------------- connections */
+
+async function dbLoadConnections(){
+  const c = db(); if (!c || !authUser) return;
+  const me = authUser.id;
+  const { data } = await c.from('connections').select('*')
+    .or(`requester_id.eq.${me},addressee_id.eq.${me}`);
+  const rows = data || [];
+  const other = r => r.requester_id === me ? r.addressee_id : r.requester_id;
+
+  state.connections = rows.filter(r => r.status === 'accepted').map(other);
+  /* Sent by me and not yet answered. */
+  state.requests = rows.filter(r => r.status === 'pending' && r.requester_id === me).map(r => r.addressee_id);
+  /* Sent to me and waiting on an answer — the half the preview had no idea existed. */
+  state.incoming = rows.filter(r => r.status === 'pending' && r.addressee_id === me).map(r => r.requester_id);
+
+  await dbPeople([...state.connections, ...state.requests, ...state.incoming]);
+}
+
+async function dbRequestConnection(otherId){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  if (otherId === authUser.id) return { error: { message: 'That is you.' } };
+  /* If they already asked you, asking back is an acceptance rather than a
+     second row — otherwise two people who both pressed the button sit waiting
+     on each other forever. */
+  if ((state.incoming || []).includes(otherId)) return await dbAcceptConnection(otherId);
+  const { error } = await c.from('connections')
+    .insert({ requester_id: authUser.id, addressee_id: otherId, status: 'pending' });
+  if (error) return { error };
+  state.requests = [...(state.requests || []), otherId];
+  await dbPeople([otherId]);
+  return { data: true };
+}
+
+async function dbAcceptConnection(otherId){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const { error } = await c.from('connections').update({ status: 'accepted' })
+    .eq('requester_id', otherId).eq('addressee_id', authUser.id).eq('status', 'pending');
+  if (error) return { error };
+  state.incoming = (state.incoming || []).filter(x => x !== otherId);
+  if (!(state.connections || []).includes(otherId)) state.connections = [...(state.connections || []), otherId];
+  return { data: true };
+}
+
+/* Declining, withdrawing and unfriending are the same row going away. Kept as
+   one function so none of them can be half-implemented. */
+async function dbRemoveConnection(otherId){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const me = authUser.id;
+  const { error } = await c.from('connections').delete()
+    .or(`and(requester_id.eq.${me},addressee_id.eq.${otherId}),and(requester_id.eq.${otherId},addressee_id.eq.${me})`);
+  if (error) return { error };
+  state.connections = (state.connections || []).filter(x => x !== otherId);
+  state.requests    = (state.requests    || []).filter(x => x !== otherId);
+  state.incoming    = (state.incoming    || []).filter(x => x !== otherId);
+  return { data: true };
+}
+
+/* ---------------------------------------------------------------- messages */
+
+async function dbLoadMessages(){
+  const c = db(); if (!c || !authUser) return;
+  const me = authUser.id;
+  const { data } = await c.from('messages').select('*')
+    .or(`sender_id.eq.${me},recipient_id.eq.${me}`)
+    .order('created_at', { ascending: true });
+  const rows = data || [];
+  const threads = {};
+  for (const m of rows) {
+    const other = m.sender_id === me ? m.recipient_id : m.sender_id;
+    (threads[other] = threads[other] || []).push({
+      id: m.id, from: m.sender_id, mine: m.sender_id === me,
+      body: m.body, at: m.created_at, readAt: m.read_at
+    });
+  }
+  state.threads = threads;
+  state.unread = Object.entries(threads)
+    .filter(([, ms]) => ms.some(m => !m.mine && !m.readAt)).map(([id]) => id);
+  await dbPeople(Object.keys(threads));
+}
+
+async function dbSendMessage(toId, body){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const text = String(body || '').trim();
+  if (!text) return { error: { message: 'Nothing to send.' } };
+  const { data, error } = await c.from('messages')
+    .insert({ sender_id: authUser.id, recipient_id: toId, body: text }).select().maybeSingle();
+  /* The restrictive policy refuses anything across a block. Saying so plainly
+     beats a silent failure, without confirming who blocked whom. */
+  if (error) return { error: { message: /row-level security/i.test(error.message)
+    ? 'You cannot message this person.' : error.message } };
+  state.threads = state.threads || {};
+  (state.threads[toId] = state.threads[toId] || []).push({
+    id: data && data.id, from: authUser.id, mine: true, body: text,
+    at: (data && data.created_at) || new Date().toISOString(), readAt: null
+  });
+  return { data: true };
+}
+
+async function dbMarkThreadRead(otherId){
+  const c = db(); if (!c || !authUser) return;
+  const unread = (state.threads?.[otherId] || []).filter(m => !m.mine && !m.readAt);
+  if (!unread.length) return;
+  const when = new Date().toISOString();
+  await c.from('messages').update({ read_at: when })
+    .eq('sender_id', otherId).eq('recipient_id', authUser.id).is('read_at', null);
+  unread.forEach(m => { m.readAt = when; });
+  state.unread = (state.unread || []).filter(x => x !== otherId);
+}
+
+/* ------------------------------------------------------------------ search */
+
+/* Who else trains the way you do. Blocked people are filtered here rather than
+   in the query because the block may run in either direction and only
+   blocked_with() can see both. */
+async function dbSearchPeople({ activities = [], times = [], city = '' } = {}){
+  const c = db(); if (!c || !authUser) return [];
+  let q = c.from('profiles').select('*').neq('id', authUser.id).limit(60);
+  if (city) q = q.ilike('city', `%${city}%`);
+  if (activities.length) q = q.overlaps('activities', activities);
+  if (times.length) q = q.overlaps('times', times);
+  const { data, error } = await q;
+  if (error) return [];
+  const out = [];
+  for (const row of data || []) {
+    if ((state.blocked || []).includes(row.id)) continue;
+    const p = rowToPerson(row);
+    p.photo = await dbPhotoUrl(p.photoPath);
+    state.people = state.people || {};
+    state.people[p.id] = p;
+    out.push(p);
+  }
+  return out;
+}
+
+/* ----------------------------------------------------- other people's days */
+
+async function dbLoadCommunityFeed(){
+  const c = db(); if (!c || !authUser) return [];
+  const { data } = await c.from('sessions').select('*')
+    .neq('profile_id', authUser.id)
+    .order('happened_at', { ascending: false }).limit(30);
+  const rows = (data || []).filter(r => !(state.blocked || []).includes(r.profile_id));
+  await dbPeople(rows.map(r => r.profile_id));
+  const out = [];
+  for (const r of rows) {
+    const s = rowToSession(r);
+    s.photo = await dbPhotoUrl(r.photo_path);
+    s.by = state.people[r.profile_id] || null;
+    out.push(s);
+  }
+  return out;
 }
 
 async function dbSaveProfileEdits(patch){

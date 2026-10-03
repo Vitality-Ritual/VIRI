@@ -185,6 +185,9 @@ let ex={city:'dc',cat:'All',day:0,time:'All',members:false,query:'',venue:null,c
 const exCity=()=>VIRI.cities.find(c=>c.id===ex.city)||VIRI.cities[0];
 const exVenue=id=>VIRI.venues.find(v=>v.id===id);
 const exPerson=id=>VIRI.people.find(p=>p.id===id);
+/* Real members live in state.people, the sample roster in VIRI.people.
+   Pages should not have to know which they are holding. */
+const personById=id=>(state.people&&state.people[id])||exPerson(id)||null;
 let exAll=null;
 const exClasses=()=>(exAll||(exAll=VIRI.buildClasses()));
 const DAYBANDS={Early:[0,9],Midday:[9,16],Evening:[16,24]};
@@ -371,7 +374,9 @@ function exAvatars(ids,max){
     return `<span class="av" title="${escapeHTML(p?p.name:'')}">${escapeHTML(initials(p?p.name:'V'))}</span>`;}).join('')}${
     ids.length>shown.length?`<span class="av av-more">+${ids.length-shown.length}</span>`:''}</span>`;
 }
-const exLinked=id=>state.connections.includes(id)?'connected':(state.requests||[]).includes(id)?'requested':'none';
+const exLinked=id=>state.connections.includes(id)?'connected'
+  :(state.incoming||[]).includes(id)?'incoming'
+  :(state.requests||[]).includes(id)?'requested':'none';
 function exConnectBtn(p){
   const s=exLinked(p.id);
   return `<button class="button small ${s==='none'?'':'outline'}" data-action="ex-connect" data-id="${p.id}"
@@ -492,14 +497,28 @@ function exPersonModal(id){
     <div class="dialog-actions">${exConnectBtn(p)}
       <button class="button small outline" data-action="close-modal">Close</button></div>`);
 }
-function exConnect(id){
-  const p=exPerson(id); if(!p)return;
-  if(!state.profile){toast('Create your profile first so they know who is reaching out.');location.hash='#/signup';return;}
-  state.requests=state.requests||[];
-  if(state.connections.includes(id))return;
-  if(state.requests.includes(id)){state.requests=state.requests.filter(x=>x!==id);toast('Request withdrawn.');}
-  else{state.requests.push(id);toast(`Request sent to ${p.name}. They will see it before class.`);}
-  save();exRefresh();if($('#modal').open)exPersonModal(id);
+async function exConnect(id){
+  if(!signedIn()){toast('Create your profile first so they know who is reaching out.');location.hash='#/signup';return;}
+  const p=personById(id);
+  /* The sample roster has no accounts behind it, so a request would have
+     nowhere to go. Say so rather than pretending it was sent. */
+  if(!isRealAccount(id)){toast('This is a sample member, so there is no one to send a request to.');return;}
+  const linked=exLinked(id);
+  if(linked==='connected')return;
+  if(linked==='incoming'){
+    const r=await dbAcceptConnection(id);
+    if(r.error){toast(r.error.message);return;}
+    toast(`You and ${p?p.name:'they'} are now friends.`);
+  }else if(linked==='requested'){
+    const r=await dbRemoveConnection(id);
+    if(r.error){toast(r.error.message);return;}
+    toast('Request withdrawn.');
+  }else{
+    const r=await dbRequestConnection(id);
+    if(r.error){toast(r.error.message);return;}
+    toast(`Request sent to ${p?p.name:'them'}.`);
+  }
+  save();render(false);if($('#modal').open)friendsModal();
 }
 
 
@@ -619,9 +638,7 @@ function signupPage(){return `<section class="signup-split">
   </figure>
   <div class="signup-split-form">
     <div class="signup-split-inner">
-      <p class="eyebrow">Join VIRI</p>
       <h1>Sign up now</h1>
-      <p class="signup-who">VIRI is a space for women. Trans women are women.</p>
       <form id="signup-form" novalidate>
         <div class="field"><label class="visually-hidden" for="su-first">First name</label>
           <input id="su-first" name="first" placeholder="First name" autocomplete="given-name" maxlength="40"></div>
@@ -1019,20 +1036,37 @@ bindPhoto();
 }
 /* Requests sent was its own stat, which made a number nobody needed into a
    quarter of the panel. Friends now opens both lists instead. */
+async function respondToRequest(id,what){
+  const name=personById(id)?.name||'They';
+  const r=await dbRemoveConnection(id);
+  if(r.error){toast(r.error.message);return;}
+  save();render(false);if($('#modal').open)friendsModal();
+  toast(what==='declined'?'Request declined.':what==='withdrawn'?'Request withdrawn.':`${name} is no longer a friend.`);
+}
+
 function friendsModal(){
-  const mine=state.connections||[], waiting=(state.requests||[]).filter(id=>!mine.includes(id));
-  const nameOf=id=>exPerson(id)?.name||(id==='alex'?'Alex’s circle':'Sample member');
-  const lineOf=id=>{const p=exPerson(id);return p?`${p.area} · ${p.line}`:'Illustrative profile in this preview';};
-  const list=ids=>`<ul class="friend-list">${ids.map(id=>
-    `<li><strong>${escapeHTML(nameOf(id))}</strong><span class="small">${escapeHTML(lineOf(id))}</span></li>`).join('')}</ul>`;
+  const mine=state.connections||[], sent=state.requests||[], waiting=state.incoming||[];
+  const nameOf=id=>personById(id)?.name||'A member';
+  const lineOf=id=>{const p=personById(id);return p?[p.area,(p.interests||[]).slice(0,2).join(', ')].filter(Boolean).join(' · '):'';};
+  const row=(id,actions='')=>`<li><div><strong>${escapeHTML(nameOf(id))}</strong><span class="small">${escapeHTML(lineOf(id))}</span></div>${actions}</li>`;
+  const list=(ids,actions=()=>'')=>`<ul class="friend-list">${ids.map(id=>row(id,actions(id))).join('')}</ul>`;
   openModal('Your friends',
-    (mine.length?list(mine)
-      :'<p class="dialog-copy">No one yet. Connect with someone on Explore and they will show up here.</p>')+
-    `<h3 class="modal-sub">Pending requests</h3>`+
-    (waiting.length?list(waiting)
-      :'<p class="small">Nothing waiting. Requests you send sit here until they are accepted.</p>')+
-    `<div class="dialog-actions"><a class="button small outline" href="#/explore" data-action="close-modal">Find people ${arrow}</a>
-      <button class="button small" data-action="close-modal">Done</button></div>`);
+    `<h3 class="modal-sub">Waiting for you</h3>`+
+    (waiting.length
+      ? list(waiting,id=>`<span class="friend-acts">`+
+          `<button class="button small" data-action="accept-request" data-id="${escapeHTML(id)}">Accept</button>`+
+          `<button class="button small outline" data-action="decline-request" data-id="${escapeHTML(id)}">Decline</button></span>`)
+      : '<p class="small">No one is waiting on you.</p>')+
+    `<h3 class="modal-sub">Friends</h3>`+
+    (mine.length
+      ? list(mine,id=>`<span class="friend-acts">`+
+          `<a class="button small outline" href="#/messages">Message</a>`+
+          `<button class="button small outline" data-action="remove-friend" data-id="${escapeHTML(id)}">Remove</button></span>`)
+      : '<p class="dialog-copy">No one yet. Find someone in Search and they will show up here.</p>')+
+    `<h3 class="modal-sub">Requests you have sent</h3>`+
+    (sent.length
+      ? list(sent,id=>`<button class="button small outline" data-action="withdraw-request" data-id="${escapeHTML(id)}">Withdraw</button>`)
+      : '<p class="small">Nothing waiting. Requests you send sit here until they are answered.</p>'));
 }
 
 let profileTab='sessions';
@@ -1871,8 +1905,8 @@ function termsPage(){return `<article class="article-detail legal">
   <p>VIRI is for adults. You must be 18 or over. We ask your age when you join, and accounts we believe belong to someone under 18 are removed.</p>
 
   <h2>3. Who can join</h2>
-  <p>VIRI is for women. Trans women are women, and are welcome.</p>
-  <p>We do not verify this, and we are not going to &mdash; gender cannot be checked reliably, and a document check would fall hardest on trans women. We ask you to confirm it honestly when you join, and we remove accounts that we believe do not belong here.</p>
+  <p>VIRI is for women. Trans women are women.</p>
+  <p>We do not verify this. We ask you to confirm it honestly when you join, and we remove accounts that we believe do not belong here.</p>
 
   <h2>4. Your account</h2>
   <p>Give us accurate information, and keep it accurate. Choose a password you do not use elsewhere, and keep it to yourself. What happens on your account is your responsibility.</p>
@@ -2036,7 +2070,7 @@ case 'book-new':bookChoose(t.dataset.id,'new');break;
 case 'book-plan':bookChoose(t.dataset.id,'plan');break;
 case 'ex-zoom':exZoom(t.dataset.dir);break;
 case 'ex-reset':ex={...ex,cat:'All',time:'All',members:false,query:'',venue:null,cls:null};render(false);break;
-case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':{const nowOn=!state.saved.includes(id);state.saved=nowOn?[...state.saved,id]:state.saved.filter(x=>x!==id);if(typeof dbSetStudio==='function')dbPush(dbSetStudio(id,nowOn),'that studio');save();render(false);}toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':pendingPlans().length?attendModal():postActivity();break;case 'post-new':closeModal();postActivity();break;case 'attend-yes':logAttended(t.dataset.id);break;case 'attend-no':skipAttended(t.dataset.id);break;case 'finish-next':{const n=(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start)[0];if(n){n.start=Date.now()-(n.dur+5)*60000;save();render(false);toast('Moved into the past. The + now has something to ask you.');}break;}case 'attend-more':{const p=takePlan(t.dataset.id);closeModal();postActivity(p);break;}case 'show-friends':friendsModal();break;case 'msg-open':msgThread=t.dataset.id;render(false);break;case 'log-out':dbSignOut().then(()=>{$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Signed out.');location.hash='#/';render(false);});break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':toast('Added to your plan. In the live product this books you alongside them.');break;case 'session-talk':toast('Comments are part of this design. Writing one is not wired up in the preview yet.');break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':t.classList.toggle('is-on');break;case 'connect-sample':state.connections=state.connections.includes('alex')?[]:['alex'];save();render(false);toast(state.connections.length?'Sample connection added to your preview.':'Sample connection removed.');break;case 'edit-profile':openModal('Make your profile yours',`<form id="edit-form"><div class="field"><label for="edit-name">Your name</label><input id="edit-name" name="name" value="${escapeHTML(state.profile?.name)}" required maxlength="60"></div><div class="field"><label for="edit-area">Your neighborhood</label><input id="edit-area" name="area" value="${escapeHTML(state.profile?.area)}" required maxlength="70"></div><div class="field"><label for="edit-photo">Profile photo <span class="field-optional">Optional</span></label><div class="photo-drop" id="edit-drop" data-has="0"><input id="edit-photo" type="file" accept="image/*" class="visually-hidden"><div class="photo-empty"><p class="photo-lede">Drag a photo here, or <button type="button" class="plain-link" id="edit-pick">choose a file</button>.</p></div><div class="photo-editor"><figure class="post-shot"><img id="edit-preview" alt="Your photo"></figure><p class="photo-swap"><button type="button" class="plain-link" id="edit-repick">Choose another</button></p></div></div></div><p id="edit-error" class="field-error" role="alert"></p><div class="dialog-actions"><button class="button small" type="submit">Save profile</button></div></form>`,()=>{let newPhoto='';const drop=$('#edit-drop'),file=$('#edit-photo');const take=async f=>{const d=await shrinkImage(f,640);if(!d){$('#edit-error').textContent='That file could not be read as an image.';return;}newPhoto=d;$('#edit-preview').src=d;drop.dataset.has='1';};$('#edit-pick')?.addEventListener('click',()=>file.click());$('#edit-repick')?.addEventListener('click',()=>file.click());file.addEventListener('change',()=>{if(file.files?.[0])take(file.files[0]);});['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('is-over');}));['dragleave','dragend'].forEach(t=>drop.addEventListener(t,e=>{if(t==='dragleave'&&drop.contains(e.relatedTarget))return;drop.classList.remove('is-over');}));drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('is-over');const f=e.dataTransfer?.files?.[0];if(f)take(f);});$('#edit-form').addEventListener('submit',async ev=>{ev.preventDefault();const fd=Object.fromEntries(new FormData(ev.target));if(!fd.name.trim()||!fd.area.trim())return;const btn=ev.target.querySelector('button[type=submit]'),label=btn.innerHTML;btn.disabled=true;btn.textContent='Saving\u2026';state.profile={...state.profile,name:fd.name.trim(),area:fd.area.trim()};if(typeof dbSaveProfileEdits==='function')await dbSaveProfileEdits({name:fd.name.trim(),area:fd.area.trim()});if(newPhoto&&typeof dbSetAvatar==='function'){const r=await dbSetAvatar(newPhoto);if(r.error){btn.disabled=false;btn.innerHTML=label;$('#edit-error').textContent=r.error.message;return;}}save();closeModal();render(false);toast('Profile updated.');});});break;case 'person-menu':personMenu(t.dataset.id,t.dataset.name);break;case 'report-person':closeModal();reportModal(t.dataset.id,t.dataset.name);break;case 'block-person':closeModal();blockConfirm(t.dataset.id,t.dataset.name);break;case 'block-confirm':doBlock(t.dataset.id,t.dataset.name);break;case 'unblock-person':doUnblock(t.dataset.id,t.dataset.name);break;case 'toggle-show-age':toggleShowAge(t.checked);break;case 'export-data':exportMyData(t);break;case 'delete-account':deleteAccountModal();break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
+case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':{const nowOn=!state.saved.includes(id);state.saved=nowOn?[...state.saved,id]:state.saved.filter(x=>x!==id);if(typeof dbSetStudio==='function')dbPush(dbSetStudio(id,nowOn),'that studio');save();render(false);}toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':pendingPlans().length?attendModal():postActivity();break;case 'post-new':closeModal();postActivity();break;case 'attend-yes':logAttended(t.dataset.id);break;case 'attend-no':skipAttended(t.dataset.id);break;case 'finish-next':{const n=(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start)[0];if(n){n.start=Date.now()-(n.dur+5)*60000;save();render(false);toast('Moved into the past. The + now has something to ask you.');}break;}case 'attend-more':{const p=takePlan(t.dataset.id);closeModal();postActivity(p);break;}case 'show-friends':friendsModal();break;case 'accept-request':exConnect(t.dataset.id);break;case 'decline-request':respondToRequest(t.dataset.id,'declined');break;case 'withdraw-request':respondToRequest(t.dataset.id,'withdrawn');break;case 'remove-friend':respondToRequest(t.dataset.id,'removed');break;case 'msg-open':msgThread=t.dataset.id;render(false);break;case 'log-out':dbSignOut().then(()=>{$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Signed out.');location.hash='#/';render(false);});break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':toast('Added to your plan. In the live product this books you alongside them.');break;case 'session-talk':toast('Comments are part of this design. Writing one is not wired up in the preview yet.');break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':t.classList.toggle('is-on');break;case 'connect-sample':state.connections=state.connections.includes('alex')?[]:['alex'];save();render(false);toast(state.connections.length?'Sample connection added to your preview.':'Sample connection removed.');break;case 'edit-profile':openModal('Make your profile yours',`<form id="edit-form"><div class="field"><label for="edit-name">Your name</label><input id="edit-name" name="name" value="${escapeHTML(state.profile?.name)}" required maxlength="60"></div><div class="field"><label for="edit-area">Your neighborhood</label><input id="edit-area" name="area" value="${escapeHTML(state.profile?.area)}" required maxlength="70"></div><div class="field"><label for="edit-photo">Profile photo <span class="field-optional">Optional</span></label><div class="photo-drop" id="edit-drop" data-has="0"><input id="edit-photo" type="file" accept="image/*" class="visually-hidden"><div class="photo-empty"><p class="photo-lede">Drag a photo here, or <button type="button" class="plain-link" id="edit-pick">choose a file</button>.</p></div><div class="photo-editor"><figure class="post-shot"><img id="edit-preview" alt="Your photo"></figure><p class="photo-swap"><button type="button" class="plain-link" id="edit-repick">Choose another</button></p></div></div></div><p id="edit-error" class="field-error" role="alert"></p><div class="dialog-actions"><button class="button small" type="submit">Save profile</button></div></form>`,()=>{let newPhoto='';const drop=$('#edit-drop'),file=$('#edit-photo');const take=async f=>{const d=await shrinkImage(f,640);if(!d){$('#edit-error').textContent='That file could not be read as an image.';return;}newPhoto=d;$('#edit-preview').src=d;drop.dataset.has='1';};$('#edit-pick')?.addEventListener('click',()=>file.click());$('#edit-repick')?.addEventListener('click',()=>file.click());file.addEventListener('change',()=>{if(file.files?.[0])take(file.files[0]);});['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('is-over');}));['dragleave','dragend'].forEach(t=>drop.addEventListener(t,e=>{if(t==='dragleave'&&drop.contains(e.relatedTarget))return;drop.classList.remove('is-over');}));drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('is-over');const f=e.dataTransfer?.files?.[0];if(f)take(f);});$('#edit-form').addEventListener('submit',async ev=>{ev.preventDefault();const fd=Object.fromEntries(new FormData(ev.target));if(!fd.name.trim()||!fd.area.trim())return;const btn=ev.target.querySelector('button[type=submit]'),label=btn.innerHTML;btn.disabled=true;btn.textContent='Saving\u2026';state.profile={...state.profile,name:fd.name.trim(),area:fd.area.trim()};if(typeof dbSaveProfileEdits==='function')await dbSaveProfileEdits({name:fd.name.trim(),area:fd.area.trim()});if(newPhoto&&typeof dbSetAvatar==='function'){const r=await dbSetAvatar(newPhoto);if(r.error){btn.disabled=false;btn.innerHTML=label;$('#edit-error').textContent=r.error.message;return;}}save();closeModal();render(false);toast('Profile updated.');});});break;case 'person-menu':personMenu(t.dataset.id,t.dataset.name);break;case 'report-person':closeModal();reportModal(t.dataset.id,t.dataset.name);break;case 'block-person':closeModal();blockConfirm(t.dataset.id,t.dataset.name);break;case 'block-confirm':doBlock(t.dataset.id,t.dataset.name);break;case 'unblock-person':doUnblock(t.dataset.id,t.dataset.name);break;case 'toggle-show-age':toggleShowAge(t.checked);break;case 'export-data':exportMyData(t);break;case 'delete-account':deleteAccountModal();break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
 $('#menu-button').addEventListener('click',()=>{const open=$('#menu-panel').hidden;$('#menu-panel').hidden=!open;$('#menu-button').setAttribute('aria-expanded',String(open));});
 bindAccountMenu();
 document.addEventListener('click',e=>{if(!e.target.closest('.site-header')){$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');}});

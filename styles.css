@@ -249,7 +249,6 @@ strong{font-weight:500}
     background:var(--cream-2);border-left:2px solid var(--line-2)}
 .preview-note.is-plain strong{display:none}
 .preview-note.is-plain{font-style:normal}
-.signup-who{margin:-4px 0 22px;color:var(--muted);font-size:.86rem;line-height:1.55}
 .check-box.join-women{margin-bottom:10px}
 #report-form select,#report-form textarea{width:100%}
 #report-form textarea{min-height:110px;resize:vertical}
@@ -1516,13 +1515,14 @@ body:after{
 /* a checkbox the whole width of its box, so the target is the answer */
 .check-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:9px}
 .check-grid.is-wide{grid-template-columns:repeat(auto-fill,minmax(172px,1fr))}
-.check-box{display:flex;align-items:center;gap:10px;cursor:pointer;
-  border:1px solid var(--line);background:var(--cream-2);padding:11px 13px;
-  font-size:14px;line-height:1.3;color:var(--muted);transition:border-color .2s,background .2s,color .2s}
+.check-box{display:flex;align-items:center;gap:8px;cursor:pointer;
+  border:1px solid var(--line);background:var(--cream-2);padding:7px 10px;
+  font-size:12.5px;line-height:1.35;color:var(--muted);transition:border-color .2s,background .2s,color .2s}
 .check-box:hover{border-color:var(--line-2)}
-.check-box input{accent-color:var(--taupe);width:15px;height:15px;flex:none;padding:0;margin:0}
+.check-box input{accent-color:var(--taupe);width:13px;height:13px;flex:none;padding:0;margin:0}
 .check-box:has(:checked){border-color:var(--cocoa);background:var(--paper);color:var(--ink)}
 .check-box:focus-within{outline:1px solid var(--cocoa);outline-offset:2px}
+@media (max-width:767px){.check-box{padding:10px;min-height:40px}}
 /* optional fields say so, rather than letting people guess from the absence
    of an error - the city and both personal details never block the step */
 /* the two college fields only mean anything once the box is ticked */
