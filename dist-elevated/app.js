@@ -1907,14 +1907,97 @@ function privacyPage(){return `<article class="article-detail legal">
 /* Only the preview terms live here now; the privacy branch this function used
    to carry claimed nothing left the browser, which the database made untrue.
    It is gone rather than merely unrouted, so it cannot be revived by accident. */
+/* The terms of service. Published without legal review, which Margaret decided
+   knowingly — the open questions are recorded in terms-of-service-notes.md
+   rather than here, because an inventory of a waiver's weak points is not
+   something to hand the people it is meant to work against. */
 function termsPage(){return `<article class="article-detail legal">
-  <p class="eyebrow">VIRI preview</p>
-  <h1>About this preview</h1>
-  <p><b>VIRI is for women.</b> Trans women are women, and are welcome. We do not verify this and we are not going to &mdash; gender cannot be checked reliably, and a document check would fall hardest on trans women. We ask you to confirm it honestly when you join, and we remove accounts we believe do not belong here.</p>
-  <p>Parts of this website are still an interactive preview. Demo profiles, events, reviews and attendance counts are illustrative. No class reservation, purchase or booking is made through it.</p>
-  <p>Studio names and photographs identify the respective businesses. Listings do not imply a partnership or endorsement. Visit each studio&rsquo;s official website to confirm schedules, prices, requirements and bookings.</p>
-  <p>Full terms of service, including the terms that apply to meeting other members in person, will be published before accounts are opened to the public.</p>
-  <p>Our <a href="#/privacy">privacy policy</a> is live and describes how your data is handled today.</p>
+  <p class="eyebrow">VIRI</p>
+  <h1>Terms of service</h1>
+  <p class="legal-date">Last updated 3 October 2026</p>
+
+  <p class="legal-lede">VIRI helps you find people to exercise with. We do not check who those people are. Meeting someone from VIRI is your decision and your risk, exactly as it would be if you met them at the gym without us. Please read <a href="#terms-meeting">Meeting other members</a> &mdash; it is the most important part of this page.</p>
+
+  <h2>1. Who you are agreeing with</h2>
+  <p>VIRI (Vitality Ritual) is run by Margaret Cole in Washington, DC. &ldquo;We&rdquo; and &ldquo;us&rdquo; mean her. &ldquo;You&rdquo; means you.</p>
+  <p>By making an account you accept these terms. If you do not accept them, do not make an account.</p>
+
+  <h2>2. You must be 18</h2>
+  <p>VIRI is for adults. You must be 18 or over. We ask your age when you join, and accounts we believe belong to someone under 18 are removed.</p>
+
+  <h2>3. Who can join</h2>
+  <p>VIRI is for women. Trans women are women, and are welcome.</p>
+  <p>We do not verify this, and we are not going to &mdash; gender cannot be checked reliably, and a document check would fall hardest on trans women. We ask you to confirm it honestly when you join, and we remove accounts that we believe do not belong here.</p>
+
+  <h2>4. Your account</h2>
+  <p>Give us accurate information, and keep it accurate. Choose a password you do not use elsewhere, and keep it to yourself. What happens on your account is your responsibility.</p>
+  <p>One person, one account. Do not make an account for anybody else, and do not pretend to be someone you are not.</p>
+
+  <h2>5. What VIRI is, and what it is not</h2>
+  <p>VIRI shows you other members whose activities and training times overlap with yours, and lets you talk to them. That is all it is.</p>
+  <p><b>We do not check who anybody is.</b> There is no identity verification, no background check, no vetting, and no screening of any kind. We do not confirm that a name is real, that a photograph is of the person using the account, or that anything written on a profile is true.</p>
+  <p>We are not a party to anything you arrange with another member. We do not supervise meetings, we are not present at them, and we are not responsible for what members do.</p>
+  <p>We also do not run the studios or classes listed on VIRI, and we are not affiliated with them unless we say so. Check schedules, prices and requirements with the studio itself.</p>
+
+  <h2 id="terms-meeting">6. Meeting other members</h2>
+  <p><b>This is the part that matters.</b></p>
+  <p>VIRI exists so you can meet people in person. That carries real risk. The people you meet are strangers, we have not checked them, and we cannot protect you from them.</p>
+  <p><b>You decide whether to meet someone, and you accept the risk of doing so.</b> You are responsible for your own safety, and for deciding what information to share and with whom.</p>
+  <p>Some things worth doing, every time:</p>
+  <ul>
+    <li>Meet in public, in a class or a studio, not somewhere private</li>
+    <li>Tell someone you trust where you are going and who you are meeting</li>
+    <li>Make your own way there and back</li>
+    <li>Leave if you feel uncomfortable &mdash; you never owe anyone an explanation</li>
+    <li>If you are in danger, contact the emergency services, not us</li>
+  </ul>
+  <p>Think carefully before putting your neighbourhood, your regular training times and the studios you attend on your profile. Together they describe where you can be found, and when. Every one of those fields is optional.</p>
+  <p>You can <b>block</b> anyone, which stops them messaging you or sending you a request, and <b>report</b> anyone to us.</p>
+  <p>We read every report. We aim to act within two business days, and sooner where someone&rsquo;s safety is at stake. We cannot undo harm that has already happened.</p>
+  <p><b>If you are in danger, contact the emergency services.</b> We are not an emergency service, we are not monitoring VIRI around the clock, and we cannot respond like one.</p>
+
+  <h2>7. What you post</h2>
+  <p>Your sessions, photographs, bio and messages remain yours. By posting them you give us permission to store and display them on VIRI so the product can work &mdash; nothing more. We do not sell your content and we do not use it to advertise.</p>
+  <p>Only post photographs you took or have the right to use, and do not post pictures of other people without their agreement.</p>
+
+  <h2>8. How to behave</h2>
+  <p>Do not:</p>
+  <ul>
+    <li>harass, threaten, stalk or intimidate anybody</li>
+    <li>post anything sexual, violent, hateful or discriminatory</li>
+    <li>pretend to be someone else, or lie about who you are</li>
+    <li>use VIRI to advertise, recruit, sell or promote anything</li>
+    <li>collect other members&rsquo; information, or share it outside VIRI</li>
+    <li>use VIRI to arrange anything illegal</li>
+    <li>try to break, overload or get around the security of the service</li>
+  </ul>
+  <p>Members who do these things lose their accounts.</p>
+
+  <h2>9. Ending things</h2>
+  <p>You can delete your account at any time in <a href="#/settings">Settings</a>. It is immediate.</p>
+  <p>We can suspend or remove an account at any time, with or without warning, if we believe someone has broken these terms or is a risk to other members. We will usually explain, but when someone&rsquo;s safety is involved we may act first.</p>
+
+  <h2>10. VIRI is provided as it is</h2>
+  <p>VIRI is free, and it is provided as it is, with no promises. We do not guarantee that it will work, that it will be available, that anything on it is accurate, or that you will meet anyone.</p>
+  <p>To the fullest extent the law allows, we exclude all warranties, express or implied.</p>
+
+  <h2>11. What we are liable for</h2>
+  <p>To the fullest extent the law allows, we are not liable for anything that happens between you and another member, including anything that happens when you meet in person. We are not liable for indirect or consequential loss, for lost data, or for the conduct of anyone else using VIRI.</p>
+  <p>Where liability cannot lawfully be excluded, it is limited to one hundred US dollars.</p>
+  <p>Nothing here excludes liability for our own fraud, for gross negligence or wilful misconduct, or for anything else that cannot lawfully be limited.</p>
+
+  <h2>12. If you cause us a problem</h2>
+  <p>If somebody brings a claim against us because of something you did on VIRI or something you did to another member, you agree to cover our reasonable costs in dealing with it.</p>
+
+  <h2>13. Changes</h2>
+  <p>We may change these terms. If a change matters, we will tell you before it takes effect. Continuing to use VIRI after that means you accept the new version.</p>
+
+  <h2>14. Law</h2>
+  <p>These terms are governed by the law of the District of Columbia, and any dispute belongs in the courts of the District of Columbia.</p>
+  <p>If any part of this page turns out to be unenforceable, the rest still stands.</p>
+
+  <h2>15. Talking to us</h2>
+  <p><a href="mailto:info@vitalityritual.org">info@vitalityritual.org</a>. We will give you a postal address if you ask.</p>
 </article>`;}
 function notFound(){return `<section class="section wrap"><h1>Let’s find your way back.</h1><p style="margin:25px 0">This page isn’t part of your circle just yet.</p>${button('Back to VIRI','#/')}</section>`;}
 function initWordmark(){
@@ -1990,7 +2073,7 @@ function initPageMotion(){
   revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('is-revealed');revealObserver.unobserve(entry.target);}}),{threshold:.08,rootMargin:'0px 0px -30px 0px'});
   targets.forEach(el=>{el.classList.add('will-reveal');revealObserver.observe(el);});
 }
-function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':if(signedIn()){location.replace('#/feed');return;}html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'check-email':html=checkEmailPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'profile':html=profilePage();break;case 'feed':html=feedPage();break;case 'find':html=findPage();break;case 'messages':html=messagesPage();break;case 'settings':html=settingsPage();break;case 'setup':html=setupPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=privacyPage();break;case 'terms':html=termsPage();break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you','check-email':'Check your email',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',profile:'Your circle',feed:'Feed',find:'Find your people',messages:'Messages',settings:'Settings',setup:'Your profile',book:'Book this class',privacy:'Your privacy',terms:'Preview terms'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#auth-form'))bindAuth();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='find')$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();toast('Search runs over the sample roster in this preview.');});if(path==='join')bindJoin();if(path==='setup')bindSetup();
+function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':if(signedIn()){location.replace('#/feed');return;}html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'check-email':html=checkEmailPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'profile':html=profilePage();break;case 'feed':html=feedPage();break;case 'find':html=findPage();break;case 'messages':html=messagesPage();break;case 'settings':html=settingsPage();break;case 'setup':html=setupPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=privacyPage();break;case 'terms':html=termsPage();break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you','check-email':'Check your email',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',profile:'Your circle',feed:'Feed',find:'Find your people',messages:'Messages',settings:'Settings',setup:'Your profile',book:'Book this class',privacy:'Your privacy',terms:'Terms of service'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#auth-form'))bindAuth();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='find')$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();toast('Search runs over the sample roster in this preview.');});if(path==='join')bindJoin();if(path==='setup')bindSetup();
   $('#subscribe-form')?.addEventListener('submit',e=>{e.preventDefault();
     toast('Saved on this device only \u2014 the preview does not send email.');e.target.reset();});if(path==='explore'){$('#ex-search').addEventListener('input',e=>{ex.query=e.target.value;exRefresh();});$('#ex-time').addEventListener('change',e=>{ex.time=e.target.value;exRefresh();});exBindMap();}}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-action]');if(!t)return;const {action,id,index,category,view,kind,name,channel}=t.dataset;switch(action){case 'video-toggle':{const v=$('#'+(t.dataset.video||'about-video'));if(v.paused)v.play().catch(()=>toast('Video playback is unavailable in this browser.'));else v.pause();break;}case 'close-modal':closeModal();break;case 'join-back':joinStep=Math.max(0,joinStep-1);render(false);break;case 'studio-prev':studioIndex=Math.max(0,studioIndex-1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'studio-next':studioIndex=Math.min(STUDIO_LAST(),studioIndex+1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'ex-city':ex={...ex,city:t.dataset.id,venue:null,cls:null};render(false);break;
