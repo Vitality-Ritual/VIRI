@@ -868,19 +868,17 @@ function syncAccountLinks(){
   if(menu)menu.innerHTML=on
     ? '<p class="menu-label">Discover</p><a href="#/explore">Explore</a><a href="#/studios">Studios</a>'
       +'<a href="#/read">Read</a><a href="#/about">About</a>'
+      +`<p class="menu-label">${escapeHTML(state.profile.name)}</p>`
+      +'<a href="#/profile">My profile</a><a href="#/settings">Settings</a>'
+      +'<button class="plain-link" data-action="log-out">Log out</button>'
     : HEADER_OUT.menu;
   if(icon){
     icon.innerHTML=on?`<span class="acc-av">${avatarFor(state.profile)}</span>${CHEV}`:HEADER_OUT.icon;
     icon.classList.toggle('account-button',on);
     icon.classList.toggle('icon-button',!on);
-    icon.setAttribute('aria-label',on?'Your account':'Sign up or log in');
+    icon.setAttribute('aria-label',on?'Your profile':'Sign up or log in');
   }
-  if(card)card.innerHTML=on
-    ? `<p class="menu-label">${escapeHTML(state.profile.name)}</p>`
-      +'<a href="#/profile">My profile</a>'
-      +'<a href="#/settings">Settings</a>'
-      +'<button class="plain-link" data-action="log-out">Log out</button>'
-    : '';
+  if(card)card.innerHTML='';   /* the panel is gone; the avatar is a link */
   if(panel&&!on){panel.hidden=true;icon?.setAttribute('aria-expanded','false');}
   /* the phone carries the same four destinations as the signed-in top nav */
   const bar=$('#tabbar');
@@ -901,19 +899,17 @@ function syncAccountLinks(){
 }
 /* Hover opens it on a pointer, tap and keyboard open it everywhere else. The
    panel's own box reaches up to the button so the pointer never crosses a gap. */
+/* The avatar used to open a small menu, which meant pressing your own face did
+   not take you to your own profile. It is a link now; the two things that were
+   in that menu live in the burger with the rest of the navigation. */
 function bindAccountMenu(){
-  const wrap=$('#account-wrap'), btn=$('#account-button'), panel=$('#account-panel');
-  if(!wrap||!btn||!panel)return;
-  const show=v=>{panel.hidden=!v;btn.setAttribute('aria-expanded',String(v));
-    if(v){$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');}};
-  const fine=()=>matchMedia('(hover: hover) and (pointer: fine)').matches;
-  wrap.addEventListener('mouseenter',()=>{if(signedIn()&&fine())show(true);});
-  wrap.addEventListener('mouseleave',()=>{if(fine())show(false);});
-  btn.addEventListener('click',()=>{
-    if(!signedIn()){location.hash='#/signup';return;}
-    show(panel.hidden);
-  });
-  wrap.addEventListener('focusout',e=>{if(!wrap.contains(e.relatedTarget))show(false);});
+  const btn=$('#account-button'), panel=$('#account-panel');
+  if(panel)panel.hidden=true;
+  if(!btn||btn.dataset.bound)return;
+  btn.dataset.bound='1';
+  btn.removeAttribute('aria-haspopup');
+  btn.removeAttribute('aria-expanded');
+  btn.addEventListener('click',e=>{ e.preventDefault(); goTo(signedIn()?'#/profile':'#/login'); });
 }
 function joinPage(){
   const s=JOIN_STEPS[joinStep], n=JOIN_STEPS.length, last=joinStep===n-1;
