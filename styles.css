@@ -319,6 +319,28 @@ strong{font-weight:500}
 .find-results{display:flex;flex-direction:column;gap:2px;margin-top:10px}
   .find-head{margin:26px 0 0}
 .pf-week{margin:24px 0 4px}
+/* goals sit beside the details, where another member sees them */
+.goals-panel{flex:0 0 260px;max-width:300px;padding:16px 18px;background:var(--cream-2);
+  border:1px solid var(--line);align-self:flex-start}
+.goals-panel .rail-label{margin:0 0 10px}
+.goal-group{margin-bottom:14px}
+.goal-group:last-child{margin-bottom:0}
+.goal-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.goal{margin-bottom:12px}
+.goal-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.goal-name{font-size:13px;line-height:1.35;color:var(--ink)}
+.goal-count{font-size:10px;letter-spacing:.06em;color:var(--muted);flex:none}
+.goal-bar{height:4px;background:var(--line);margin-top:6px;overflow:hidden}
+.goal-bar span{display:block;height:100%;background:var(--cocoa);transition:width .5s cubic-bezier(.62,0,.24,1)}
+.goal-x{font-size:10px;margin-top:4px}
+.goal-none{font-size:12.5px;line-height:1.6;color:var(--muted);margin:0}
+.ask-list{list-style:none;margin:18px 0 0;padding:0}
+.ask-list li{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:11px 0;border-bottom:1px solid var(--line)}
+.ask-list li:last-child{border-bottom:0}
+@media (max-width:860px){
+  .goals-panel{flex:1 1 100%;max-width:none;margin-top:18px}
+}
 .week-list{list-style:none;margin:10px 0 14px;padding:0}
 .week-list li{display:flex;align-items:center;justify-content:space-between;gap:14px;
   padding:10px 0;border-bottom:1px solid var(--line)}
