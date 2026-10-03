@@ -88,8 +88,9 @@ be found, and when. Every one of those fields is optional.
 You can **block** anyone, which stops them messaging you or sending you a
 request, and **report** anyone to us.
 
-We read every report. We aim to act within two business days, and sooner where
-someone's safety is at stake. We cannot undo harm that has already happened.
+We read every report. Reports about harassment, or about feeling unsafe with
+someone, are read **every day**. Everything else we aim to act on within two
+business days. We cannot undo harm that has already happened.
 
 **If you are in danger, contact the emergency services.** We are not an
 emergency service, we are not monitoring VIRI around the clock, and we cannot

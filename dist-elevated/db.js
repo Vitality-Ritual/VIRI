@@ -447,6 +447,11 @@ async function dbDeleteAccount(){
    to triage — who, what kind, when — and the account itself stays in the
    database. Once mail goes out through our own domain this can carry the lot. */
 
+/* These two are read every day rather than on the two-day cycle, so the
+   notification says so in the subject line and the daily check is a glance
+   at an inbox rather than a query someone has to remember to run. */
+const URGENT_REASONS = ['harassment', 'safety'];
+
 const REPORT_REASONS = [
   ['harassment',   'Harassment or abuse'],
   ['inappropriate','Inappropriate photographs or messages'],
@@ -506,14 +511,14 @@ async function dbNotifyReport(row, reason){
       email: authUser.email,
       message:
         `A member reported another member.\n\n` +
-        `Reason: ${label}\n` +
+        `Reason: ${label}${URGENT_REASONS.includes(reason) ? '  (read today, not on the two-day cycle)' : ''}\n` +
         `Report id: ${row && row.id}\n` +
         `Reported account: ${row && row.reported_profile_id}\n` +
         `Reported by: ${authUser.email} (${authUser.id})\n` +
         `Filed: ${row && row.created_at}\n\n` +
         `What they wrote is in the reports table in Supabase. It is not included ` +
         `here on purpose — see the note in db.js.`,
-      _subject: `VIRI report — ${label}`,
+      _subject: `${URGENT_REASONS.includes(reason) ? 'URGENT — ' : ''}VIRI report — ${label}`,
       _captcha: 'false',
       _template: 'table'
     })

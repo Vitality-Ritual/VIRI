@@ -1953,7 +1953,7 @@ function termsPage(){return `<article class="article-detail legal">
   </ul>
   <p>Think carefully before putting your neighbourhood, your regular training times and the studios you attend on your profile. Together they describe where you can be found, and when. Every one of those fields is optional.</p>
   <p>You can <b>block</b> anyone, which stops them messaging you or sending you a request, and <b>report</b> anyone to us.</p>
-  <p>We read every report. We aim to act within two business days, and sooner where someone&rsquo;s safety is at stake. We cannot undo harm that has already happened.</p>
+  <p>We read every report. Reports about harassment, or about feeling unsafe with someone, are read <b>every day</b>. Everything else we aim to act on within two business days. We cannot undo harm that has already happened.</p>
   <p><b>If you are in danger, contact the emergency services.</b> We are not an emergency service, we are not monitoring VIRI around the clock, and we cannot respond like one.</p>
 
   <h2>7. What you post</h2>
