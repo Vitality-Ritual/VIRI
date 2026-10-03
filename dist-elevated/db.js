@@ -137,6 +137,7 @@ async function dbLoadProfile(){
   await dbLoadBlocks();
   await dbLoadConnections();
   await dbLoadMessages();
+  await dbLoadFeed();
   await dbLoadSessions();
   await dbLoadPlans();
   return state.profile;
@@ -680,9 +681,14 @@ async function dbRequestConnection(otherId){
 
 async function dbAcceptConnection(otherId){
   const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
-  const { error } = await c.from('connections').update({ status: 'accepted' })
-    .eq('requester_id', otherId).eq('addressee_id', authUser.id).eq('status', 'pending');
+  const { data, error } = await c.from('connections').update({ status: 'accepted' })
+    .eq('requester_id', otherId).eq('addressee_id', authUser.id).eq('status', 'pending')
+    .select();
   if (error) return { error };
+  /* No rows changed means no policy allowed it, which Postgres does not
+     call an error. Without this check the interface congratulates somebody
+     on a friendship the database never recorded. */
+  if (!data || !data.length) return { error: { message: 'That request could not be accepted.' } };
   state.incoming = (state.incoming || []).filter(x => x !== otherId);
   if (!(state.connections || []).includes(otherId)) state.connections = [...(state.connections || []), otherId];
   return { data: true };
@@ -693,9 +699,11 @@ async function dbAcceptConnection(otherId){
 async function dbRemoveConnection(otherId){
   const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
   const me = authUser.id;
-  const { error } = await c.from('connections').delete()
-    .or(`and(requester_id.eq.${me},addressee_id.eq.${otherId}),and(requester_id.eq.${otherId},addressee_id.eq.${me})`);
+  const { data, error } = await c.from('connections').delete()
+    .or(`and(requester_id.eq.${me},addressee_id.eq.${otherId}),and(requester_id.eq.${otherId},addressee_id.eq.${me})`)
+    .select();
   if (error) return { error };
+  if (!data || !data.length) return { error: { message: 'Nothing to remove.' } };
   state.connections = (state.connections || []).filter(x => x !== otherId);
   state.requests    = (state.requests    || []).filter(x => x !== otherId);
   state.incoming    = (state.incoming    || []).filter(x => x !== otherId);
@@ -748,8 +756,10 @@ async function dbMarkThreadRead(otherId){
   const unread = (state.threads?.[otherId] || []).filter(m => !m.mine && !m.readAt);
   if (!unread.length) return;
   const when = new Date().toISOString();
-  await c.from('messages').update({ read_at: when })
-    .eq('sender_id', otherId).eq('recipient_id', authUser.id).is('read_at', null);
+  const { data } = await c.from('messages').update({ read_at: when })
+    .eq('sender_id', otherId).eq('recipient_id', authUser.id).is('read_at', null)
+    .select('id');
+  if (!data || !data.length) return;   /* nothing written, so do not pretend locally */
   unread.forEach(m => { m.readAt = when; });
   state.unread = (state.unread || []).filter(x => x !== otherId);
 }
@@ -781,20 +791,27 @@ async function dbSearchPeople({ activities = [], times = [], city = '' } = {}){
 
 /* ----------------------------------------------------- other people's days */
 
-async function dbLoadCommunityFeed(){
-  const c = db(); if (!c || !authUser) return [];
+/* Friends only, deliberately. A feed of every member's sessions would publish
+   where each woman trains and at what time to everybody who signed up, which
+   is the one thing this product should be most careful with. Discovery belongs
+   in search, where you choose to look; the feed is for people you have already
+   agreed to share with. */
+async function dbLoadFeed(){
+  const c = db(); if (!c || !authUser) { state.feed = []; return []; }
+  const friends = (state.connections || []).filter(id => !(state.blocked || []).includes(id));
+  if (!friends.length) { state.feed = []; return []; }
   const { data } = await c.from('sessions').select('*')
-    .neq('profile_id', authUser.id)
-    .order('happened_at', { ascending: false }).limit(30);
-  const rows = (data || []).filter(r => !(state.blocked || []).includes(r.profile_id));
-  await dbPeople(rows.map(r => r.profile_id));
+    .in('profile_id', friends)
+    .order('happened_at', { ascending: false }).limit(40);
+  await dbPeople((data || []).map(r => r.profile_id));
   const out = [];
-  for (const r of rows) {
-    const s = rowToSession(r);
-    s.photo = await dbPhotoUrl(r.photo_path);
-    s.by = state.people[r.profile_id] || null;
-    out.push(s);
+  for (const r of data || []) {
+    const sess = rowToSession(r);
+    sess.photo = await dbPhotoUrl(r.photo_path);
+    sess.by = state.people[r.profile_id] || null;
+    out.push(sess);
   }
+  state.feed = out;
   return out;
 }
 
