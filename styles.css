@@ -250,6 +250,34 @@ strong{font-weight:500}
 .preview-note.is-plain strong{display:none}
 .preview-note.is-plain{font-style:normal}
 .check-box.join-women{margin-bottom:10px}
+/* requests: two answers, nothing to read twice */
+.req-list{list-style:none;margin:0 0 6px;padding:0}
+.req-list li{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.req-list li:last-child{border-bottom:0}
+.req-who{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.req-who .small{color:var(--muted)}
+.req-acts{display:flex;gap:8px;flex:none}
+.req-yes,.req-no{width:34px;height:34px;border-radius:50%;border:1px solid var(--line-2);
+  background:transparent;font-size:14px;line-height:1;cursor:pointer;
+  transition:background .2s,border-color .2s,color .2s}
+.req-yes{color:var(--cocoa)}
+.req-yes:hover{background:var(--cocoa);border-color:var(--cocoa);color:#fff}
+.req-no{color:var(--muted)}
+.req-no:hover{background:var(--grave);border-color:var(--grave);color:#fff}
+/* a count nobody notices is a request nobody answers */
+#requests-button{position:relative}
+#requests-button[data-badge]:not([data-badge=""])::after{content:attr(data-badge);
+  position:absolute;top:2px;right:2px;min-width:15px;height:15px;padding:0 4px;
+  border-radius:999px;background:var(--grave);color:#fff;font-size:9px;
+  display:grid;place-items:center;line-height:1}
+/* On a phone the full wordmark is 217px, which left no room for the tools
+   beside it. Signed in it collapses to the mark it animates to anyway. */
+@media (max-width:767px){
+  .site-header.is-in .mark .is-drop{display:none}
+  .site-header.is-in .mark .mark-gap{display:none}
+}
+.icon-button.is-here{color:var(--cocoa)}
+.icon-button.is-here svg{stroke-width:2}
 /* the photograph and the bio, now asked for on the profile rather than
    during sign-up */
 .pf-avatar{position:relative;display:inline-block}
