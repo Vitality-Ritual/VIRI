@@ -28,7 +28,8 @@ stored hashed — we never see it and cannot recover it for you.
 | | |
 |---|---|
 | Required | your name, the neighbourhood and city where you train |
-| Optional | a photograph, a short bio, your birth year, your college and year, your industry |
+| Required | your age &mdash; VIRI is for over-18s. Showing it on your profile is opt-in and off by default |
+| Optional | a photograph, a short bio, your college and year, your industry |
 | Matching | the activities you do and the times of week you usually train |
 
 **What you do on VIRI:** sessions you log (activity, place, how long, how far,
@@ -100,8 +101,8 @@ account.
 
 ## Age
 
-VIRI is for adults. The sign-up form does not accept a birth year that would
-make you under 16, and we do not knowingly keep data about children. If you
+VIRI is for adults. You must be 18 or over to make an account, and we do not
+knowingly keep data about anyone younger. If you
 believe a child has an account, write to us and we will remove it.
 
 ## Security
@@ -135,8 +136,8 @@ quietly updating the page.
    thresholds, the Washington My Health My Data Act and similar state laws given
    fitness data, and whether any EU users trigger GDPR obligations including a
    lawful basis analysis and a representative.
-4. **Age.** 16 is enforced in the sign-up form only. Should the floor be 18 for
-   a product that introduces strangers who then meet in person?
+4. **Age.** Now 18, required rather than optional, and enforced by the only
+   selectable birth years. Display on the profile is a separate opt-in.
 5. **Retention of reports about deleted accounts.** Asserted above as legitimate
    interest. Needs confirming, and a defined retention period rather than
    indefinite.
