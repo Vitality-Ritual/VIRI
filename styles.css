@@ -1538,7 +1538,10 @@ body:after{
 /* three questions share a step, so each legend has to read as a question
    rather than the tiny uppercase label the other fieldsets use */
 .join-set{border:0;padding:0;margin:0 0 clamp(24px,2.8vw,34px)}
-.join-set:last-of-type{margin-bottom:0}
+/* :last-of-type matches the last fieldset even when other things follow it,
+   so the college block lost its bottom margin while the industry field sat
+   directly beneath. :last-child only matches when nothing comes after. */
+.join-set:last-child{margin-bottom:0}
 .join-set legend{font-family:var(--display);font-weight:400;font-size:clamp(1rem,1.35vw,1.15rem);
   color:var(--cocoa);letter-spacing:0;text-transform:none;line-height:1.35;
   margin:0 0 14px;padding:0;max-width:40ch}
