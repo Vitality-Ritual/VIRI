@@ -681,6 +681,10 @@ const BIO_EXAMPLES=[
   'Training for my first half and would love company on long runs.',
   'Lifting four days a week and looking for someone to keep me honest.'
 ];
+/* The placeholder is deliberately not one of these: five suggestions plus a
+   sixth already in the box reads as a closed list, and this field takes
+   anything somebody wants to type. */
+const INDUSTRY_EXAMPLES=['Marketing','Startup','Graduate studies','Finance','Tech'];
 const JOIN_STEPS=[
   {key:'name',type:'text',q:'What should we call you?',hint:'However you introduce yourself in class.',placeholder:'First and last name',autocomplete:'name',required:true},
   {key:'email',type:'account',q:'Where can we reach you?',hint:'Your email is how you sign back in. It is never shown to other members.',required:true},
@@ -742,7 +746,8 @@ if(s.type==='account')return `
       </div>
     </fieldset>
     <div class="field"><label for="join-industry">What industry do you work in? <span class="field-optional">Optional</span></label>
-      <input id="join-industry" name="industry" maxlength="50" placeholder="Corporate" value="${escapeHTML(joinData.industry||'')}"></div>`;
+      <input id="join-industry" name="industry" maxlength="50" placeholder="Consulting" value="${escapeHTML(joinData.industry||'')}">
+      <div class="field-eg"><p>For example:</p><ul>${INDUSTRY_EXAMPLES.map(x=>`<li>${escapeHTML(x)}</li>`).join('')}</ul></div></div>`;
 if(s.type==='details')return `
   <div class="field"><label for="join-photo">Profile photo <span class="field-optional">Optional</span></label>
     <div class="photo-drop" id="join-drop" data-has="${joinData.photo?'1':'0'}">
