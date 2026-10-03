@@ -1248,6 +1248,12 @@ let msgThread=null;
    No message is ever sent from here; the threads are drawn from the people you
    have actually connected to, so the page is yours rather than a mock-up, and
    the composer says plainly that it does not send. */
+/* Initials are the fallback, not the default. The messages list and its
+   header were rendering them unconditionally and dropping the photograph. */
+const faceOf=p=>p&&p.photo
+  ? `<img src="${escapeHTML(p.photo)}" alt="">`
+  : escapeHTML(initials((p&&p.name)||'?'));
+
 function messagesPage(){
   if(!signedIn())return authPage();
   /* Friends only. The commonest way a social product hurts women is letting a
@@ -1264,14 +1270,15 @@ function messagesPage(){
       <aside class="msg-list">
         ${ids.map(id=>{const p=personById(id)||{name:'A member'};
           return `<button class="msg-row${id===open?' is-on':''}${(state.unread||[]).includes(id)?' is-unread':''}" data-action="msg-open" data-id="${escapeHTML(id)}">
-            <span class="av-md">${escapeHTML(initials(p.name))}</span>
+            <span class="av-md">${faceOf(p)}</span>
             <span class="msg-who"><b>${escapeHTML(p.name)}</b>
               <span class="small">${escapeHTML(preview(id).slice(0,60))}</span></span>
           </button>`;}).join('')}
       </aside>
       <section class="msg-thread">
-        <header class="msg-head"><span class="av-md">${escapeHTML(initials(who.name))}</span>
-          <span class="msg-who"><b>${escapeHTML(who.name)}</b><span class="small">${escapeHTML([who.area,(who.interests||[]).slice(0,2).join(', ')].filter(Boolean).join(' · '))}</span></span></header>
+        <header class="msg-head">
+          <a class="av-md msg-face" href="#/member/${escapeHTML(open)}" aria-label="${escapeHTML(who.name)}&rsquo;s profile">${faceOf(who)}</a>
+          <span class="msg-who"><b><a class="person-link" href="#/member/${escapeHTML(open)}">${escapeHTML(who.name)}</a></b><span class="small">${escapeHTML([who.area,(who.interests||[]).slice(0,2).join(', ')].filter(Boolean).join(' · '))}</span></span></header>
         <div class="msg-body" id="msg-body">
           ${thread.length?thread.map(m=>
             `<p class="msg-bubble ${m.mine?'me':'them'}">${escapeHTML(m.body)}</p>`).join('')
