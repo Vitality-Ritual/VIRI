@@ -276,8 +276,9 @@ strong{font-weight:500}
 .req-no{color:var(--muted)}
 .req-no:hover{background:var(--grave);border-color:var(--grave);color:#fff}
 /* a count nobody notices is a request nobody answers */
-#requests-button{position:relative}
-#requests-button[data-badge]:not([data-badge=""])::after{content:attr(data-badge);
+#requests-button,#notes-button{position:relative}
+#requests-button[data-badge]:not([data-badge=""])::after,
+#notes-button[data-badge]:not([data-badge=""])::after{content:attr(data-badge);
   position:absolute;top:2px;right:2px;min-width:15px;height:15px;padding:0 4px;
   border-radius:999px;background:var(--grave);color:#fff;font-size:9px;
   display:grid;place-items:center;line-height:1}
@@ -339,6 +340,18 @@ strong{font-weight:500}
 .session-edit{margin-left:10px;font-size:12.5px}
 .session-delete{margin-right:auto;font-size:12.5px;color:#9d4137}
 .auth-forgot{margin:-8px 0 0;font-size:13px}
+.notes{padding-block:clamp(28px,4vw,56px);max-width:760px}
+.note-list{list-style:none;margin:0;padding:0}
+.note{border-bottom:1px solid var(--line)}
+.note:last-child{border-bottom:0}
+.note-open{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;background:none;border:0;
+  padding:14px 8px;cursor:pointer;font:inherit;color:var(--ink)}
+.note-open:hover{background:var(--cream-2)}
+.note.is-new .note-open{background:var(--cream-2)}
+.note.is-new .note-open::before{content:'';flex:none;width:7px;height:7px;border-radius:50%;background:var(--grave);margin-top:9px}
+.note-text{display:flex;flex-direction:column;gap:4px;font-size:14px;line-height:1.5;min-width:0}
+/* five 44px touch targets in the phone header: tighter gaps, not smaller targets */
+@media (max-width:420px){.header-tools{gap:2px}}
 .auth-forgot a{border-bottom:1px solid var(--line-2);color:var(--muted)}
 .auth-sent{margin:18px 0;font-size:15px;line-height:1.7;color:var(--ink)}
 .session-thread{border-top:1px solid var(--line);margin-top:14px;padding-top:12px}
