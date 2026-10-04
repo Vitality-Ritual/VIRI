@@ -362,6 +362,11 @@ strong{font-weight:500}
 .comment-form{display:flex;gap:8px;margin-top:10px}
 .comment-form input{flex:1;min-width:0}
 .week-acts{display:flex;gap:12px;flex:none}
+.session-like{display:inline-flex;align-items:center;gap:5px;color:var(--muted);font-size:13px}
+.session-like svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.6}
+.session-like.is-on{color:var(--grave)}
+.session-like.is-on svg{fill:currentColor}
+.session-like.is-mine{cursor:default}
 .goal{margin-bottom:12px}
 .goal-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
 .goal-name{font-size:13px;line-height:1.35;color:var(--ink)}
