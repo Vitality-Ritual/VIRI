@@ -1154,13 +1154,7 @@ const SAMPLE_SESSIONS=[
 /* your own posts first; the samples stand in only while you have none, so the
    shape of the page is visible before you have logged anything */
 const mySessions=()=>state.posts.length
-  ? state.posts.slice().reverse().map(p=>{
-      const tags=(p.withIds||[]).map(id=>personById(id)).filter(Boolean);
-      return {title:p.title,cat:p.activity||'',place:p.place||'',
-        dur:Number(p.duration)||0,went:p.went||1+tags.length,
-        ago:prettyDate(p.date),note:p.description||'',img:p.photo||'',
-        withIds:tags.map(x=>x.id),
-        withLine:tags.map(x=>x.name.split(' ')[0]).join(', '),comments:0};})
+  ? state.posts.slice().reverse().map(sessionView)
   : SAMPLE_SESSIONS;
 const avatarFor=p=>p&&p.photo
   ? `<img src="${p.photo}" alt="">`
@@ -1169,10 +1163,41 @@ const avatarFor=p=>p&&p.photo
 const whoStack=ids=>!ids||!ids.length?'':`<span class="who-stack">${ids.slice(0,3).map(id=>{
   const p=personById(id);
   return `<span>${escapeHTML(initials(p?p.name:'VIRI'))}</span>`;}).join('')}</span>`;
+/* Activities measured in miles. Indoor cycling is a class, not a distance. */
+const isDistanceActivity=a=>!!a&&/run|jog|walk|hik|cycl|bik|ride|ruck/i.test(a)&&!/indoor|spin|class/i.test(a);
+const isOnFoot=a=>!!a&&/run|jog|walk|hik|ruck/i.test(a);
+function fmtDuration(min){
+  min=Math.round(Number(min)||0); if(!min)return '';
+  const h=Math.floor(min/60), m=min%60;
+  return h?(m?`${h} hr ${m} min`:`${h} hr`):`${m} min`;
+}
+/* minutes a mile on foot, miles an hour on a bike */
+function sessionPace(s){
+  const miles=parseFloat(s.dist), min=Number(s.dur);
+  if(!(miles>0)||!(min>0))return null;
+  if(isOnFoot(s.cat)){const per=min/miles, mm=Math.floor(per), ss=Math.round((per-mm)*60);
+    return ['Pace',`${ss===60?mm+1:mm}:${String(ss===60?0:ss).padStart(2,'0')} /mi`];}
+  if(isDistanceActivity(s.cat))return ['Speed',`${(miles/(min/60)).toFixed(1)} mph`];
+  return null;
+}
+/* Sessions exist in two shapes: as logged and stored (activity, duration,
+   distance, description, photo, date) and as a card shows them (cat, dur,
+   dist, note, img, ago). Everything goes through this one translation.
+   Friends' sessions in the feed used to reach the card untranslated and
+   showed nothing but "Went 1 person". */
+function sessionView(p){
+  const tags=(p.withIds||[]).map(id=>personById(id)).filter(Boolean);
+  return {title:p.title,cat:p.activity||'',place:p.place||'',
+    dur:Number(p.duration)||0,dist:p.distance||'',went:p.went||1+tags.length,
+    ago:prettyDate(p.date),note:p.description||'',img:p.photo||'',
+    withIds:tags.map(x=>x.id),
+    withLine:tags.map(x=>x.name.split(' ')[0]).join(', '),comments:0};
+}
 function sessionStats(s){
   const cells=[];
   if(s.dist)cells.push(['Distance',s.dist]);
-  if(s.dur)cells.push(['Length',`${s.dur} min`]);
+  if(s.dur)cells.push(['Length',fmtDuration(s.dur)]);
+  const pace=sessionPace(s); if(pace)cells.push(pace);
   if(s.cat)cells.push(['Activity',s.cat]);
   if(s.went)cells.push(['Went',`${s.went} ${s.went===1?'person':'people'}`]);
   if(s.met)cells.push(['Of those',`${s.met} new`]);
@@ -1181,6 +1206,7 @@ function sessionStats(s){
     `<span><span class="session-k">${escapeHTML(k)}</span><span class="session-v">${escapeHTML(v)}</span></span>`).join('')}</div>`;
 }
 function sessionCard(s,by){
+  if(s.ago===undefined)s=sessionView(s);
   return `<article class="session">
     ${by?`<div class="session-by"><span class="av-sm">${avatarFor(by)}</span>
       <span><b>${by.id&&isRealAccount(by.id)?`<a class="person-link" href="#/member/${escapeHTML(by.id)}">${escapeHTML(by.name)}</a>`:escapeHTML(by.name)}</b><span class="small">${escapeHTML(s.ago)} &middot; ${escapeHTML(s.place)}</span></span>
@@ -1191,7 +1217,7 @@ function sessionCard(s,by){
     <h3 class="session-title">${escapeHTML(s.title)}</h3>
     ${sessionStats(s)}
     ${s.note?`<p class="session-note">${escapeHTML(s.note)}</p>`:''}
-    ${s.img?`<figure class="session-shot"><img src="${/^data:/.test(s.img)?s.img:A+s.img}" alt="" loading="lazy"></figure>`:''}
+    ${s.img?`<figure class="session-shot"><img src="${/^(data:|https?:|blob:)/.test(s.img)?s.img:A+s.img}" alt="" loading="lazy"></figure>`:''}
     <div class="session-foot">
       ${s.withLine?`${whoStack(s.withIds)}<span class="small">with ${escapeHTML(s.withLine)}</span>`:''}
       <button class="button small" data-action="session-join">Join ${by?'them':'me'} next time</button>
@@ -2217,27 +2243,36 @@ const SETUP_TIMES=['Before work','Mornings','Lunchtime','After work','Evenings',
    A band is turned into a nominal hour only so an occurrence can be ordered
    and known to have passed. Nobody is told you were there at 6:00 sharp. */
 const BAND_HOUR={'Before 5am':4,'5–7am':6,'8–10am':9,'10–12pm':11,'12–3pm':13,'3–5pm':16,'5–7pm':18,'8pm Onward':20};
+/* When each band is over. "Did you go?" waits for this, not for a nominal hour
+   later: a 12–3pm class is not finished at 2. */
+const BAND_END={'Before 5am':5,'5–7am':7,'8–10am':10,'10–12pm':12,'12–3pm':15,'3–5pm':17,'5–7pm':19,'8pm Onward':22};
 
 function routineOccurrences(){
-  const out=[], now=new Date();
+  const out=[], now=Date.now();
   for(const r of state.routines||[]){
-    const hour=BAND_HOUR[r.band]??7;
-    /* the last seven days, so a week away still has something to answer */
-    for(let back=1;back<=7;back++){
+    const hour=BAND_HOUR[r.band]??7, endHour=BAND_END[r.band]??hour+1;
+    /* Only slots that were still to come when the routine was added. Adding a
+       Wednesday class on a Sunday used to ask, at once, about the Wednesday
+       before — a class nobody had said they would go to. A routine with no
+       recorded start (an old cached copy) asks about nothing until reloaded. */
+    const since=r.createdAt?new Date(r.createdAt).getTime():now;
+    /* today and the last seven days, so a week away still has something to answer */
+    for(let back=0;back<=7;back++){
       const d=new Date(); d.setHours(hour,0,0,0); d.setDate(d.getDate()-back);
       if(d.getDay()!==r.weekday)continue;
-      if(d>now)continue;
+      const end=new Date(d); end.setHours(endHour,0,0,0);
+      if(end.getTime()>now||end.getTime()<=since)continue;
       const where=(r.venue||'').split(' — ')[0];
       out.push({ id:`${r.id}:${d.toISOString().slice(0,10)}`,
         title:where?`${r.activity||'Training'} at ${where}`:(r.activity||'Training'),
-        cat:r.activity||'', dur:60, start:d.getTime(), place:r.venue||'', going:[] });
+        cat:r.activity||'', dur:60, start:d.getTime(), end:end.getTime(), place:r.venue||'', going:[] });
     }
   }
   return out.sort((x,y)=>x.start-y.start);
 }
-const planEnd=p=>p.start+((p.dur||45)*60000);
+/* routineOccurrences() only returns slots that are over, so nothing more to check here */
 const pendingPlans=()=>routineOccurrences()
-  .filter(p=>planEnd(p)<Date.now()&&!(state.logged||[]).includes(p.id));
+  .filter(p=>!(state.logged||[]).includes(p.id));
 function attendModal(){
   const list=pendingPlans();
   if(!list.length)return postActivity();
@@ -2245,7 +2280,7 @@ function attendModal(){
     `<p class="dialog-copy">${list.length===1?'This is in your week.':'These are in your week.'} Logging takes one tap &mdash; everything is already known.</p>
      <div class="attend-list">${list.map(p=>`<div class="attend-row">
        <div class="attend-what"><b>${escapeHTML(p.title)}</b>
-         <span class="small">${prettyDate(p.start)} ${prettyTime(p.start)} &middot; ${escapeHTML(p.place)} &middot; ${p.dur} min</span></div>
+         <span class="small">${prettyDate(p.start)} ${prettyTime(p.start)} &middot; ${escapeHTML(p.place)} &middot; ${fmtDuration(p.dur)}</span></div>
        <div class="attend-acts">
          <button class="button small" data-action="attend-yes" data-id="${escapeHTML(p.id)}">I went</button>
          <button class="plain-link" data-action="attend-more" data-id="${escapeHTML(p.id)}">Add a photo</button>
@@ -2296,6 +2331,7 @@ function shrinkImage(file,maxW=900){return new Promise(res=>{
   fr.onerror=()=>res('');fr.readAsDataURL(file);});}
 function postActivity(pre){
   postPhoto='';
+  const dur0=Math.round(Number(pre&&pre.dur)||45);
   const friends=(state.connections||[]).map(id=>personById(id)).filter(Boolean);
   const v=(x)=>escapeHTML(x||'');
   openModal(pre?'Log this session':'Log a session',
@@ -2308,8 +2344,14 @@ function postActivity(pre){
         <datalist id="post-cats">${JOIN_FORMS.filter(x=>x!==JOIN_ANY.forms&&x!=='Other').map(c=>`<option>${escapeHTML(c)}</option>`).join('')}</datalist></div>
       <div class="field"><label for="post-place">Where</label>
         <input id="post-place" name="place" maxlength="60" value="${v(pre&&pre.place)}" placeholder="Club Pilates Dupont"></div>
-      <div class="field"><label for="post-duration">Minutes</label>
-        <input id="post-duration" name="duration" type="number" min="1" max="1440" value="${pre&&pre.dur?pre.dur:45}" required></div>
+      <fieldset class="interest-fieldset"><legend>How long</legend>
+        <div class="post-pair">
+          <label class="post-unit"><input id="post-hours" name="hours" type="number" inputmode="numeric" min="0" max="23" step="1" value="${Math.floor(dur0/60)}"><span>hours</span></label>
+          <label class="post-unit"><input id="post-minutes" name="minutes" type="number" inputmode="numeric" min="0" max="59" step="1" value="${dur0%60}"><span>minutes</span></label>
+        </div></fieldset>
+      <div class="field" id="post-distance-field"${isDistanceActivity(pre&&pre.cat)?'':' hidden'}><label for="post-distance">Distance <span class="field-optional">Optional</span></label>
+        <div class="post-pair"><label class="post-unit"><input id="post-distance" name="distance" type="number" inputmode="decimal" min="0" max="500" step="0.01" placeholder="6.2"><span>miles</span></label></div>
+        <p class="field-eg">For runs, walks, hikes and rides. Leave it blank if you did not track it.</p></div>
       <div class="field"><label for="post-description">How was it?</label>
         <textarea id="post-description" name="description" maxlength="400" placeholder="Share a little about your ritual."></textarea></div>
       <div class="field"><label for="post-photo">A photo <span class="field-optional">Optional</span></label>
@@ -2343,13 +2385,19 @@ function postActivity(pre){
        if(t==='dragleave'&&drop.contains(e.relatedTarget))return;drop.classList.remove('is-over');}));
      drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('is-over');
        const f=e.dataTransfer?.files?.[0];if(f)take(f);});
+     /* miles appear once the activity is one that has them */
+     const distField=$('#post-distance-field');
+     $('#post-activity').addEventListener('input',e=>{distField.hidden=!isDistanceActivity(e.target.value);});
      $('#post-form').addEventListener('submit',e=>{
        e.preventDefault();
        const f=Object.fromEntries(new FormData(e.target));
        if(!String(f.title||'').trim())return;
+       const minutes=Math.round((Number(f.hours)||0)*60+(Number(f.minutes)||0));
+       if(minutes<1){$('#post-error').textContent='How long was it? Add hours, minutes or both.';return;}
+       const miles=!distField.hidden&&Number(f.distance)>0?Math.round(Number(f.distance)*100)/100:0;
        const withIds=[...e.target.querySelectorAll('input[name="withIds"]:checked')].map(i=>i.value);
        state.posts.push({title:String(f.title).trim(),activity:String(f.activity||'').trim(),
-         place:String(f.place||'').trim(),duration:Number(f.duration),
+         place:String(f.place||'').trim(),duration:minutes,distance:miles?`${miles} mi`:'',
          description:String(f.description||'').trim(),photo:postPhoto,withIds,
          went:1+withIds.length,date:new Date().toISOString(),
          fromPlan:pre?pre.id:null});

@@ -250,6 +250,7 @@ async function dbAddSession(p){
     activity: p.activity || null,
     place: p.place || null,
     duration_min: Number(p.duration) || null,
+    distance: p.distance || null,
     note: p.description || null,
     photo_path: p.photo || null,
     went_count: p.went || 1,
@@ -967,7 +968,8 @@ async function dbLoadRoutines(profileId){
     .eq('profile_id', who).order('weekday').order('time_band');
   const out = (data || []).map(r => ({
     id: r.id, venueId: r.venue_id, venue: r.venue_label,
-    activity: r.activity || '', weekday: r.weekday, band: r.time_band
+    activity: r.activity || '', weekday: r.weekday, band: r.time_band,
+    createdAt: r.created_at
   }));
   if (who === authUser.id) state.routines = out;
   else if (state.people && state.people[who]) state.people[who].routines = out;
@@ -989,7 +991,8 @@ async function dbAddRoutine({ venueId, venueLabel, activity, weekday, band }){
   if (!data) return { error: { message: 'That could not be added to your week.' } };
   state.routines = [...(state.routines || []), {
     id: data.id, venueId: venueId || '', venue: (venueLabel || '').trim(),
-    activity, weekday: Number(weekday), band
+    activity, weekday: Number(weekday), band,
+    createdAt: data.created_at || new Date().toISOString()
   }].sort((a,b) => a.weekday - b.weekday);
   return { data: true };
 }
