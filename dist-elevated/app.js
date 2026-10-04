@@ -851,9 +851,12 @@ function syncAccountLinks(){
     icon.innerHTML=on?`<span class="acc-av">${avatarFor(state.profile)}</span>${CHEV}`:HEADER_OUT.icon;
     icon.classList.toggle('account-button',on);
     icon.classList.toggle('icon-button',!on);
-    icon.setAttribute('aria-label',on?'Your profile':'Sign up or log in');
+    icon.setAttribute('aria-label',on?'Your account':'Sign up or log in');
   }
-  if(card)card.innerHTML='';   /* the panel is gone; the avatar is a link */
+  if(card)card.innerHTML=on
+    ? `<p class="menu-label">${escapeHTML(state.profile.name)}</p><a href="#/profile">My profile</a><a href="#/settings">Settings</a><button class="plain-link" data-action="log-out">Log out</button>`
+    : '';
+  if(icon){icon.setAttribute('aria-haspopup',on?'true':'false');if(!on)icon.removeAttribute('aria-expanded');else if(!icon.hasAttribute('aria-expanded'))icon.setAttribute('aria-expanded','false');}
   if(panel&&!on){panel.hidden=true;icon?.setAttribute('aria-expanded','false');}
   /* the phone carries the same four destinations as the signed-in top nav */
   const bar=$('#tabbar');
@@ -874,17 +877,22 @@ function syncAccountLinks(){
 }
 /* Hover opens it on a pointer, tap and keyboard open it everywhere else. The
    panel's own box reaches up to the button so the pointer never crosses a gap. */
-/* The avatar used to open a small menu, which meant pressing your own face did
-   not take you to your own profile. It is a link now; the two things that were
-   in that menu live in the burger with the rest of the navigation. */
+/* The avatar opens a small menu: My profile first, then Settings and Log out.
+   For a while it was only a link to your profile, but it kept the down-arrow,
+   so on your own profile — or on a phone, where the bottom bar already has
+   your profile — pressing it appeared to do nothing at all. */
 function bindAccountMenu(){
   const btn=$('#account-button'), panel=$('#account-panel');
   if(panel)panel.hidden=true;
   if(!btn||btn.dataset.bound)return;
   btn.dataset.bound='1';
-  btn.removeAttribute('aria-haspopup');
-  btn.removeAttribute('aria-expanded');
-  btn.addEventListener('click',e=>{ e.preventDefault(); goTo(signedIn()?'#/profile':'#/login'); });
+  btn.addEventListener('click',e=>{
+    e.preventDefault();
+    if(!signedIn()){goTo('#/login');return;}
+    const open=panel.hidden;
+    panel.hidden=!open; btn.setAttribute('aria-expanded',String(open));
+    $('#menu-panel').hidden=true; $('#menu-button')?.setAttribute('aria-expanded','false');
+  });
 }
 function joinPage(){
   const s=JOIN_STEPS[joinStep], n=JOIN_STEPS.length, last=joinStep===n-1;
