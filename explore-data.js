@@ -225,16 +225,170 @@
     V('at-cl-wm', 'Club Pilates', 'atl', 'West Midtown', -84.4126, 33.7864, 'Pilates'),
     V('at-cb-ip', 'CycleBar', 'atl', 'Inman Park', -84.3534, 33.7614, 'Cycling'),
     V('at-ot-vh', 'Orangetheory Fitness', 'atl', 'Virginia-Highland', -84.3544, 33.7794, 'Strength'),
-    /* Barre3 — one in every city. Neighbourhoods chosen to sit away from the
-       existing barre studio in each, so the map does not stack two pins. */
-    V('dc-b3-sh', 'Barre3', 'dc', 'Shaw', -77.0220, 38.9134, 'Barre'),
-    V('ny-b3-bh', 'Barre3', 'nyc', 'Brooklyn Heights', -73.9936, 40.6960, 'Barre'),
-    V('la-b3-lr', 'Barre3', 'la', 'Larchmont', -118.3244, 34.0760, 'Barre'),
-    V('mi-b3-gb', 'Barre3', 'mia', 'Coral Gables', -80.2588, 25.7506, 'Barre'),
-    V('bo-b3-fw', 'Barre3', 'bos', 'Fenway', -71.0972, 42.3448, 'Barre'),
-    V('ch-b3-ot', 'Barre3', 'chi', 'Old Town', -87.6382, 41.9106, 'Barre'),
-    V('ph-b3-oc', 'Barre3', 'phl', 'Old City', -75.1450, 39.9510, 'Barre'),
-    V('at-b3-vh', 'Barre3', 'atl', 'Poncey-Highland', -84.3596, 33.7716, 'Barre')
+    /* Barre3: every studio Barre3 lists inside these cities, read off its own
+       finder at barre3.com/studio-locations on 4 Oct 2026. These replaced one
+       invented studio per city, placed only so pins would not stack; none of
+       the eight was real. Barre3 has no Miami studio. Williamsburg (Brooklyn)
+       is listed as coming soon and left out until it opens. Coordinates are from
+       the Census geocoder on each address, except Long Island City and Atlanta's
+       Peachtree St studio, where it matched the wrong street and they were placed
+       by hand. Barre3 calls 1745 Peachtree St "Buckhead"; it sits nearer Midtown. */
+    V('dc-b3-us', 'Barre3', 'dc', 'Union Station', -77.0034, 38.8990, 'Barre'),
+    V('dc-b3-14', 'Barre3', 'dc', 'U Street', -77.0320, 38.9150, 'Barre'),
+    V('ny-b3-wv', 'Barre3', 'nyc', 'West Village', -73.9987, 40.7333, 'Barre'),
+    V('ny-b3-li', 'Barre3', 'nyc', 'Long Island City', -73.9443, 40.7478, 'Barre'),
+    V('la-b3-sc', 'Barre3', 'la', 'Studio City', -118.3926, 34.1435, 'Barre'),
+    V('bo-b3-bl', 'Barre3', 'bos', 'Brookline', -71.1351, 42.3397, 'Barre'),
+    V('ch-b3-wl', 'Barre3', 'chi', 'West Loop', -87.6544, 41.8848, 'Barre'),
+    V('ch-b3-lv', 'Barre3', 'chi', 'Lakeview', -87.6536, 41.9399, 'Barre'),
+    V('ph-b3-rt', 'Barre3', 'phl', 'Rittenhouse', -75.1659, 39.9503, 'Barre'),
+    V('at-b3-bh', 'Barre3', 'atl', 'Buckhead', -84.3898, 33.8025, 'Barre'),
+    V('at-b3-bk', 'Barre3', 'atl', 'Brookhaven', -84.3316, 33.8270, 'Barre'),
+    /* Gyms: Equinox, Life Time, Gold's Gym, Crunch Fitness and VIDA Fitness (DC).
+       Locations are the clubs each chain lists on its own site, inside the city or its
+       immediate neighbourhoods; suburbs, New Jersey and Long Island are left out, as is
+       a Gold's not yet open. Coordinates are from the US Census geocoder on each club's
+       published street address, except seven placed by hand. Neighbourhood names are the
+       nearest recognised one and are labels, not boundaries. */
+    /* Washington, DC */
+    V('dc-gg-buzzardpoi', 'Gold’s Gym', 'dc', 'Buzzard Point', -77.0118, 38.8702, 'Gym'),
+    V('dc-vd-cityvista', 'VIDA Fitness', 'dc', 'City Vista', -77.0179, 38.9026, 'Gym'),
+    V('dc-eq-downtown', 'Equinox', 'dc', 'Downtown', -77.0230, 38.9020, 'Gym'),
+    V('dc-gg-dupontcirc', 'Gold’s Gym', 'dc', 'Dupont Circle', -77.0406, 38.9081, 'Gym'),
+    V('dc-eq-friendship', 'Equinox', 'dc', 'Friendship Heights', -77.0856, 38.9606, 'Gym'),
+    V('dc-gg-georgetown', 'Gold’s Gym', 'dc', 'Georgetown', -77.0852, 38.9169, 'Gym'),
+    V('dc-vd-logancircl', 'VIDA Fitness', 'dc', 'Logan Circle', -77.0345, 38.9102, 'Gym'),
+    V('dc-vd-navyyard', 'VIDA Fitness', 'dc', 'Navy Yard', -77.0005, 38.8763, 'Gym'),
+    V('dc-gg-noma', 'Gold’s Gym', 'dc', 'NoMa', -77.0062, 38.9035, 'Gym'),
+    V('dc-vd-ustreet', 'VIDA Fitness', 'dc', 'U Street', -77.0368, 38.9169, 'Gym'),
+    V('dc-gg-vanness', 'Gold’s Gym', 'dc', 'Van Ness', -77.0650, 38.9458, 'Gym'),
+    V('dc-eq-westend', 'Equinox', 'dc', 'West End', -77.0489, 38.9048, 'Gym'),
+    /* New York */
+    V('nyc-eq-batterypar', 'Equinox', 'nyc', 'Battery Park City', -74.0149, 40.7113, 'Gym'),
+    V('nyc-lt-batterypar', 'Life Time', 'nyc', 'Battery Park City', -74.0150, 40.7060, 'Gym'),
+    V('nyc-cr-bensonhurs', 'Crunch Fitness', 'nyc', 'Bensonhurst', -73.9971, 40.5937, 'Gym'),
+    V('nyc-eq-brooklynhe', 'Equinox', 'nyc', 'Brooklyn Heights', -73.9912, 40.6925, 'Gym'),
+    V('nyc-cr-chelsea', 'Crunch Fitness', 'nyc', 'Chelsea', -73.9981, 40.7419, 'Gym'),
+    V('nyc-eq-chelsea', 'Equinox', 'nyc', 'Chelsea', -74.0053, 40.7514, 'Gym'),
+    V('nyc-eq-chelsea2', 'Equinox', 'nyc', 'Chelsea', -74.0071, 40.7436, 'Gym'),
+    V('nyc-eq-columbusci', 'Equinox', 'nyc', 'Columbus Circle', -73.9821, 40.7689, 'Gym'),
+    V('nyc-cr-crownheigh', 'Crunch Fitness', 'nyc', 'Crown Heights', -73.9333, 40.6634, 'Gym'),
+    V('nyc-eq-dumbo', 'Equinox', 'nyc', 'DUMBO', -73.9886, 40.7025, 'Gym'),
+    V('nyc-lt-dumbo', 'Life Time', 'nyc', 'DUMBO', -73.9872, 40.7024, 'Gym'),
+    V('nyc-lt-downtownbr', 'Life Time', 'nyc', 'Downtown Brooklyn', -73.9825, 40.6900, 'Gym'),
+    V('nyc-cr-eastvillag', 'Crunch Fitness', 'nyc', 'East Village', -73.9904, 40.7290, 'Gym'),
+    V('nyc-cr-financiald', 'Crunch Fitness', 'nyc', 'Financial District', -74.0105, 40.7091, 'Gym'),
+    V('nyc-eq-financiald', 'Equinox', 'nyc', 'Financial District', -74.0108, 40.7073, 'Gym'),
+    V('nyc-lt-financiald', 'Life Time', 'nyc', 'Financial District', -74.0119, 40.7066, 'Gym'),
+    V('nyc-cr-flatbush', 'Crunch Fitness', 'nyc', 'Flatbush', -73.9581, 40.6458, 'Gym'),
+    V('nyc-eq-flatiron', 'Equinox', 'nyc', 'Flatiron', -73.9899, 40.7389, 'Gym'),
+    V('nyc-lt-flatiron', 'Life Time', 'nyc', 'Flatiron', -73.9915, 40.7423, 'Gym'),
+    V('nyc-cr-fortgreene', 'Crunch Fitness', 'nyc', 'Fort Greene', -73.9777, 40.6877, 'Gym'),
+    V('nyc-cr-garmentdis', 'Crunch Fitness', 'nyc', 'Garment District', -73.9875, 40.7525, 'Gym'),
+    V('nyc-eq-gramercy', 'Equinox', 'nyc', 'Gramercy', -73.9860, 40.7406, 'Gym'),
+    V('nyc-cr-greenpoint', 'Crunch Fitness', 'nyc', 'Greenpoint', -73.9535, 40.7285, 'Gym'),
+    V('nyc-lt-hellskitch', 'Life Time', 'nyc', 'Hell\'s Kitchen', -73.9984, 40.7609, 'Gym'),
+    V('nyc-eq-hudsonsqua', 'Equinox', 'nyc', 'Hudson Square', -74.0063, 40.7232, 'Gym'),
+    V('nyc-eq-hudsonsqua2', 'Equinox', 'nyc', 'Hudson Square', -74.0070, 40.7301, 'Gym'),
+    V('nyc-eq-hudsonyard', 'Equinox', 'nyc', 'Hudson Yards', -74.0010, 40.7537, 'Gym'),
+    V('nyc-cr-inwood', 'Crunch Fitness', 'nyc', 'Inwood', -73.9173, 40.8639, 'Gym'),
+    V('nyc-eq-lowereasts', 'Equinox', 'nyc', 'Lower East Side', -73.9883, 40.7217, 'Gym'),
+    V('nyc-cr-midtown', 'Crunch Fitness', 'nyc', 'Midtown', -73.9831, 40.7642, 'Gym'),
+    V('nyc-eq-midtown', 'Equinox', 'nyc', 'Midtown', -73.9782, 40.7592, 'Gym'),
+    V('nyc-eq-midtown2', 'Equinox', 'nyc', 'Midtown', -73.9852, 40.7545, 'Gym'),
+    V('nyc-lt-midtown', 'Life Time', 'nyc', 'Midtown', -73.9781, 40.7637, 'Gym'),
+    V('nyc-lt-midtown2', 'Life Time', 'nyc', 'Midtown', -73.9832, 40.7504, 'Gym'),
+    V('nyc-cr-midtowneas', 'Crunch Fitness', 'nyc', 'Midtown East', -73.9732, 40.7552, 'Gym'),
+    V('nyc-eq-midtowneas', 'Equinox', 'nyc', 'Midtown East', -73.9801, 40.7544, 'Gym'),
+    V('nyc-eq-midtowneas2', 'Equinox', 'nyc', 'Midtown East', -73.9678, 40.7578, 'Gym'),
+    V('nyc-eq-midtowneas3', 'Equinox', 'nyc', 'Midtown East', -73.9753, 40.7601, 'Gym'),
+    V('nyc-eq-midtowneas4', 'Equinox', 'nyc', 'Midtown East', -73.9756, 40.7522, 'Gym'),
+    V('nyc-cr-murrayhill', 'Crunch Fitness', 'nyc', 'Murray Hill', -73.9773, 40.7453, 'Gym'),
+    V('nyc-eq-murrayhill', 'Equinox', 'nyc', 'Murray Hill', -73.9818, 40.7453, 'Gym'),
+    V('nyc-eq-noho', 'Equinox', 'nyc', 'NoHo', -73.9926, 40.7260, 'Gym'),
+    V('nyc-lt-noho', 'Life Time', 'nyc', 'NoHo', -73.9913, 40.7281, 'Gym'),
+    V('nyc-eq-nomad', 'Equinox', 'nyc', 'NoMad', -73.9892, 40.7447, 'Gym'),
+    V('nyc-cr-norwood', 'Crunch Fitness', 'nyc', 'Norwood', -73.8753, 40.8725, 'Gym'),
+    V('nyc-cr-parkslope', 'Crunch Fitness', 'nyc', 'Park Slope', -73.9726, 40.6773, 'Gym'),
+    V('nyc-lt-pennstatio', 'Life Time', 'nyc', 'Penn Station', -73.9927, 40.7511, 'Gym'),
+    V('nyc-lt-prospecthe', 'Life Time', 'nyc', 'Prospect Heights', -73.9740, 40.6825, 'Gym'),
+    V('nyc-cr-richmondhi', 'Crunch Fitness', 'nyc', 'Richmond Hill', -73.8339, 40.6987, 'Gym'),
+    V('nyc-cr-rochdale', 'Crunch Fitness', 'nyc', 'Rochdale', -73.7771, 40.6796, 'Gym'),
+    V('nyc-eq-soho', 'Equinox', 'nyc', 'SoHo', -73.9970, 40.7240, 'Gym'),
+    V('nyc-cr-southslope', 'Crunch Fitness', 'nyc', 'South Slope', -73.9892, 40.6656, 'Gym'),
+    V('nyc-eq-theaterdis', 'Equinox', 'nyc', 'Theater District', -73.9840, 40.7616, 'Gym'),
+    V('nyc-cr-tribeca', 'Crunch Fitness', 'nyc', 'Tribeca', -74.0050, 40.7173, 'Gym'),
+    V('nyc-eq-tribeca', 'Equinox', 'nyc', 'Tribeca', -74.0093, 40.7139, 'Gym'),
+    V('nyc-cr-unionsquar', 'Crunch Fitness', 'nyc', 'Union Square', -73.9899, 40.7328, 'Gym'),
+    V('nyc-cr-uppereasts', 'Crunch Fitness', 'nyc', 'Upper East Side', -73.9629, 40.7665, 'Gym'),
+    V('nyc-cr-uppereasts2', 'Crunch Fitness', 'nyc', 'Upper East Side', -73.9562, 40.7759, 'Gym'),
+    V('nyc-cr-uppereasts3', 'Crunch Fitness', 'nyc', 'Upper East Side', -73.9644, 40.7606, 'Gym'),
+    V('nyc-eq-uppereasts', 'Equinox', 'nyc', 'Upper East Side', -73.9664, 40.7645, 'Gym'),
+    V('nyc-eq-uppereasts2', 'Equinox', 'nyc', 'Upper East Side', -73.9622, 40.7613, 'Gym'),
+    V('nyc-eq-uppereasts3', 'Equinox', 'nyc', 'Upper East Side', -73.9511, 40.7826, 'Gym'),
+    V('nyc-eq-uppereasts4', 'Equinox', 'nyc', 'Upper East Side', -73.9573, 40.7704, 'Gym'),
+    V('nyc-eq-uppereasts5', 'Equinox', 'nyc', 'Upper East Side', -73.9543, 40.7781, 'Gym'),
+    V('nyc-cr-upperwests', 'Crunch Fitness', 'nyc', 'Upper West Side', -73.9754, 40.7852, 'Gym'),
+    V('nyc-eq-upperwests', 'Equinox', 'nyc', 'Upper West Side', -73.9740, 40.7917, 'Gym'),
+    V('nyc-eq-upperwests2', 'Equinox', 'nyc', 'Upper West Side', -73.9796, 40.7815, 'Gym'),
+    V('nyc-eq-upperwests3', 'Equinox', 'nyc', 'Upper West Side', -73.9811, 40.7744, 'Gym'),
+    V('nyc-eq-westvillag', 'Equinox', 'nyc', 'West Village', -74.0018, 40.7375, 'Gym'),
+    V('nyc-eq-williamsbu', 'Equinox', 'nyc', 'Williamsburg', -73.9663, 40.7166, 'Gym'),
+    V('nyc-eq-williamsbu2', 'Equinox', 'nyc', 'Williamsburg', -73.9599, 40.7159, 'Gym'),
+    /* Los Angeles */
+    V('la-eq-beverlyhil', 'Equinox', 'la', 'Beverly Hills', -118.4035, 34.0671, 'Gym'),
+    V('la-cr-burbank', 'Crunch Fitness', 'la', 'Burbank', -118.3154, 34.1856, 'Gym'),
+    V('la-eq-burbank', 'Equinox', 'la', 'Burbank', -118.3358, 34.1523, 'Gym'),
+    V('la-eq-centurycit', 'Equinox', 'la', 'Century City', -118.4198, 34.0600, 'Gym'),
+    V('la-eq-culvercity', 'Equinox', 'la', 'Culver City', -118.3982, 34.0211, 'Gym'),
+    V('la-eq-downtownla', 'Equinox', 'la', 'Downtown LA', -118.2553, 34.0523, 'Gym'),
+    V('la-eq-encino', 'Equinox', 'la', 'Encino', -118.5002, 34.1590, 'Gym'),
+    V('la-eq-glendale', 'Equinox', 'la', 'Glendale', -118.2554, 34.1568, 'Gym'),
+    V('la-eq-hollywood', 'Equinox', 'la', 'Hollywood', -118.3266, 34.0989, 'Gym'),
+    V('la-eq-marinadelr', 'Equinox', 'la', 'Marina del Rey', -118.4417, 33.9866, 'Gym'),
+    V('la-eq-miraclemil', 'Equinox', 'la', 'Miracle Mile', -118.3543, 34.0623, 'Gym'),
+    V('la-eq-pacificpal', 'Equinox', 'la', 'Pacific Palisades', -118.5547, 34.0396, 'Gym'),
+    V('la-eq-pasadena', 'Equinox', 'la', 'Pasadena', -118.1437, 34.1458, 'Gym'),
+    V('la-eq-playavista', 'Equinox', 'la', 'Playa Vista', -118.3974, 33.9825, 'Gym'),
+    V('la-eq-santamonic', 'Equinox', 'la', 'Santa Monica', -118.4903, 34.0185, 'Gym'),
+    V('la-eq-santamonic2', 'Equinox', 'la', 'Santa Monica', -118.4965, 34.0158, 'Gym'),
+    V('la-eq-sawtelle', 'Equinox', 'la', 'Sawtelle', -118.4425, 34.0454, 'Gym'),
+    V('la-eq-studiocity', 'Equinox', 'la', 'Studio City', -118.4125, 34.1450, 'Gym'),
+    V('la-cr-vannuys', 'Crunch Fitness', 'la', 'Van Nuys', -118.4488, 34.1928, 'Gym'),
+    V('la-gg-venice', 'Gold’s Gym', 'la', 'Venice', -118.4753, 33.9954, 'Gym'),
+    V('la-eq-westhollyw', 'Equinox', 'la', 'West Hollywood', -118.3791, 34.0925, 'Gym'),
+    V('la-eq-westwood', 'Equinox', 'la', 'Westwood', -118.4462, 34.0581, 'Gym'),
+    V('la-eq-woodlandhi', 'Equinox', 'la', 'Woodland Hills', -118.5993, 34.1791, 'Gym'),
+    /* Miami */
+    V('mia-eq-brickell', 'Equinox', 'mia', 'Brickell', -80.1926, 25.7587, 'Gym'),
+    V('mia-eq-brickell2', 'Equinox', 'mia', 'Brickell', -80.1938, 25.7655, 'Gym'),
+    V('mia-eq-coralgable', 'Equinox', 'mia', 'Coral Gables', -80.2617, 25.7321, 'Gym'),
+    V('mia-lt-coralgable', 'Life Time', 'mia', 'Coral Gables', -80.2596, 25.7281, 'Gym'),
+    V('mia-eq-edgewater', 'Equinox', 'mia', 'Edgewater', -80.1901, 25.8022, 'Gym'),
+    V('mia-cr-southbeach', 'Crunch Fitness', 'mia', 'South Beach', -80.1321, 25.7837, 'Gym'),
+    V('mia-eq-southbeach', 'Equinox', 'mia', 'South Beach', -80.1330, 25.7748, 'Gym'),
+    /* Boston */
+    V('bos-cr-allston', 'Crunch Fitness', 'bos', 'Allston', -71.1329, 42.3489, 'Gym'),
+    V('bos-eq-backbay', 'Equinox', 'bos', 'Back Bay', -71.0756, 42.3467, 'Gym'),
+    V('bos-lt-backbay', 'Life Time', 'bos', 'Back Bay', -71.0821, 42.3487, 'Gym'),
+    V('bos-eq-chestnuthi', 'Equinox', 'bos', 'Chestnut Hill', -71.1772, 42.3197, 'Gym'),
+    V('bos-lt-chestnuthi', 'Life Time', 'bos', 'Chestnut Hill', -71.1791, 42.3193, 'Gym'),
+    V('bos-eq-downtowncr', 'Equinox', 'bos', 'Downtown Crossing', -71.0628, 42.3532, 'Gym'),
+    V('bos-eq-fenway', 'Equinox', 'bos', 'Fenway', -71.1046, 42.3458, 'Gym'),
+    V('bos-eq-financiald', 'Equinox', 'bos', 'Financial District', -71.0544, 42.3563, 'Gym'),
+    V('bos-eq-seaport', 'Equinox', 'bos', 'Seaport', -71.0485, 42.3540, 'Gym'),
+    /* Chicago */
+    V('chi-eq-goldcoast', 'Equinox', 'chi', 'Gold Coast', -87.6509, 41.9109, 'Gym'),
+    V('chi-eq-lincolnpar', 'Equinox', 'chi', 'Lincoln Park', -87.6336, 41.9143, 'Gym'),
+    V('chi-eq-lincolnpar2', 'Equinox', 'chi', 'Lincoln Park', -87.6476, 41.9247, 'Gym'),
+    V('chi-lt-rivernorth', 'Life Time', 'chi', 'River North', -87.6288, 41.8966, 'Gym'),
+    V('chi-eq-theloop', 'Equinox', 'chi', 'The Loop', -87.6339, 41.8807, 'Gym'),
+    V('chi-eq-westloop', 'Equinox', 'chi', 'West Loop', -87.6502, 41.8867, 'Gym'),
+    /* Philadelphia */
+    V('phl-eq-rittenhous', 'Equinox', 'phl', 'Rittenhouse', -75.1728, 39.9505, 'Gym'),
+    /* Atlanta */
+    V('atl-lt-buckhead', 'Life Time', 'atl', 'Buckhead', -84.3615, 33.8513, 'Gym'),
+    V('atl-lt-northdruid', 'Life Time', 'atl', 'North Druid Hills', -84.3376, 33.8247, 'Gym')
   ];
 
   /* ---------- sample members --------------------------------------------------
@@ -260,7 +414,7 @@
     'Trying to make fitness the social thing, not the solo thing.',
     'Two kids, two mornings a week, fiercely protected.'
   ];
-  var CATS = ['Pilates','Yoga','Cycling','Barre','Strength','Running'];
+  var CATS = ['Pilates','Yoga','Cycling','Barre','Strength','Gym','Running'];
 
   var PEOPLE = (function () {
     var out = [], ci, k;

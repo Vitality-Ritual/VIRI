@@ -326,6 +326,7 @@ strong{font-weight:500}
 .goal-group{margin-bottom:14px}
 .goal-group:last-child{margin-bottom:0}
 .goal-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.period-dates{margin-left:6px;letter-spacing:.08em;color:var(--muted);text-transform:none;white-space:nowrap}
 .goal{margin-bottom:12px}
 .goal-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
 .goal-name{font-size:13px;line-height:1.35;color:var(--ink)}
@@ -1655,6 +1656,13 @@ body:after{
 /* a checkbox the whole width of its box, so the target is the answer */
 .check-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:9px}
 .check-grid.is-wide{grid-template-columns:repeat(auto-fill,minmax(172px,1fr))}
+/* Seven days want one row, which a visible tick box is too wide for. The input
+   stays in the markup for keyboard and screen readers and is only moved out of
+   sight; .check-box's own :has(:checked) and :focus-within carry the state. */
+.day-picker{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+.day-picker .check-box{position:relative;justify-content:center;gap:0;padding:12px 4px;text-align:center}
+.day-picker .check-box input{position:absolute;width:1px;height:1px;opacity:0;margin:0}
+@media (max-width:520px){.day-picker{gap:5px}.day-picker .check-box{padding:11px 2px;font-size:11.5px}}
 .check-box{display:flex;align-items:center;gap:8px;cursor:pointer;
   border:1px solid var(--line);background:var(--cream-2);padding:7px 10px;
   font-size:12.5px;line-height:1.35;color:var(--muted);transition:border-color .2s,background .2s,color .2s}

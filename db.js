@@ -25,6 +25,19 @@ function db(){
   });
   return sbClient;
 }
+
+/* Every UPDATE and DELETE goes through written(). Row-level security does not
+   refuse an update or delete it does not permit: the policy filters the row out,
+   nothing matches, and Supabase reports success. So ask for the rows back and
+   treat none as the failure it is. Inserts are different, a refused insert
+   raises an error, so they do not need this. tools/check.rb fails the build on
+   any update or delete in this file that does not go through here. */
+async function written(query, failMessage){
+  const { data, error } = await query.select();
+  if (error) return { error };
+  if (!data || !data.length) return { error: { message: failMessage || 'That could not be saved.', code: 'NO_ROWS' } };
+  return { data };
+}
 const dbReady = () => !!db();
 
 /* A read-only check that the project answers and that the tables are there.
@@ -257,8 +270,8 @@ async function dbAddPlan(plan){
      one plan; a constraint would be better if this ever races. */
   const { data: seen } = await c.from('plans').select('id')
     .eq('profile_id', authUser.id).eq('class_ref', plan.id).maybeSingle();
-  if (seen) return;
-  await c.from('plans').insert({
+  if (seen) return { data: true };
+  return c.from('plans').insert({
     profile_id: authUser.id,
     class_ref: plan.id,
     title: plan.title,
@@ -270,22 +283,22 @@ async function dbAddPlan(plan){
 }
 
 async function dbAnswerPlan(classRef){
-  const c = db(); if (!c || !authUser) return;
-  await c.from('plans').update({ answered_at: new Date().toISOString() })
-    .eq('profile_id', authUser.id).eq('class_ref', classRef);
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  return written(c.from('plans').update({ answered_at: new Date().toISOString() })
+    .eq('profile_id', authUser.id).eq('class_ref', classRef), 'That answer could not be saved.');
 }
 
 async function dbDropPlan(classRef){
-  const c = db(); if (!c || !authUser) return;
-  await c.from('plans').delete().eq('profile_id', authUser.id).eq('class_ref', classRef);
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  return written(c.from('plans').delete().eq('profile_id', authUser.id).eq('class_ref', classRef), 'That plan could not be removed.');
 }
 
 async function dbSetStudio(studioId, on){
-  const c = db(); if (!c || !authUser) return;
-  if (on) await c.from('saved_studios')
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  if (on) return c.from('saved_studios')
     .upsert({ profile_id: authUser.id, studio_id: studioId }, { onConflict: 'profile_id,studio_id' });
-  else await c.from('saved_studios')
-    .delete().eq('profile_id', authUser.id).eq('studio_id', studioId);
+  return written(c.from('saved_studios')
+    .delete().eq('profile_id', authUser.id).eq('studio_id', studioId), 'That studio could not be removed.');
 }
 
 /* Studios chosen during sign-up cannot be saved then — there is no session until
@@ -296,9 +309,10 @@ async function dbClaimPendingStudios(){
   let ids = [];
   try { ids = JSON.parse(localStorage.getItem('viri-pending-studios') || '[]'); } catch (e) {}
   if (!ids.length) return;
-  await c.from('saved_studios').upsert(
+  const { error } = await c.from('saved_studios').upsert(
     ids.map(id => ({ profile_id: authUser.id, studio_id: id })),
     { onConflict: 'profile_id,studio_id' });
+  if (error) return;              /* keep them parked and try again next load */
   try { localStorage.removeItem('viri-pending-studios'); } catch (e) {}
   state.saved = [...new Set([...(state.saved || []), ...ids])];
 }
@@ -349,7 +363,7 @@ async function dbClaimPendingPhoto(){
     if (typeof toast === 'function') toast('Your photo could not be uploaded. It is still saved here and will retry.');
     return;
   }
-  const { error } = await c.from('profiles').update({ photo_path: path }).eq('id', authUser.id);
+  const { error } = await written(c.from('profiles').update({ photo_path: path }).eq('id', authUser.id), 'Your photo could not be saved.');
   if (error) {
     if (typeof toast === 'function') toast('Your photo uploaded but could not be attached to your profile.');
     return;
@@ -362,7 +376,7 @@ async function dbSetAvatar(dataUrl){
   const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
   const path = await dbUploadPhoto(dataUrl, 'avatar');
   if (!path) return { error: { message: 'That photo could not be uploaded.' } };
-  const { error } = await c.from('profiles').update({ photo_path: path }).eq('id', authUser.id);
+  const { error } = await written(c.from('profiles').update({ photo_path: path }).eq('id', authUser.id), 'Your photo could not be saved.');
   if (!error) state.profile.photo = await dbPhotoUrl(path);
   return { error };
 }
@@ -564,8 +578,8 @@ async function dbBlock(blockedId){
 async function dbUnblock(blockedId){
   const c = db();
   if (!c || !authUser) return { error: { message: 'Not signed in.' } };
-  const { error } = await c.from('blocks').delete()
-    .eq('blocker_id', authUser.id).eq('blocked_id', blockedId);
+  const { error } = await written(c.from('blocks').delete()
+    .eq('blocker_id', authUser.id).eq('blocked_id', blockedId), 'That person could not be unblocked.');
   if (error) return { error };
   state.blocked = (state.blocked || []).filter(x => x !== blockedId);
   return { data: true };
@@ -595,7 +609,7 @@ async function dbClaimPendingEligibility(){
     return;
   }
   const when = new Date().toISOString();
-  const { error } = await c.from('profiles').update({ eligibility_confirmed_at: when }).eq('id', authUser.id);
+  const { error } = await written(c.from('profiles').update({ eligibility_confirmed_at: when }).eq('id', authUser.id), 'Your confirmation could not be saved.');
   if (error) return;
   state.profile.eligibilityConfirmedAt = when;
   try { localStorage.removeItem('viri-pending-eligibility'); } catch (e) {}
@@ -608,7 +622,7 @@ async function dbClaimPendingShowAge(){
   if (pending === null) return;
   const want = pending === '1';
   if (want !== state.profile.showAge) {
-    const { error } = await c.from('profiles').update({ show_age: want }).eq('id', authUser.id);
+    const { error } = await written(c.from('profiles').update({ show_age: want }).eq('id', authUser.id), 'That setting could not be saved.');
     if (error) return;            /* keep it parked and try again next time */
     state.profile.showAge = want;
   }
@@ -617,7 +631,7 @@ async function dbClaimPendingShowAge(){
 
 async function dbSetShowAge(on){
   const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
-  const { error } = await c.from('profiles').update({ show_age: !!on }).eq('id', authUser.id);
+  const { error } = await written(c.from('profiles').update({ show_age: !!on }).eq('id', authUser.id), 'That setting could not be saved.');
   if (!error && state.profile) state.profile.showAge = !!on;
   return { error };
 }
@@ -705,14 +719,12 @@ async function dbRequestConnection(otherId){
 
 async function dbAcceptConnection(otherId){
   const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
-  const { data, error } = await c.from('connections').update({ status: 'accepted' })
-    .eq('requester_id', otherId).eq('addressee_id', authUser.id).eq('status', 'pending')
-    .select();
-  if (error) return { error };
-  /* No rows changed means no policy allowed it, which Postgres does not
-     call an error. Without this check the interface congratulates somebody
+  /* Without the row check in written() the interface congratulates somebody
      on a friendship the database never recorded. */
-  if (!data || !data.length) return { error: { message: 'That request could not be accepted.' } };
+  const { error } = await written(c.from('connections').update({ status: 'accepted' })
+    .eq('requester_id', otherId).eq('addressee_id', authUser.id).eq('status', 'pending'),
+    'That request could not be accepted.');
+  if (error) return { error };
   state.incoming = (state.incoming || []).filter(x => x !== otherId);
   if (!(state.connections || []).includes(otherId)) state.connections = [...(state.connections || []), otherId];
   return { data: true };
@@ -723,11 +735,10 @@ async function dbAcceptConnection(otherId){
 async function dbRemoveConnection(otherId){
   const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
   const me = authUser.id;
-  const { data, error } = await c.from('connections').delete()
-    .or(`and(requester_id.eq.${me},addressee_id.eq.${otherId}),and(requester_id.eq.${otherId},addressee_id.eq.${me})`)
-    .select();
+  const { error } = await written(c.from('connections').delete()
+    .or(`and(requester_id.eq.${me},addressee_id.eq.${otherId}),and(requester_id.eq.${otherId},addressee_id.eq.${me})`),
+    'Nothing to remove.');
   if (error) return { error };
-  if (!data || !data.length) return { error: { message: 'Nothing to remove.' } };
   state.connections = (state.connections || []).filter(x => x !== otherId);
   state.requests    = (state.requests    || []).filter(x => x !== otherId);
   state.incoming    = (state.incoming    || []).filter(x => x !== otherId);
@@ -785,10 +796,9 @@ async function dbMarkThreadRead(otherId){
   const unread = (state.threads?.[otherId] || []).filter(m => !m.mine && !m.readAt);
   if (!unread.length) return;
   const when = new Date().toISOString();
-  const { data } = await c.from('messages').update({ read_at: when })
-    .eq('sender_id', otherId).eq('recipient_id', authUser.id).is('read_at', null)
-    .select('id');
-  if (!data || !data.length) return;   /* nothing written, so do not pretend locally */
+  const { error } = await written(c.from('messages').update({ read_at: when })
+    .eq('sender_id', otherId).eq('recipient_id', authUser.id).is('read_at', null));
+  if (error) return;   /* nothing written, so do not pretend locally */
   unread.forEach(m => { m.readAt = when; });
   state.unread = (state.unread || []).filter(x => x !== otherId);
 }
@@ -924,10 +934,9 @@ async function dbAddGalleryPhoto(dataUrl){
 async function dbRemoveGalleryPhoto(photoId){
   const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
   const row = (state.gallery || []).find(p => p.id === photoId);
-  const { data, error } = await c.from('profile_photos').delete()
-    .eq('id', photoId).eq('profile_id', authUser.id).select();
+  const { error } = await written(c.from('profile_photos').delete()
+    .eq('id', photoId).eq('profile_id', authUser.id), 'That photo could not be removed.');
   if (error) return { error };
-  if (!data || !data.length) return { error: { message: 'That photo could not be removed.' } };
   /* The row is what the gallery reads, so the file goes too rather than
      sitting in storage forever with nothing pointing at it. */
   if (row) await c.storage.from('photos').remove([row.path]);
@@ -974,8 +983,10 @@ async function dbAddRoutine({ venueId, venueLabel, activity, weekday, band }){
     venue_label: (venueLabel || '').trim() || null,
     activity, weekday: Number(weekday), time_band: band
   }).select().maybeSingle();
-  if (error && error.code === '23505') return { error: { message: 'That is already in your week.' } };
+  if (error && error.code === '23505') return { error: { message: 'That is already in your week.' }, duplicate: true };
   if (error) return { error };
+  /* no row back means no policy matched the write — success here would be a lie */
+  if (!data) return { error: { message: 'That could not be added to your week.' } };
   state.routines = [...(state.routines || []), {
     id: data.id, venueId: venueId || '', venue: (venueLabel || '').trim(),
     activity, weekday: Number(weekday), band
@@ -983,12 +994,30 @@ async function dbAddRoutine({ venueId, venueLabel, activity, weekday, band }){
   return { data: true };
 }
 
+/* One routine per day, inserted one at a time on purpose: the unique slot index
+   is an expression index, so a single multi-row insert would fail as a whole on
+   one duplicate. A day already in the week is skipped and counted, not an error. */
+async function dbAddRoutineDays({ venueId, venueLabel, activity, days, band }){
+  const list = [...new Set((days || []).map(Number))].sort((a,b) => a - b);
+  if (!list.length) return { error: { message: 'Pick at least one day.' } };
+  let added = 0, duplicates = 0, failure = null;
+  for (const weekday of list) {
+    const r = await dbAddRoutine({ venueId, venueLabel, activity, weekday, band });
+    if (r.duplicate) duplicates++;
+    else if (r.error) failure = failure || r.error;
+    else added++;
+  }
+  if (!added && failure) return { error: failure };
+  if (!added) return { error: { message: list.length === 1
+    ? 'That is already in your week.' : 'Those are all already in your week.' } };
+  return { data: { added, duplicates } };
+}
+
 async function dbRemoveRoutine(id){
   const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
-  const { data, error } = await c.from('routines').delete()
-    .eq('id', id).eq('profile_id', authUser.id).select();
+  const { error } = await written(c.from('routines').delete()
+    .eq('id', id).eq('profile_id', authUser.id), 'That could not be removed.');
   if (error) return { error };
-  if (!data || !data.length) return { error: { message: 'That could not be removed.' } };
   state.routines = (state.routines || []).filter(r => r.id !== id);
   return { data: true };
 }
@@ -1104,10 +1133,9 @@ async function dbAddGoal({ period, title, target }){
 
 async function dbRemoveGoal(id){
   const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
-  const { data, error } = await c.from('goals').delete()
-    .eq('id', id).eq('profile_id', authUser.id).select();
+  const { error } = await written(c.from('goals').delete()
+    .eq('id', id).eq('profile_id', authUser.id), 'That goal could not be removed.');
   if (error) return { error };
-  if (!data || !data.length) return { error: { message: 'That goal could not be removed.' } };
   state.goals = (state.goals || []).filter(g => g.id !== id);
   return { data: true };
 }
@@ -1170,8 +1198,8 @@ async function dbSaveProfileEdits(patch){
   if (patch.birthDate !== undefined) row.birth_year = patch.birthDate ? Number(String(patch.birthDate).slice(0,4)) : null;
   if (!Object.keys(row).length) return { data: true };
   row.updated_at = new Date().toISOString();
-  const { data, error } = await c.from('profiles').update(row).eq('id', authUser.id).select();
+  const { error } = await written(c.from('profiles').update(row).eq('id', authUser.id),
+    'Those changes could not be saved.');
   if (error) return { error };
-  if (!data || !data.length) return { error: { message: 'Those changes could not be saved.' } };
   return { data: true };
 }
