@@ -1865,11 +1865,20 @@ async function removeGoal(id){
 /* The morning question. One day at a time, oldest unanswered first, so a
    missed Tuesday can still be filled in on Thursday. */
 let askedThisVisit=false;
-function askAboutYesterday(){
+/* Asked on its own at most once a day. It used to come back on every page
+   load, because the only memory of having asked was this variable, and a
+   refresh wipes it. Answering one day moves straight on to the next. */
+const goalsAskKey='viri-goals-asked';
+function askAboutYesterday(continuing){
   if(askedThisVisit||!signedIn())return;
+  const today=new Date().toDateString();
+  if(continuing!==true){
+    try{if(localStorage.getItem(goalsAskKey)===today)return;}catch(e){}
+  }
   const waiting=(typeof goalsAwaitingAnswer==='function'?goalsAwaitingAnswer():[]);
   if(!waiting.length)return;
   askedThisVisit=true;
+  try{localStorage.setItem(goalsAskKey,today);}catch(e){}
   const day=waiting[0].day;
   const sameDay=waiting.filter(w=>w.day===day);
   const pretty=new Date(day+'T00:00:00').toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
@@ -1888,7 +1897,7 @@ async function answerGoal(id,day,done){
   if(r.error){toast(r.error.message);return;}
   const left=(typeof goalsAwaitingAnswer==='function'?goalsAwaitingAnswer():[]).filter(w=>w.day===day);
   save(); render(false);
-  if(left.length){askedThisVisit=false;askAboutYesterday();}
+  if(left.length){askedThisVisit=false;askAboutYesterday(true);}
   else{closeModal();toast(done?'Logged. Nice.':'Logged.');}
 }
 
