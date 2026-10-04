@@ -520,7 +520,7 @@ function exRow(v){
       <h3>${escapeHTML(v.brand)}</h3>
       <p class="small">${escapeHTML(v.area)} &middot; ${escapeHTML(v.cat)}</p>
       ${n?`<p class="cls-going">${n} member${n===1?'':'s'} train${n===1?'s':''} here</p>`:''}
-      ${mine.length?`<p class="cls-going">In your week: ${mine.map(r=>escapeHTML(WEEKDAYS[r.weekday]+'s, '+r.band)).join('; ')}</p>`:''}
+      ${mine.length?`<p class="cls-going">In your week: ${mine.map(r=>escapeHTML(WEEKDAYS[r.weekday]+', '+r.band)).join('; ')}</p>`:''}
     </div>
     <div class="cls-actions">
       <button class="button small" data-action="add-routine" data-id="${escapeHTML(v.id)}">Add to my week</button>
@@ -1191,7 +1191,8 @@ function sessionView(p){
     dur:Number(p.duration)||0,dist:p.distance||'',went:p.went||1+tags.length,
     ago:prettyDate(p.date),note:p.description||'',img:p.photo||'',
     withIds:tags.map(x=>x.id),
-    withLine:tags.map(x=>x.name.split(' ')[0]).join(', '),comments:0};
+    withLine:tags.map(x=>x.name.split(' ')[0]).join(', '),
+    ownerId:p.ownerId,comments:((state.comments||{})[p.id]||[]).length};
 }
 function sessionStats(s){
   const cells=[];
@@ -1205,7 +1206,67 @@ function sessionStats(s){
   return `<div class="session-stats">${cells.map(([k,v])=>
     `<span><span class="session-k">${escapeHTML(k)}</span><span class="session-v">${escapeHTML(v)}</span></span>`).join('')}</div>`;
 }
-/* Your own sessions, and the samples shown on your own empty profile. Someone
+/* ===================== comments and joining =====================
+   Comments sit under a session, seen and written by the people who can see the
+   session at all: whoever logged it and her friends. The author can delete a
+   comment; so can the session's owner, which is how an unwelcome one goes. */
+let openThreads=new Set();
+function commentThread(s,by){
+  const list=(state.comments||{})[s.id]||[];
+  const mine=sessionIsMine(s,by), me=authUser&&authUser.id;
+  return `<div class="session-thread">
+    ${list.length?list.map(c=>{
+      const who=c.authorId===me?((state.profile&&state.profile.name)||'You'):((personById(c.authorId)||{}).name||'A member');
+      const drop=c.authorId===me||mine;
+      return `<div class="comment"><p class="comment-head"><b>${escapeHTML(who)}</b> <span class="small">${escapeHTML(prettyDate(c.at))}</span>${drop?` <button class="plain-link comment-x" data-action="comment-delete" data-id="${escapeHTML(c.id)}" data-session="${escapeHTML(String(s.id))}">Delete</button>`:''}</p>
+        <p class="comment-body">${escapeHTML(c.body)}</p></div>`;}).join('')
+      :'<p class="small">No comments yet.</p>'}
+    ${signedIn()?`<form class="comment-form" data-session="${escapeHTML(String(s.id))}"><input name="body" maxlength="500" required placeholder="Add a comment" aria-label="Add a comment"><button class="button small" type="submit">Post</button></form>`:''}
+  </div>`;
+}
+document.addEventListener('submit',async e=>{
+  const f=e.target&&e.target.closest&&e.target.closest('.comment-form'); if(!f)return;
+  e.preventDefault();
+  const input=f.querySelector('input[name=body]'), btn=f.querySelector('button');
+  btn.disabled=true;
+  const r=await dbAddComment(f.dataset.session,input.value);
+  btn.disabled=false;
+  if(r.error){toast(r.error.message);return;}
+  render(false);
+});
+async function deleteComment(id,sessionId){
+  const r=await dbDeleteComment(id,sessionId);
+  if(r.error){toast(r.error.message);return;}
+  render(false); toast('Comment removed.');
+}
+/* "Join them next time" puts a friend's session into your own week. If they
+   have a routine for it, it takes that routine's days and time; otherwise the
+   day the session was logged. Either way the usual form opens first. */
+const bandFor=d=>{const h=d.getHours();
+  return h<5?'Before 5am':h<8?'5–7am':h<10?'8–10am':h<12?'10–12pm':h<15?'12–3pm':h<17?'3–5pm':h<20?'5–7pm':'8pm Onward';};
+async function joinSession(id){
+  if(!signedIn()){toast('Create your profile first.');location.hash='#/signup';return;}
+  const s=(state.feed||[]).find(x=>String(x.id)===String(id));
+  if(!s){toast('That session could not be found. Refresh and try again.');return;}
+  const ownerId=s.ownerId||(s.by&&s.by.id);
+  const first=((personById(ownerId)||s.by||{}).name||'Your friend').split(' ')[0];
+  const theirs=ownerId&&typeof dbLoadRoutines==='function'?((await dbLoadRoutines(ownerId))||[]):[];
+  const act=String(s.activity||'').trim().toLowerCase(), where=String(s.place||'').trim().toLowerCase();
+  const same=theirs.filter(r=>String(r.activity||'').trim().toLowerCase()===act
+    &&(!where||!r.venue||String(r.venue).toLowerCase().includes(where)||where.includes(String(r.venue).toLowerCase().split(' — ')[0])));
+  if(same.length){
+    const band=same[0].band;
+    routineModal(null,{activity:s.activity,venueLabel:same[0].venue||s.place||'',venueId:same[0].venueId||'',
+      days:[...new Set(same.filter(r=>r.band===band).map(r=>r.weekday))],band,
+      note:`This is in ${first}'s week. Add it to yours and you will be there together.`});
+  }else{
+    const when=new Date(s.date);
+    routineModal(null,{activity:s.activity,venueLabel:s.place||'',venueId:'',days:[when.getDay()],band:bandFor(when),
+      note:`${first} logged this on a ${WEEKDAYS[when.getDay()]}. Change the day or time if you like.`});
+  }
+}
+/* Your own sessions, and the samples shown on your own empty profile.
+ Someone
    else's session always arrives with an id that is not in your posts. */
 const sessionIsMine=(s,by)=>!by&&(!s.id||(state.posts||[]).some(x=>x.id===s.id));
 function sessionCard(s,by){
@@ -1223,10 +1284,11 @@ function sessionCard(s,by){
     ${s.img?`<figure class="session-shot"><img src="${/^(data:|https?:|blob:)/.test(s.img)?s.img:A+s.img}" alt="" loading="lazy"></figure>`:''}
     <div class="session-foot">
       ${s.withLine?`${whoStack(s.withIds)}<span class="small">with ${escapeHTML(s.withLine)}</span>`:''}
-      ${sessionIsMine(s,by)?'':`<button class="button small" data-action="session-join">Join them next time</button>`}
-      <button class="plain-link session-talk" data-action="session-talk">
+      ${sessionIsMine(s,by)?'':`<button class="button small" data-action="session-join" data-id="${escapeHTML(String(s.id||''))}">Join them next time</button>`}
+      <button class="plain-link session-talk" data-action="session-talk" data-id="${escapeHTML(String(s.id||''))}" aria-expanded="${!!(s.id&&openThreads.has(String(s.id)))}" aria-label="Comments">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-8 8H5l-2 2V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z"/></svg>${s.comments||0}</button>
     </div>
+    ${s.id&&openThreads.has(String(s.id))?commentThread(s,by):''}
   </article>`;
 }
 /* Local state updates at once so the page stays quick; the server write
@@ -1719,15 +1781,17 @@ function weekList(routines,{own=false}={}){
     : '<p class="small">Nothing shared yet.</p>';
   return `<ul class="week-list">${rs.map(r=>`<li>
     <div><strong>${escapeHTML(r.activity||r.venue||'Training')}</strong>
-      <span class="small">${escapeHTML(WEEKDAYS[r.weekday])}s &middot; ${escapeHTML(r.band)}${r.venue?' · '+escapeHTML(r.venue):''}</span></div>
-    ${own?`<button class="plain-link" data-action="remove-routine" data-id="${escapeHTML(r.id)}">Remove</button>`:''}
+      <span class="small">${escapeHTML(WEEKDAYS[r.weekday])} &middot; ${escapeHTML(r.band)}${r.venue?' · '+escapeHTML(r.venue):''}</span></div>
+    ${own?`<span class="week-acts"><button class="plain-link" data-action="edit-routine" data-id="${escapeHTML(r.id)}">Edit</button><button class="plain-link" data-action="remove-routine" data-id="${escapeHTML(r.id)}">Remove</button></span>`:''}
   </li>`).join('')}</ul>
   ${own?`<button class="button small outline" data-action="add-routine">Add another</button>`:''}`;}
 
 /* Activity first, place second and optional. A week of runs is a complete
    answer; so is a week of runs with one barre class in it. Requiring a studio
    made the whole feature useless to anyone who mostly trains outdoors. */
-function routineModal(presetVenue){
+function routineModal(presetVenue,extra){
+  const join=extra||{};
+  const editing=join.editId?(state.routines||[]).find(r=>r.id===join.editId):null;
   const venues=(window.VIRI&&VIRI.venues)||[];
   const cityName=(state.profile&&state.profile.city)||'';
   const near=venues.filter(v=>{
@@ -1739,32 +1803,33 @@ function routineModal(presetVenue){
   /* a venue's category is not always one of the activities on offer: a gym is
      strength training, a cycling studio is indoor cycling */
   const presetForm=preset?({Gym:'Strength training',Strength:'Strength training',Cycling:'Indoor cycling'}[preset.cat]||preset.cat):'';
-  openModal('Add to your week', `<form id="rt-form">
+  const formWant=join.activity?(JOIN_FORMS.find(f=>f.toLowerCase()===String(join.activity).trim().toLowerCase())||'Other'):presetForm;
+  openModal(editing?'Edit this routine':'Add to your week', `<form id="rt-form">${join.note?`<p class="dialog-copy">${escapeHTML(join.note)}</p>`:''}
     <div class="field"><label for="rt-act">What do you do?</label>
       <select id="rt-act" name="activity" required>
         ${JOIN_FORMS.filter(x=>x!=='No preference').map(x=>
-          `<option${presetForm===x?' selected':''}>${escapeHTML(x)}</option>`).join('')}
+          `<option${formWant===x?' selected':''}>${escapeHTML(x)}</option>`).join('')}
       </select></div>
 
     <div class="field"><label for="rt-place">Where? <span class="field-optional">Optional</span></label>
       <input id="rt-place" name="venueLabel" list="rt-venues" maxlength="80"
         placeholder="A studio, a gym, a park &mdash; or leave it blank"
-        value="${preset?escapeHTML(preset.brand+' — '+preset.area):''}">
-      <input type="hidden" name="venueId" id="rt-vid" value="${preset?escapeHTML(preset.id):''}">
+        value="${preset?escapeHTML(preset.brand+' — '+preset.area):escapeHTML(join.venueLabel||'')}">
+      <input type="hidden" name="venueId" id="rt-vid" value="${preset?escapeHTML(preset.id):escapeHTML(join.venueId||'')}">
       <datalist id="rt-venues">${list.map(v=>
         `<option data-id="${escapeHTML(v.id)}" value="${escapeHTML(v.brand+' — '+v.area)}"></option>`).join('')}</datalist>
       <p class="field-eg">Leave it blank for a run, a walk, or anything without a fixed place. If your gym is not in the list, just type it.</p></div>
 
     <fieldset class="interest-fieldset"><legend>Which days?</legend>
-      <div class="day-picker">${WEEKDAYS.map((d,i)=>`<label class="check-box"><input type="checkbox" name="weekday" value="${i}"${i===new Date().getDay()?' checked':''}><span>${escapeHTML(d.slice(0,3))}</span></label>`).join('')}</div>
+      <div class="day-picker">${WEEKDAYS.map((d,i)=>`<label class="check-box"><input type="checkbox" name="weekday" value="${i}"${(join.days?join.days.includes(i):i===new Date().getDay())?' checked':''}><span>${escapeHTML(d.slice(0,3))}</span></label>`).join('')}</div>
       <p class="field-eg">Pick every day it happens &mdash; a run on four mornings is four entries, added in one go. This repeats every week; this week is <strong>${weekRangeLabel()}</strong>.</p></fieldset>
     <div class="field"><label for="rt-band">Roughly when?</label>
-      <select id="rt-band" name="band" required>${JOIN_TIMES.map(t=>`<option>${escapeHTML(t)}</option>`).join('')}</select>
+      <select id="rt-band" name="band" required>${JOIN_TIMES.map(t=>`<option${join.band===t?' selected':''}>${escapeHTML(t)}</option>`).join('')}</select>
       <p class="field-eg">A rough window, not a clock time &mdash; enough to find the people who are there with you.</p></div>
     <p id="rt-error" class="field-error" role="alert"></p>
     <div class="dialog-actions">
       <button class="button outline small" type="button" data-action="close-modal">Cancel</button>
-      <button class="button small" type="submit">Add it</button>
+      <button class="button small" type="submit">${editing?'Save changes':'Add it'}</button>
     </div>
   </form>`, () => {
     const place=$('#rt-place'), vid=$('#rt-vid');
@@ -1782,6 +1847,21 @@ function routineModal(presetVenue){
       const days=fd.getAll('weekday').map(Number).filter(n=>n>=0&&n<=6);
       if(!days.length){$('#rt-error').textContent='Pick at least one day.';return;}
       $('#rt-error').textContent='';
+      if(editing){
+        btn.disabled=true; btn.textContent='Saving…';
+        const fields={venueId:String(fd.get('venueId')||''),venueLabel:String(fd.get('venueLabel')||''),
+          activity:String(fd.get('activity')||''),band:String(fd.get('band'))};
+        /* this routine keeps its own day if it is still ticked; any other ticked day is added */
+        const ordered=days.includes(editing.weekday)?[editing.weekday,...days.filter(d=>d!==editing.weekday)]:days;
+        const r=await dbUpdateRoutine(editing.id,{...fields,weekday:ordered[0]});
+        if(r.error){btn.disabled=false;btn.innerHTML=label;$('#rt-error').textContent=r.error.message;return;}
+        const rest=ordered.slice(1);
+        if(rest.length){const r2=await dbAddRoutineDays({...fields,days:rest});if(r2.error)toast(r2.error.message);}
+        if(typeof dbRoutineMatches==='function')await dbRoutineMatches();
+        save(); closeModal(); render(false);
+        toast(rest.length?`Updated, and added ${rest.length} more ${rest.length===1?'day':'days'}.`:'Updated.');
+        return;
+      }
       btn.disabled=true; btn.textContent='Adding…';
       const r=await dbAddRoutineDays({ venueId:String(fd.get('venueId')||''),
         venueLabel:String(fd.get('venueLabel')||''), activity:String(fd.get('activity')||''),
@@ -1834,12 +1914,21 @@ function goalsPanel(goals,{own=false}={}){
   return `<aside class="goals-panel"><p class="rail-label">Goals</p>${body}</aside>`;}
 
 /* Goals whose week or month is over, newest first, on your own profile. */
-let goalHistoryLoaded=false;
+let goalHistoryLoaded=false, goalHistoryOpen=false;
+/* two taps, like deleting a session */
+async function deleteHistoryGoal(btn){
+  if(btn.dataset.armed!=='1'){btn.dataset.armed='1';btn.textContent='Tap again to delete';return;}
+  btn.disabled=true;
+  const r=await dbRemoveGoal(btn.dataset.id);
+  if(r.error){btn.disabled=false;btn.dataset.armed='';btn.textContent='Delete';toast(r.error.message);return;}
+  goalHistoryOpen=true; render(false); toast('Goal deleted.');
+}
 function goalHistory(){
   const gs=state.goalHistory;
   if(!goalHistoryLoaded||gs===undefined)return '';
-  if(gs===null)return '<section class="goal-history"><p class="rail-label">Past goals</p><p class="small">Past goals could not be loaded. Refresh to try again.</p></section>';
-  if(!gs.length)return '<section class="goal-history"><p class="rail-label">Past goals</p><p class="small">When a week or month ends, its goals are kept here.</p></section>';
+  const head='<div class="pf-section-head"><h2>Past goals</h2></div>';
+  if(gs===null)return `<section class="pf-section goal-history">${head}<p class="small">Past goals could not be loaded. Refresh to try again.</p></section>`;
+  if(!gs.length)return `<section class="pf-section goal-history">${head}<p class="small">When a week or month ends, its goals are kept here.</p></section>`;
   const groups=[];
   for(const g of gs){
     const key=g.period+'|'+g.periodStart;
@@ -1850,8 +1939,8 @@ function goalHistory(){
   const label=grp=>grp.period==='week'
     ? `Week of ${weekRangeLabel(grp.start+'T12:00:00')}`
     : new Date(grp.start+'T12:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'});
-  return `<section class="goal-history"><details>
-    <summary class="rail-label">Past goals <span class="period-dates">${gs.length}</span></summary>
+  return `<section class="pf-section goal-history"><details${goalHistoryOpen?' open':''}>
+    <summary class="pf-section-head"><h2>Past goals</h2><span class="period-dates">${gs.length}</span></summary>
     ${groups.map(grp=>`<div class="goal-group"><p class="goal-label">${label(grp)}</p>
       ${grp.rows.map(g=>`<div class="goal${g.done>=g.target?' is-met':''}">
         <div class="goal-top">
@@ -1859,6 +1948,7 @@ function goalHistory(){
           <span class="goal-count">${g.done} of ${g.target}${g.done>=g.target?' &#10003;':''}</span>
         </div>
         <div class="goal-bar" role="img" aria-label="${g.done} of ${g.target} done"><span style="width:${g.pct}%"></span></div>
+        <button class="plain-link goal-x" data-action="history-goal-delete" data-id="${escapeHTML(g.id)}">Delete</button>
       </div>`).join('')}</div>`).join('')}
   </details></section>`;
 }
@@ -2062,9 +2152,11 @@ function profilePage(){
   const saved=studios.filter(s=>state.saved.includes(s.id));
   const going=state.routines||[];
   const list=mySessions();
-  const tab=profileTab;
+  /* "Going to" listed classes from the old generated timetable; routines have no
+     titles or times, so it showed nothing true. Your week covers it. */
+  const tab=profileTab==='going'?'sessions':profileTab;
   return `<div class="wrap pf">
-    <header class="pf-head">
+    <header class="pf-head pf-card">
       <span class="pf-avatar">${avatarFor(p)}
         <button class="pf-avatar-edit" data-action="edit-photo" aria-label="${p.photo?'Change your photo':'Add a photo'}" title="${p.photo?'Change photo':'Add a photo'}">${p.photo?'Change':'Add photo'}</button></span>
       <div class="pf-id">
@@ -2097,11 +2189,10 @@ function profilePage(){
       </div>
       ${goalsPanel(state.goals,{own:true})}
     </header>
-    <section class="pf-week"><p class="rail-label">Your week <span class="period-dates">${weekRangeLabel()}</span></p>${weekList(state.routines,{own:true})}</section>
-    ${goalHistory()}
-    ${galleryStrip(state.gallery,{own:true})}
+    <section class="pf-section"><div class="pf-section-head"><h2>Photos</h2></div>${galleryStrip(state.gallery,{own:true})}</section>
+    <section class="pf-section pf-activity"><div class="pf-section-head"><h2>Activity</h2></div>
     <nav class="pf-tabs" aria-label="Your profile">
-      ${[['sessions','Sessions'],['studios','Saved studios'],['going','Going to']].map(([k,label])=>
+      ${[['sessions','Sessions'],['studios','Saved studios']].map(([k,label])=>
         `<button class="pf-tab${tab===k?' is-on':''}" data-action="pf-tab" data-id="${k}"${tab===k?' aria-current="true"':''}>${label}</button>`).join('')}
     </nav>
     <div class="pf-main">
@@ -2121,12 +2212,14 @@ function profilePage(){
 `
     }</div>
     <aside class="pf-rail">
-      <div class="rail-box">
-<p class="rail-label">Your week <span class="period-dates">${weekRangeLabel()}</span></p>
-${going.length?going.slice(0,4).map(r=>
-  `<p class="rail-line"><b>${escapeHTML(WEEKDAYS[r.weekday])}s</b> &middot; ${escapeHTML(r.band)}<br>${escapeHTML(r.activity||'Training')}${r.venue?`<br><span class="small">${escapeHTML(r.venue)}</span>`:''}</p>`).join('')
-  :'<p class="small">Nothing yet. Tell VIRI what your week looks like and the people in it appear.</p>'}
-<a class="text-link" href="#/explore">Find studios ${arrow}</a>
+      <div class="rail-box pf-weekbox">
+        <p class="rail-label">Your week <span class="period-dates">${weekRangeLabel()}</span></p>
+        ${going.length?[...going].sort((a,b)=>a.weekday-b.weekday||(BAND_HOUR[a.band]??0)-(BAND_HOUR[b.band]??0)).map(r=>
+          `<div class="rail-line"><b>${escapeHTML(WEEKDAYS[r.weekday])}</b> &middot; ${escapeHTML(r.band)}<br>${escapeHTML(r.activity||'Training')}${r.venue?`<br><span class="small">${escapeHTML(r.venue)}</span>`:''}
+            <span class="week-acts"><button class="plain-link" data-action="edit-routine" data-id="${escapeHTML(r.id)}">Edit</button><button class="plain-link" data-action="remove-routine" data-id="${escapeHTML(r.id)}">Remove</button></span></div>`).join('')
+          :'<p class="small">Tell VIRI where you train and roughly when. That is how it finds the people who are there with you.</p>'}
+        <button class="button small outline" data-action="add-routine">${going.length?'Add another':'Add to my week'}</button>
+        <a class="text-link" href="#/explore">Find studios ${arrow}</a>
       </div>
       <div class="rail-box plain">
         <p class="rail-label">Waiting for you</p>
@@ -2139,6 +2232,8 @@ ${going.length?going.slice(0,4).map(r=>
       </div>
     </aside>
     </div>
+    </section>
+    ${goalHistory()}
   </div>`;
 }
 /* ---- the home feed: other people's sessions ---- */
@@ -2487,10 +2582,10 @@ function postActivity(pre,edit){
             <p class="photo-swap"><button type="button" class="plain-link" id="post-repick">Choose another</button>
               <button type="button" class="plain-link" id="post-unpick">Remove</button></p></div>
         </div></div>
-      ${edit?'<p class="small">Who you went with cannot be changed here yet.</p>':`<fieldset class="interest-fieldset"><legend>Who you went with <span class="field-optional">Optional</span></legend>
+      ${`<fieldset class="interest-fieldset"><legend>Who you went with <span class="field-optional">Optional</span></legend>
         ${friends.length
           ? `<div class="check-grid">${friends.map(p=>
-              `<label class="check-box"><input type="checkbox" name="withIds" value="${escapeHTML(p.id)}"><span>${escapeHTML(p.name)}</span></label>`).join('')}</div>`
+              `<label class="check-box"><input type="checkbox" name="withIds" value="${escapeHTML(p.id)}"${edit&&(edit.withIds||[]).includes(p.id)?' checked':''}><span>${escapeHTML(p.name)}</span></label>`).join('')}</div>`
           : '<p class="small">You can tag the people you have connected to. Connect with someone first and they appear here.</p>'}
       </fieldset>`}
       <p id="post-error" class="field-error" role="alert"></p>
@@ -2536,12 +2631,20 @@ function postActivity(pre,edit){
            place:String(f.place||'').trim(),duration:minutes,distance:miles?`${miles} mi`:'',
            description:String(f.description||'').trim()});
          if(photoChanged&&!postPhoto){edit.photo='';edit.photoPath='';}
+         /* tags of people no longer in your friends list are not shown, so they are kept */
+         const before=[...(edit.withIds||[])], shown=friends.map(p=>p.id);
+         const ticked=[...e.target.querySelectorAll('input[name="withIds"]:checked')].map(i=>i.value);
+         const after=[...new Set([...ticked,...before.filter(id=>!shown.includes(id))])];
+         const tagsChanged=after.length!==before.length||after.some(id=>!before.includes(id));
+         if(tagsChanged){edit.withIds=after;edit.went=1+after.length;}
          if(typeof dbUpdateSession==='function')dbPush((async()=>{
            if(photoChanged&&postPhoto){
              const path=await dbUploadPhoto(postPhoto,'session');
              if(!path)return {error:{message:'The photo could not be uploaded.'}};
              edit.photoPath=path;edit.photo=await dbPhotoUrl(path);render(false);}
-           return dbUpdateSession(edit,{photoChanged});
+           const r=await dbUpdateSession(edit,{photoChanged});
+           if(r.error||!tagsChanged)return r;
+           return dbSetSessionTags(edit.id,before,after);
          })(),'those changes');
          if(photoChanged&&postPhoto)edit.photo=postPhoto;
          save();closeModal();render(false);toast('Session updated.');
@@ -2831,7 +2934,7 @@ case 'book-new':bookChoose(t.dataset.id,'new');break;
 case 'book-plan':bookChoose(t.dataset.id,'plan');break;
 case 'ex-zoom':exZoom(t.dataset.dir);break;
 case 'ex-reset':ex={...ex,cat:'All',members:false,query:'',venue:null};render(false);break;
-case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':{const nowOn=!state.saved.includes(id);state.saved=nowOn?[...state.saved,id]:state.saved.filter(x=>x!==id);if(typeof dbSetStudio==='function')dbPush(dbSetStudio(id,nowOn),'that studio');save();render(false);}toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':pendingPlans().length?attendModal():postActivity();break;case 'post-new':closeModal();postActivity();break;case 'edit-session':editSession(t.dataset.id);break;case 'attend-yes':logAttended(t.dataset.id);break;case 'attend-no':skipAttended(t.dataset.id);break;case 'finish-next':{const n=(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start)[0];if(n){n.start=Date.now()-(n.dur+5)*60000;save();render(false);toast('Moved into the past. The + now has something to ask you.');}break;}case 'attend-more':{const p=takePlan(t.dataset.id);closeModal();postActivity(p);break;}case 'show-friends':friendsModal();break;case 'show-requests':requestsModal();break;case 'edit-bio':bioModal();break;case 'add-gallery':addGalleryPhoto();break;case 'add-routine':routineModal(t.dataset.id);break;case 'add-goal':goalModal(t.dataset.id);break;case 'edit-goal':goalModal(null,t.dataset.id);break;case 'remove-goal':removeGoal(t.dataset.id);break;case 'goal-yes':answerGoal(t.dataset.id,t.dataset.day,true);break;case 'goal-no':answerGoal(t.dataset.id,t.dataset.day,false);break;case 'remove-routine':removeRoutine(t.dataset.id);break;case 'open-photo':{const who=(location.hash||'').startsWith('#/member/')?personById(location.hash.split('/')[2]):null;openLightbox(who?(who.gallery||[]):(state.gallery||[]),Number(t.dataset.index)||0);break;}case 'photo-prev':lightboxAt=(lightboxAt-1+lightboxOf.length)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'photo-next':lightboxAt=(lightboxAt+1)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'remove-photo':removeGalleryPhoto(t.dataset.id);break;case 'edit-photo':photoModal();break;case 'accept-request':exConnect(t.dataset.id);break;case 'decline-request':respondToRequest(t.dataset.id,'declined');break;case 'withdraw-request':respondToRequest(t.dataset.id,'withdrawn');break;case 'remove-friend':respondToRequest(t.dataset.id,'removed');break;case 'msg-open':msgThread=t.dataset.id;render(false);if(typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);break;case 'log-out':dbSignOut().then(()=>{$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Signed out.');location.hash='#/';render(false);});break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':toast('Added to your plan. In the live product this books you alongside them.');break;case 'session-talk':toast('Comments are part of this design. Writing one is not wired up in the preview yet.');break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':{const v=t.dataset.id;findActivities=findActivities.includes(v)?findActivities.filter(x=>x!==v):[...findActivities,v];runSearch();break;}case 'edit-profile':editProfileModal();break;case 'person-menu':personMenu(t.dataset.id,t.dataset.name);break;case 'report-person':closeModal();reportModal(t.dataset.id,t.dataset.name);break;case 'block-person':closeModal();blockConfirm(t.dataset.id,t.dataset.name);break;case 'block-confirm':doBlock(t.dataset.id,t.dataset.name);break;case 'unblock-person':doUnblock(t.dataset.id,t.dataset.name);break;case 'toggle-show-age':toggleShowAge(t.checked);break;case 'export-data':exportMyData(t);break;case 'delete-account':deleteAccountModal();break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
+case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':{const nowOn=!state.saved.includes(id);state.saved=nowOn?[...state.saved,id]:state.saved.filter(x=>x!==id);if(typeof dbSetStudio==='function')dbPush(dbSetStudio(id,nowOn),'that studio');save();render(false);}toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':pendingPlans().length?attendModal():postActivity();break;case 'post-new':closeModal();postActivity();break;case 'edit-session':editSession(t.dataset.id);break;case 'attend-yes':logAttended(t.dataset.id);break;case 'attend-no':skipAttended(t.dataset.id);break;case 'finish-next':{const n=(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start)[0];if(n){n.start=Date.now()-(n.dur+5)*60000;save();render(false);toast('Moved into the past. The + now has something to ask you.');}break;}case 'attend-more':{const p=takePlan(t.dataset.id);closeModal();postActivity(p);break;}case 'show-friends':friendsModal();break;case 'show-requests':requestsModal();break;case 'edit-bio':bioModal();break;case 'add-gallery':addGalleryPhoto();break;case 'add-routine':routineModal(t.dataset.id);break;case 'add-goal':goalModal(t.dataset.id);break;case 'edit-goal':goalModal(null,t.dataset.id);break;case 'remove-goal':removeGoal(t.dataset.id);break;case 'goal-yes':answerGoal(t.dataset.id,t.dataset.day,true);break;case 'goal-no':answerGoal(t.dataset.id,t.dataset.day,false);break;case 'remove-routine':removeRoutine(t.dataset.id);break;case 'open-photo':{const who=(location.hash||'').startsWith('#/member/')?personById(location.hash.split('/')[2]):null;openLightbox(who?(who.gallery||[]):(state.gallery||[]),Number(t.dataset.index)||0);break;}case 'photo-prev':lightboxAt=(lightboxAt-1+lightboxOf.length)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'photo-next':lightboxAt=(lightboxAt+1)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'remove-photo':removeGalleryPhoto(t.dataset.id);break;case 'edit-photo':photoModal();break;case 'accept-request':exConnect(t.dataset.id);break;case 'decline-request':respondToRequest(t.dataset.id,'declined');break;case 'withdraw-request':respondToRequest(t.dataset.id,'withdrawn');break;case 'remove-friend':respondToRequest(t.dataset.id,'removed');break;case 'msg-open':msgThread=t.dataset.id;render(false);if(typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);break;case 'log-out':dbSignOut().then(()=>{$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Signed out.');location.hash='#/';render(false);});break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':joinSession(t.dataset.id);break;case 'session-talk':{const sid=t.dataset.id;if(!sid){toast('This is a sample session, so there is nobody to talk to yet.');break;}openThreads.has(sid)?openThreads.delete(sid):openThreads.add(sid);render(false);break;}case 'comment-delete':deleteComment(t.dataset.id,t.dataset.session);break;case 'edit-routine':{const r=(state.routines||[]).find(x=>x.id===t.dataset.id);if(r)routineModal(null,{editId:r.id,activity:r.activity,venueLabel:r.venue,venueId:r.venueId,days:[r.weekday],band:r.band});break;}case 'history-goal-delete':deleteHistoryGoal(t);break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':{const v=t.dataset.id;findActivities=findActivities.includes(v)?findActivities.filter(x=>x!==v):[...findActivities,v];runSearch();break;}case 'edit-profile':editProfileModal();break;case 'person-menu':personMenu(t.dataset.id,t.dataset.name);break;case 'report-person':closeModal();reportModal(t.dataset.id,t.dataset.name);break;case 'block-person':closeModal();blockConfirm(t.dataset.id,t.dataset.name);break;case 'block-confirm':doBlock(t.dataset.id,t.dataset.name);break;case 'unblock-person':doUnblock(t.dataset.id,t.dataset.name);break;case 'toggle-show-age':toggleShowAge(t.checked);break;case 'export-data':exportMyData(t);break;case 'delete-account':deleteAccountModal();break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
 $('#menu-button').addEventListener('click',()=>{const open=$('#menu-panel').hidden;$('#menu-panel').hidden=!open;$('#menu-button').setAttribute('aria-expanded',String(open));});
 bindAccountMenu();
 document.addEventListener('click',e=>{if(!e.target.closest('.site-header')){$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');}});
