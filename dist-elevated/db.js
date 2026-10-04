@@ -383,6 +383,32 @@ async function dbDeleteComment(id, sessionId){
   return { data: true };
 }
 
+/* ===================== notifications =====================
+   Written by the database itself (019's triggers) when someone comments on
+   your session, tags you in theirs, or adds your routine to their week. Read
+   here, and marked read when the Notifications page is opened. */
+async function dbLoadNotifications(){
+  const c = db(); if (!c || !authUser) return;
+  const { data, error } = await c.from('notifications').select('*')
+    .order('created_at', { ascending: false }).limit(50);
+  if (error) return;                      /* before 019 the table does not exist */
+  state.notifications = (data || []).map(n => ({ id: n.id, kind: n.kind, actorId: n.actor_id,
+    sessionId: n.session_id, routineId: n.routine_id, detail: n.detail || {}, at: n.created_at, read: !!n.read_at }));
+  state.unseenNotes = state.notifications.filter(n => !n.read).length;
+  await dbPeople(state.notifications.map(n => n.actorId));
+}
+
+async function dbMarkNotificationsRead(){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  if (!state.unseenNotes) return { data: true };
+  const { error } = await written(c.from('notifications').update({ read_at: new Date().toISOString() })
+    .eq('recipient_id', authUser.id).is('read_at', null), 'Notifications could not be marked as read.');
+  if (error) return { error };
+  (state.notifications || []).forEach(n => { n.read = true; });
+  state.unseenNotes = 0;
+  return { data: true };
+}
+
 /* Who was there, changed after the fact. Only the difference is written. */
 async function dbSetSessionTags(sessionId, before, after){
   const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
@@ -557,6 +583,8 @@ async function dbExportData(){
   /* Comments you wrote. Before 018 the table does not exist, so nothing to add. */
   const comments = await c.from('session_comments').select('*').eq('author_id', authUser.id);
   out.session_comments = comments.error ? [] : (comments.data || []);
+  const notes = await c.from('notifications').select('*').eq('recipient_id', authUser.id);
+  out.notifications = notes.error ? [] : (notes.data || []);
 
   /* Signed links expire, so the pictures travel as part of the file rather
      than as addresses that stop working a week after the export. */
@@ -1118,15 +1146,22 @@ async function dbLoadRoutines(profileId){
   return out;
 }
 
-async function dbAddRoutine({ venueId, venueLabel, activity, weekday, band }){
+async function dbAddRoutine({ venueId, venueLabel, activity, weekday, band, joinedFrom }){
   const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
   if (!activity) return { error: { message: 'What are you doing?' } };
-  const { data, error } = await c.from('routines').insert({
+  const row = {
     profile_id: authUser.id,
     venue_id: venueId || null,
     venue_label: (venueLabel || '').trim() || null,
     activity, weekday: Number(weekday), time_band: band
-  }).select().maybeSingle();
+  };
+  /* added with "Join them next time": 019's trigger tells the friend */
+  if (joinedFrom) row.joined_from = joinedFrom;
+  let { data, error } = await c.from('routines').insert(row).select().maybeSingle();
+  if (error && joinedFrom && /joined_from/.test(error.message || '')) {   /* before 019 */
+    delete row.joined_from;
+    ({ data, error } = await c.from('routines').insert(row).select().maybeSingle());
+  }
   if (error && error.code === '23505') return { error: { message: 'That is already in your week.' }, duplicate: true };
   if (error) return { error };
   /* no row back means no policy matched the write — success here would be a lie */
@@ -1142,12 +1177,12 @@ async function dbAddRoutine({ venueId, venueLabel, activity, weekday, band }){
 /* One routine per day, inserted one at a time on purpose: the unique slot index
    is an expression index, so a single multi-row insert would fail as a whole on
    one duplicate. A day already in the week is skipped and counted, not an error. */
-async function dbAddRoutineDays({ venueId, venueLabel, activity, days, band }){
+async function dbAddRoutineDays({ venueId, venueLabel, activity, days, band, joinedFrom }){
   const list = [...new Set((days || []).map(Number))].sort((a,b) => a - b);
   if (!list.length) return { error: { message: 'Pick at least one day.' } };
   let added = 0, duplicates = 0, failure = null;
   for (const weekday of list) {
-    const r = await dbAddRoutine({ venueId, venueLabel, activity, weekday, band });
+    const r = await dbAddRoutine({ venueId, venueLabel, activity, weekday, band, joinedFrom });
     if (r.duplicate) duplicates++;
     else if (r.error) failure = failure || r.error;
     else added++;
