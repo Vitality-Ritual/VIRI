@@ -1624,6 +1624,8 @@ summary.pf-section-head{cursor:pointer;list-style:none}
 summary.pf-section-head::-webkit-details-marker{display:none}
 .goal-history details:not([open]) > summary.pf-section-head{margin-bottom:0;padding-bottom:0;border-bottom:0}
 .goal-history summary.pf-section-head::after{margin-left:auto}
+/* the same tan as the Goals box, so the two planning panels read as a pair */
+.rail-box.pf-weekbox{background:var(--cream-2);border-color:var(--line)}
 .pf-weekbox .rail-line{margin:0 0 14px}
 .pf-weekbox .week-acts{margin-top:5px;font-size:12px}
 .pf-weekbox > .button{margin:4px 0 14px;align-self:flex-start}
