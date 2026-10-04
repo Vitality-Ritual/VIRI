@@ -284,6 +284,21 @@ async function dbUpdateSession(p, { photoChanged = false } = {}){
     'Those changes could not be saved.');
 }
 
+/* Deleting one of your own sessions. Its tags go with it (017 makes them
+   cascade), and its photo is removed from storage rather than left behind
+   with nothing pointing at it. */
+async function dbDeleteSession(p){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  if (!p || !p.id) return { error: { message: 'That session is still saving. Try again in a moment.' } };
+  const { error } = await written(c.from('sessions').delete().eq('id', p.id).eq('profile_id', authUser.id),
+    'That session could not be deleted.');
+  if (error) return { error: /foreign key/.test(error.message || '')
+    ? { message: 'Sessions can be deleted once the latest database update (017) is run.' } : error };
+  if (p.photoPath && !/^data:|^https?:/.test(p.photoPath)) await c.storage.from('photos').remove([p.photoPath]);
+  state.posts = (state.posts || []).filter(x => x.id !== p.id);
+  return { data: true };
+}
+
 async function dbAddPlan(plan){
   const c = db(); if (!c || !authUser) return;
   /* There is no unique index on (profile_id, class_ref), so an upsert would
