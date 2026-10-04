@@ -206,6 +206,7 @@ const rowToSession = r => ({
   description: r.note || '',
   photo: r.photo_path || '',
   photoPath: r.photo_path || '',
+  ownerId: r.profile_id,
   went: r.went_count || 1,
   withIds: r.withIds || [],
   date: r.happened_at,
@@ -229,6 +230,8 @@ async function dbLoadSessions(){
   state.posts = (data || []).map(rowToSession);
   /* each stored path becomes a signed link the page can render */
   await Promise.all(state.posts.map(async p => { p.photo = await dbPhotoUrl(p.photo); }));
+  await dbAttachTags(state.posts);
+  await dbLoadComments(state.posts.map(p => p.id));
 }
 
 async function dbLoadPlans(){
@@ -277,7 +280,8 @@ async function dbUpdateSession(p, { photoChanged = false } = {}){
     place: p.place || null,
     duration_min: Number(p.duration) || null,
     distance: p.distance || null,
-    note: p.description || null
+    note: p.description || null,
+    went_count: p.went || 1
   };
   if (photoChanged) row.photo_path = p.photoPath || null;
   return written(c.from('sessions').update(row).eq('id', p.id).eq('profile_id', authUser.id),
@@ -296,6 +300,79 @@ async function dbDeleteSession(p){
     ? { message: 'Sessions can be deleted once the latest database update (017) is run.' } : error };
   if (p.photoPath && !/^data:|^https?:/.test(p.photoPath)) await c.storage.from('photos').remove([p.photoPath]);
   state.posts = (state.posts || []).filter(x => x.id !== p.id);
+  return { data: true };
+}
+
+/* ===================== who was there, and what people said =====================
+   Both hang off a session and are seen by the same people as the session: the
+   member who logged it and her friends (018's can_see_session). Tags used to be
+   written and never read back, so a session forgot who was there. */
+async function dbAttachTags(sessions){
+  const c = db(); if (!c || !authUser) return;
+  const ids = (sessions || []).map(s => s.id).filter(Boolean);
+  if (!ids.length) return;
+  const { data, error } = await c.from('session_tags').select('session_id,profile_id').in('session_id', ids);
+  if (error) return;
+  const by = {};
+  for (const t of data || []) (by[t.session_id] = by[t.session_id] || []).push(t.profile_id);
+  for (const s of sessions) if (by[s.id]) s.withIds = by[s.id];
+  await dbPeople((data || []).map(t => t.profile_id));
+}
+
+async function dbLoadComments(sessionIds){
+  const c = db(); if (!c || !authUser) return;
+  const ids = [...new Set(sessionIds || [])].filter(Boolean);
+  state.comments = state.comments || {};
+  if (!ids.length) return;
+  const { data, error } = await c.from('session_comments').select('*')
+    .in('session_id', ids).order('created_at', { ascending: true });
+  if (error) return;                       /* before 018 the table does not exist */
+  for (const id of ids) state.comments[id] = [];
+  for (const r of data || []) state.comments[r.session_id].push(
+    { id: r.id, sessionId: r.session_id, authorId: r.author_id, body: r.body, at: r.created_at });
+  await dbPeople((data || []).map(r => r.author_id));
+}
+
+async function dbAddComment(sessionId, body){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Sign in to comment.' } };
+  const text = String(body || '').trim();
+  if (!text) return { error: { message: 'Write something first.' } };
+  if (text.length > 500) return { error: { message: 'A comment can be 500 characters at most.' } };
+  const { data, error } = await c.from('session_comments')
+    .insert({ session_id: sessionId, author_id: authUser.id, body: text }).select().maybeSingle();
+  if (error) return { error: /session_comments|schema cache|does not exist/.test(error.message || '')
+    ? { message: 'Comments switch on once the latest database update (018) is run.' } : error };
+  if (!data) return { error: { message: 'That comment could not be posted.' } };
+  state.comments = state.comments || {};
+  (state.comments[sessionId] = state.comments[sessionId] || []).push(
+    { id: data.id, sessionId, authorId: authUser.id, body: data.body, at: data.created_at });
+  return { data: true };
+}
+
+async function dbDeleteComment(id, sessionId){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const { error } = await written(c.from('session_comments').delete().eq('id', id),
+    'That comment could not be removed.');
+  if (error) return { error };
+  if (state.comments && state.comments[sessionId])
+    state.comments[sessionId] = state.comments[sessionId].filter(x => x.id !== id);
+  return { data: true };
+}
+
+/* Who was there, changed after the fact. Only the difference is written. */
+async function dbSetSessionTags(sessionId, before, after){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const gone = before.filter(id => !after.includes(id));
+  const added = after.filter(id => !before.includes(id));
+  if (gone.length) {
+    const { error } = await written(c.from('session_tags').delete().eq('session_id', sessionId).in('profile_id', gone),
+      'Who you went with could not be updated.');
+    if (error) return { error };
+  }
+  if (added.length) {
+    const { error } = await c.from('session_tags').insert(added.map(id => ({ session_id: sessionId, profile_id: id })));
+    if (error) return { error };
+  }
   return { data: true };
 }
 
@@ -452,6 +529,10 @@ async function dbExportData(){
     .or(`profile_id.eq.${authUser.id}${mine.length ? `,session_id.in.(${mine.join(',')})` : ''}`);
   if (tags.error) return { error: tags.error };
   out.session_tags = tags.data || [];
+
+  /* Comments you wrote. Before 018 the table does not exist, so nothing to add. */
+  const comments = await c.from('session_comments').select('*').eq('author_id', authUser.id);
+  out.session_comments = comments.error ? [] : (comments.data || []);
 
   /* Signed links expire, so the pictures travel as part of the file rather
      than as addresses that stop working a week after the export. */
@@ -916,6 +997,8 @@ async function dbLoadFeed(){
     sess.by = state.people[r.profile_id] || null;
     out.push(sess);
   }
+  await dbAttachTags(out);
+  await dbLoadComments(out.map(s => s.id));
   state.feed = out;
   return out;
 }
@@ -1049,6 +1132,24 @@ async function dbAddRoutineDays({ venueId, venueLabel, activity, days, band }){
   if (!added) return { error: { message: list.length === 1
     ? 'That is already in your week.' : 'Those are all already in your week.' } };
   return { data: { added, duplicates } };
+}
+
+/* Changing a routine in place. Needs 018's update policy. */
+async function dbUpdateRoutine(id, { venueId, venueLabel, activity, weekday, band }){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  if (!activity) return { error: { message: 'What are you doing?' } };
+  const row = { venue_id: venueId || null, venue_label: (venueLabel || '').trim() || null,
+                activity, weekday: Number(weekday), time_band: band };
+  const { error } = await written(c.from('routines').update(row).eq('id', id).eq('profile_id', authUser.id),
+    'That could not be changed. If this keeps happening, the latest database update (018) has not been run.');
+  if (error && error.code === '23505') return { error: { message: 'That is already in your week.' } };
+  if (error) return { error };
+  const r = (state.routines || []).find(x => x.id === id);
+  /* a changed slot counts from now, so "did you go?" does not ask about one before the change */
+  if (r) Object.assign(r, { venueId: venueId || '', venue: (venueLabel || '').trim(), activity,
+                            weekday: Number(weekday), band, createdAt: new Date().toISOString() });
+  state.routines = [...(state.routines || [])].sort((a, b) => a.weekday - b.weekday);
+  return { data: true };
 }
 
 async function dbRemoveRoutine(id){
@@ -1217,6 +1318,7 @@ async function dbRemoveGoal(id){
     .eq('id', id).eq('profile_id', authUser.id), 'That goal could not be removed.');
   if (error) return { error };
   state.goals = (state.goals || []).filter(g => g.id !== id);
+  if (state.goalHistory) state.goalHistory = state.goalHistory.filter(g => g.id !== id);
   return { data: true };
 }
 

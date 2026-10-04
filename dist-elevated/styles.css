@@ -338,6 +338,14 @@ strong{font-weight:500}
 .goal-history .goal.is-met .goal-count{color:var(--ink)}
 .session-edit{margin-left:10px;font-size:12.5px}
 .session-delete{margin-right:auto;font-size:12.5px;color:#9d4137}
+.session-thread{border-top:1px solid var(--line);margin-top:14px;padding-top:12px}
+.comment{margin-bottom:12px}
+.comment-head{margin:0;font-size:13px;color:var(--ink)}
+.comment-body{margin:3px 0 0;font-size:14px;line-height:1.55;color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}
+.comment-x{font-size:11px;margin-left:8px}
+.comment-form{display:flex;gap:8px;margin-top:10px}
+.comment-form input{flex:1;min-width:0}
+.week-acts{display:flex;gap:12px;flex:none}
 .goal{margin-bottom:12px}
 .goal-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
 .goal-name{font-size:13px;line-height:1.35;color:var(--ink)}
@@ -1593,6 +1601,33 @@ body:after{
 .pf-rail .find-row > .button,.feed-rail .find-row > .button,
 .pf-rail .find-row > .tag,.feed-rail .find-row > .tag{flex:1 0 100%;justify-content:center}
 .pf-sample{margin:0 0 20px;font-size:12.5px;line-height:1.6;color:var(--muted)}
+/* The profile reads as separate parts — who you are, your week, photos,
+   activity, past goals — each on its own raised panel with a proper heading,
+   instead of one column where the bio ran into the week and the week into
+   the sessions. */
+.pf-head.pf-card,.pf-section{background:var(--paper);border:1px solid var(--line);
+  padding:clamp(20px,2.6vw,34px)}
+.pf-section{margin-top:clamp(16px,2vw,24px)}
+.pf-section-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+  margin:0 0 16px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.pf-section-head h2{font-family:var(--display);font-weight:400;font-size:clamp(1.15rem,1.8vw,1.4rem);
+  color:var(--cocoa);margin:0;letter-spacing:.01em}
+.pf-section-head .period-dates{margin-left:0;font-size:12px}
+.pf-section.pf-week{margin-top:clamp(16px,2vw,24px)}
+.pf-section .pf-tabs{margin-top:0}
+.pf-section .gallery-empty{margin:0}
+.pf-section.goal-history{max-width:none}
+summary.pf-section-head{cursor:pointer;list-style:none}
+summary.pf-section-head::-webkit-details-marker{display:none}
+.goal-history details:not([open]) > summary.pf-section-head{margin-bottom:0;padding-bottom:0;border-bottom:0}
+.goal-history summary.pf-section-head::after{margin-left:auto}
+.pf-weekbox .rail-line{margin:0 0 14px}
+.pf-weekbox .week-acts{margin-top:5px;font-size:12px}
+.pf-weekbox > .button{margin:4px 0 14px;align-self:flex-start}
+/* On a phone the side column stacks; keep the week above the sessions, not after them */
+@media (max-width:980px){.pf-rail{order:-1}}
+/* Your own avatar with no photo: the invitation alone, not printed over your initials */
+.pf-avatar:not(:has(img)){color:transparent}
 .pf-empty{margin:0 0 20px;font-size:15px;line-height:1.7;color:var(--muted)}
 .pf-rows{display:flex;flex-direction:column}
 .pf-row{display:flex;align-items:center;gap:14px;padding:18px 0;border-bottom:1px solid var(--line);
