@@ -2,6 +2,8 @@
 #
 #     ruby tools/check.rb            check everything
 #     ruby tools/check.rb --stamp    also re-stamp ?v= in index.html, then check
+#     ruby tools/check.rb --removed=planEnd,oldThing
+#                                    accept these names as deliberately removed
 #
 # Exit status is 0 when it is safe to deploy and 1 when it is not.
 #
@@ -74,6 +76,8 @@ def stamp!
 end
 
 stamp! if ARGV.include?('--stamp')
+# names removed on purpose; anything else that disappears still fails
+REMOVED = ARGV.map { |a| a[/\A--removed=(.+)\z/, 1] }.compact.flat_map { |v| v.split(',') }.map(&:strip)
 
 # ------------------------------------------------------------------ syntax
 head 'syntax'
@@ -106,12 +110,14 @@ JS.each do |f|
   indent = f == 'explore-data.js' ? 2 : 0
   mine = inventory(read(f), indent)
   theirs = inventory(remote, indent)
-  gone = theirs - mine
+  gone = theirs - mine - REMOVED
+  meant = (theirs - mine) & REMOVED
+  puts "  note  #{f}: removed on purpose: #{meant.join(', ')}" unless meant.empty?
   added = mine - theirs
   if gone.empty?
     ok "#{f}: #{mine.length} top-level names, none missing" + (added.empty? ? '' : " (#{added.length} new: #{added.first(6).join(', ')}#{added.length > 6 ? ', …' : ''})")
   else
-    fail "#{f}: on the live site but missing here: #{gone.join(', ')}. If that is deliberate, say so in the commit; if not, a scripted edit ate it."
+    fail "#{f}: on the live site but missing here: #{gone.join(', ')}. If that is deliberate, rerun with --removed=#{gone.join(',')}; if not, a scripted edit ate it."
   end
   shrink = 1.0 - read(f).length.to_f / remote.length
   warn "#{f} is #{(shrink * 100).round(1)}% smaller than the live copy. Check nothing was deleted by accident." if shrink > 0.03
