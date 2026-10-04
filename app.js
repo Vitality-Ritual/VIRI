@@ -2106,6 +2106,7 @@ function settingsPage(){
       <h2>Your details</h2>
       ${row('Name',escapeHTML(p.name))}
       ${row('Email',escapeHTML(p.email||'—'))}
+      ${row('Password','<a class="plain-link" href="#/reset-password">Change your password</a>')}
       ${row('Where you train',escapeHTML([p.city,p.region].filter(Boolean).join(', ')||p.area||'—'))}
       ${row('Age',ageOf(p.birthDate||p.birthYear)
         ? `${ageOf(p.birthDate||p.birthYear)} &middot; <span class="small">${p.showAge?'shown on your profile':'hidden from your profile'}</span>`
@@ -2372,7 +2373,7 @@ async function runSearch(){
   state.found=await dbSearchPeople({ city:findCity||((state.profile&&state.profile.city)||''), activities:findActivities });
   render(false);
 }
-function authPage(){return `<section class="auth-layout"><div class="auth-image"><img src="${A}studio-entry.jpg" alt="Two women arriving at the studio together"><h2>A new ritual.<br>A new circle.<br>A little more you.</h2></div><div class="auth-form"><p class="eyebrow">Welcome back</p><h1>Back to your circle.</h1><p>Sign in to your VIRI account.</p><form id="auth-form"><div class="field"><label for="auth-email">Email address</label><input id="auth-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required></div><div class="field"><label for="auth-pass">Password</label><input id="auth-pass" name="password" type="password" autocomplete="current-password" required></div><p id="auth-error" class="field-error" role="alert"></p><button class="button" type="submit" style="margin-top:18px">Open my profile</button></form><p class="small">New here? <a href="#/signup">Join VIRI</a></p></div></section>`;}
+function authPage(){return `<section class="auth-layout"><div class="auth-image"><img src="${A}studio-entry.jpg" alt="Two women arriving at the studio together"><h2>A new ritual.<br>A new circle.<br>A little more you.</h2></div><div class="auth-form"><p class="eyebrow">Welcome back</p><h1>Back to your circle.</h1><p>Sign in to your VIRI account.</p><form id="auth-form"><div class="field"><label for="auth-email">Email address</label><input id="auth-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required></div><div class="field"><label for="auth-pass">Password</label><input id="auth-pass" name="password" type="password" autocomplete="current-password" required></div><p class="auth-forgot"><a href="#/forgot">Forgot your password?</a></p><p id="auth-error" class="field-error" role="alert"></p><button class="button" type="submit" style="margin-top:18px">Open my profile</button></form><p class="small">New here? <a href="#/signup">Join VIRI</a></p></div></section>`;}
 function bindAuth(){$('#auth-form')?.addEventListener('submit',async e=>{
   e.preventDefault();
   const fd=new FormData(e.target), err=$('#auth-error');
@@ -2389,6 +2390,49 @@ function bindAuth(){$('#auth-form')?.addEventListener('submit',async e=>{
     ? 'That email and password did not match. If you have just signed up, open the confirmation link first.'
     : res.error.message; return;}
   toast('Welcome back to your circle.'); goTo('#/profile');
+});}
+
+/* ===================== forgotten passwords ===================== */
+const authShell=inner=>`<section class="auth-layout"><div class="auth-image"><img src="${A}studio-entry.jpg" alt="Two women arriving at the studio together"><h2>A new ritual.<br>A new circle.<br>A little more you.</h2></div><div class="auth-form">${inner}</div></section>`;
+function forgotPage(){return authShell(`<p class="eyebrow">Forgot your password</p><h1>Choose a new one.</h1>
+  <p>Enter the email address you signed up with and we will send you a link to set a new password.</p>
+  <form id="forgot-form"><div class="field"><label for="forgot-email">Email address</label><input id="forgot-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required></div>
+  <p id="forgot-error" class="field-error" role="alert"></p><button class="button" type="submit" style="margin-top:18px">Send the link</button></form>
+  <p class="small"><a href="#/login">Back to sign in</a></p>`);}
+function bindForgot(){$('#forgot-form')?.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const err=$('#forgot-error'), email=String(new FormData(e.target).get('email')||'');
+  const btn=e.target.querySelector('button[type=submit]'), label=btn.innerHTML;
+  btn.disabled=true; btn.textContent='Sending…';
+  const r=await dbSendPasswordReset(email);
+  btn.disabled=false; btn.innerHTML=label;
+  if(r.error){err.textContent=r.error.message;return;}
+  /* the same words whether or not there is an account */
+  e.target.outerHTML=`<p class="auth-sent">If there is a VIRI account for <b>${escapeHTML(email.trim())}</b>, a link to choose a new password is on its way. It can take a minute, so check your spam folder too. The link works once.</p>`;
+});}
+/* Reached from the email's link (signed in for this purpose only), or from
+   Settings to change a password you still know. */
+function resetPasswordPage(){
+  if(typeof authUser==='undefined'||!authUser)return authShell(`<p class="eyebrow">Choose a new password</p><h1>That link has run out.</h1>
+    <p>Reset links work once and expire after a while. Ask for a fresh one and use it straight away.</p>
+    <p style="margin-top:18px">${button('Send a new link','#/forgot','small')}</p>`);
+  return authShell(`<p class="eyebrow">${state.profile?escapeHTML(state.profile.name):'Your account'}</p><h1>Choose a new password.</h1>
+    <form id="reset-form">
+      <div class="field"><label for="reset-pass">New password</label><input id="reset-pass" name="password" type="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" required></div>
+      <div class="field"><label for="reset-again">Type it again</label><input id="reset-again" name="again" type="password" autocomplete="new-password" minlength="8" required></div>
+      <p id="reset-error" class="field-error" role="alert"></p><button class="button" type="submit" style="margin-top:18px">Save my new password</button></form>`);}
+function bindReset(){$('#reset-form')?.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const fd=new FormData(e.target), err=$('#reset-error');
+  const pass=String(fd.get('password')||''), again=String(fd.get('again')||'');
+  if(pass.length<8){err.textContent='Use at least 8 characters.';return;}
+  if(pass!==again){err.textContent='Those two do not match. Type the same password twice.';return;}
+  const btn=e.target.querySelector('button[type=submit]'), label=btn.innerHTML;
+  btn.disabled=true; btn.textContent='Saving…';
+  const r=await dbUpdatePassword(pass);
+  btn.disabled=false; btn.innerHTML=label;
+  if(r.error){err.textContent=r.error.message;return;}
+  toast('Password changed. Use the new one next time you sign in.'); goTo(signedIn()?'#/profile':'#/login');
 });}
 
 /* ===================== booking hand-off ===================== */
@@ -2913,7 +2957,7 @@ function initPageMotion(){
   revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('is-revealed');revealObserver.unobserve(entry.target);}}),{threshold:.08,rootMargin:'0px 0px -30px 0px'});
   targets.forEach(el=>{el.classList.add('will-reveal');revealObserver.observe(el);});
 }
-function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':if(signedIn()){location.replace('#/feed');return;}html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'check-email':html=checkEmailPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'profile':html=profilePage();break;case 'member':html=memberPage(id);if(typeof ensureMember==='function')ensureMember(id);break;case 'feed':html=feedPage();break;case 'find':html=findPage();break;case 'messages':html=messagesPage();break;case 'settings':html=settingsPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=privacyPage();break;case 'terms':html=termsPage();break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you','check-email':'Check your email',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',profile:'Your circle',member:'A member',feed:'Feed',find:'Find your people',messages:'Messages',settings:'Settings',book:'Book this class',privacy:'Your privacy',terms:'Terms of service'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#auth-form'))bindAuth();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='find'){$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();runSearch();});if(typeof dbRoutineMatches==='function'&&state.roomMatches===undefined){state.roomMatches=[];dbRoutineMatches().then(()=>{if(location.hash==='#/find')render(false);});}if(state.found===undefined||state.found===null)runSearch();}if(path==='profile'&&signedIn()&&!goalHistoryLoaded&&typeof dbLoadGoalHistory==='function'){goalHistoryLoaded=true;dbLoadGoalHistory().then(r=>{if(r===null)state.goalHistory=null;if(location.hash==='#/profile')render(false);});}if(path==='messages'){$('#msg-form')?.addEventListener('submit',e=>{e.preventDefault();sendMessage(e.target);});const b=$('#msg-body');if(b)b.scrollTop=b.scrollHeight;if(msgThread&&typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);}/* Fetch on arrival, not on every render — render() re-runs this block, so an
+function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':if(signedIn()){location.replace('#/feed');return;}html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'check-email':html=checkEmailPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'forgot':html=forgotPage();break;case 'reset-password':html=resetPasswordPage();break;case 'profile':html=profilePage();break;case 'member':html=memberPage(id);if(typeof ensureMember==='function')ensureMember(id);break;case 'feed':html=feedPage();break;case 'find':html=findPage();break;case 'messages':html=messagesPage();break;case 'settings':html=settingsPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=privacyPage();break;case 'terms':html=termsPage();break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you','check-email':'Check your email',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',forgot:'Forgot your password','reset-password':'Choose a new password',profile:'Your circle',member:'A member',feed:'Feed',find:'Find your people',messages:'Messages',settings:'Settings',book:'Book this class',privacy:'Your privacy',terms:'Terms of service'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#auth-form'))bindAuth();if(path==='forgot')bindForgot();if(path==='reset-password')bindReset();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='find'){$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();runSearch();});if(typeof dbRoutineMatches==='function'&&state.roomMatches===undefined){state.roomMatches=[];dbRoutineMatches().then(()=>{if(location.hash==='#/find')render(false);});}if(state.found===undefined||state.found===null)runSearch();}if(path==='profile'&&signedIn()&&!goalHistoryLoaded&&typeof dbLoadGoalHistory==='function'){goalHistoryLoaded=true;dbLoadGoalHistory().then(r=>{if(r===null)state.goalHistory=null;if(location.hash==='#/profile')render(false);});}if(path==='messages'){$('#msg-form')?.addEventListener('submit',e=>{e.preventDefault();sendMessage(e.target);});const b=$('#msg-body');if(b)b.scrollTop=b.scrollHeight;if(msgThread&&typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);}/* Fetch on arrival, not on every render — render() re-runs this block, so an
    unguarded fetch-then-render is an infinite loop. The flag clears when you
    leave, so coming back fetches again. */
 if(path!=='feed')feedFetched=false;
@@ -2952,4 +2996,5 @@ initWordmark();
 render(false);
 /* The first render happens before the server answers, so it draws the
    signed-out site; this redraws once the session is known. */
-if(typeof dbBoot==='function')dbBoot().then(()=>render(false)).catch(()=>{});
+/* arriving from a password-reset email goes straight to choosing the new one */
+if(typeof dbBoot==='function')dbBoot().then(r=>{if(r&&r.claim==='recovery')history.replaceState(null,'','#/reset-password');render(false);}).catch(()=>{});
