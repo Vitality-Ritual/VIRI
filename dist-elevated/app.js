@@ -1187,7 +1187,7 @@ function sessionPace(s){
    showed nothing but "Went 1 person". */
 function sessionView(p){
   const tags=(p.withIds||[]).map(id=>personById(id)).filter(Boolean);
-  return {title:p.title,cat:p.activity||'',place:p.place||'',
+  return {id:p.id,title:p.title,cat:p.activity||'',place:p.place||'',
     dur:Number(p.duration)||0,dist:p.distance||'',went:p.went||1+tags.length,
     ago:prettyDate(p.date),note:p.description||'',img:p.photo||'',
     withIds:tags.map(x=>x.id),
@@ -1213,7 +1213,7 @@ function sessionCard(s,by){
       ${by.id&&!state.connections.includes(by.id)
         ?`<button class="button small outline" data-action="ex-connect" data-id="${escapeHTML(by.id)}">Add friend</button>`
         :'<span class="tag">Friend</span>'}${safetyButton(by.id,by.name)}</div>`
-     :`<p class="session-meta">${escapeHTML(s.ago)}${s.place?` &middot; ${escapeHTML(s.place)}`:''}</p>`}
+     :`<p class="session-meta">${escapeHTML(s.ago)}${s.place?` &middot; ${escapeHTML(s.place)}`:''}${s.id&&(state.posts||[]).some(x=>x.id===s.id)?` <button class="plain-link session-edit" data-action="edit-session" data-id="${escapeHTML(String(s.id))}">Edit</button>`:''}</p>`}
     <h3 class="session-title">${escapeHTML(s.title)}</h3>
     ${sessionStats(s)}
     ${s.note?`<p class="session-note">${escapeHTML(s.note)}</p>`:''}
@@ -1821,7 +1821,8 @@ function goalsPanel(goals,{own=false}={}){
         </div>
         <div class="goal-bar" role="img" aria-label="${g.done} of ${g.target} done">
           <span style="width:${g.pct}%"></span></div>
-        ${own?`<button class="plain-link goal-x" data-action="remove-goal" data-id="${escapeHTML(g.id)}">Remove</button>`:''}
+        ${goalScheduleLine(g)?`<p class="goal-when">${escapeHTML(goalScheduleLine(g))}</p>`:''}
+        ${own?`<span class="goal-acts"><button class="plain-link goal-x" data-action="edit-goal" data-id="${escapeHTML(g.id)}">Edit</button><button class="plain-link goal-x" data-action="remove-goal" data-id="${escapeHTML(g.id)}">Remove</button></span>`:''}
       </div>`).join('')}
       ${own&&rows.length<GOALS_PER_PERIOD?`<button class="plain-link" data-action="add-goal" data-id="${period}">Add another</button>`:''}
     </div>`;};
@@ -1829,29 +1830,121 @@ function goalsPanel(goals,{own=false}={}){
   if(!body)return own?`<aside class="goals-panel"><p class="rail-label">Goals</p><p class="goal-none">Three a week, three a month, and a question each morning about yesterday. <button class="plain-link" data-action="add-goal" data-id="week">Set your first</button></p></aside>`:'';
   return `<aside class="goals-panel"><p class="rail-label">Goals</p>${body}</aside>`;}
 
-function goalModal(period){
-  openModal(period==='month'?'A goal for this month':'A goal for this week', `<form id="goal-form">
+/* Goals whose week or month is over, newest first, on your own profile. */
+let goalHistoryLoaded=false;
+function goalHistory(){
+  const gs=state.goalHistory;
+  if(!goalHistoryLoaded||gs===undefined)return '';
+  if(gs===null)return '<section class="goal-history"><p class="rail-label">Past goals</p><p class="small">Past goals could not be loaded. Refresh to try again.</p></section>';
+  if(!gs.length)return '<section class="goal-history"><p class="rail-label">Past goals</p><p class="small">When a week or month ends, its goals are kept here.</p></section>';
+  const groups=[];
+  for(const g of gs){
+    const key=g.period+'|'+g.periodStart;
+    let grp=groups.find(x=>x.key===key);
+    if(!grp){grp={key,period:g.period,start:g.periodStart,rows:[]};groups.push(grp);}
+    grp.rows.push(g);
+  }
+  const label=grp=>grp.period==='week'
+    ? `Week of ${weekRangeLabel(grp.start+'T12:00:00')}`
+    : new Date(grp.start+'T12:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  return `<section class="goal-history"><details>
+    <summary class="rail-label">Past goals <span class="period-dates">${gs.length}</span></summary>
+    ${groups.map(grp=>`<div class="goal-group"><p class="goal-label">${label(grp)}</p>
+      ${grp.rows.map(g=>`<div class="goal${g.done>=g.target?' is-met':''}">
+        <div class="goal-top">
+          <span class="goal-name">${escapeHTML(g.title)}</span>
+          <span class="goal-count">${g.done} of ${g.target}${g.done>=g.target?' &#10003;':''}</span>
+        </div>
+        <div class="goal-bar" role="img" aria-label="${g.done} of ${g.target} done"><span style="width:${g.pct}%"></span></div>
+      </div>`).join('')}</div>`).join('')}
+  </details></section>`;
+}
+
+/* "Asks after Mon, Wed, Fri" / "Asks after Oct 4, Oct 11, Oct 18" — nothing for every day */
+function goalScheduleLine(g){
+  const md=d=>new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  if(g.checkDates&&g.checkDates.length)return `Asks after ${g.checkDates.map(md).join(', ')}`;
+  if(g.checkDays&&g.checkDays.length)return `Asks after ${[...g.checkDays].sort((a,b)=>a-b).map(i=>WEEKDAYS[i].slice(0,3)).join(', ')}`;
+  return '';
+}
+
+/* Setting or editing a goal. A goal is still for this week or this month —
+   that is what brings people back — but it can say when it should be asked
+   about: every day, on chosen weekdays, or only after chosen dates. Three
+   long runs on known dates is three questions, not thirty. */
+function goalModal(period,editId){
+  const g=editId?(state.goals||[]).find(x=>x.id===editId):null;
+  if(editId&&!g){toast('That goal could not be found. Refresh and try again.');return;}
+  if(g)period=g.period;
+  const start=new Date(periodStart(period)+'T00:00:00');
+  const end=period==='week'?new Date(start.getFullYear(),start.getMonth(),start.getDate()+6):new Date(start.getFullYear(),start.getMonth()+1,0);
+  const ymd=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const lo=ymd(start), hi=ymd(end), span=period==='week'?'this week':'this month';
+  const mode0=g&&g.checkDates&&g.checkDates.length?'dates':g&&g.checkDays&&g.checkDays.length?'days':'daily';
+  const days0=(g&&g.checkDays)||[];
+  const dates0=g&&g.checkDates&&g.checkDates.length?g.checkDates:[''];
+  const dateRow=v=>`<input type="date" name="dates" min="${lo}" max="${hi}" value="${escapeHTML(v||'')}" aria-label="Date">`;
+  openModal(g?'Edit this goal':period==='month'?'A goal for this month':'A goal for this week', `<form id="goal-form">
     <div class="field"><label for="goal-title">What are you aiming at?</label>
-      <input id="goal-title" name="title" maxlength="80" required placeholder="${period==='month'?'Twelve classes this month':'Up at 6am, Monday to Friday'}">
+      <input id="goal-title" name="title" maxlength="80" required value="${escapeHTML(g?g.title:'')}" placeholder="${period==='month'?'Three long runs before the marathon':'Up at 6am, Monday to Friday'}">
     </div>
-    <div class="field"><label for="goal-target">How many times?</label>
-      <input id="goal-target" name="target" type="number" min="1" max="31" value="${period==='month'?12:5}" required>
-      <p class="field-eg">Each morning VIRI asks whether you did it the day before, and the bar fills from your answers.</p>
+    <fieldset class="interest-fieldset"><legend>When should VIRI ask?</legend>
+      <div class="goal-modes">${[['daily','Every day'],['days','On certain days'],['dates','On specific dates']].map(([v,l])=>
+        `<label class="check-box"><input type="radio" name="mode" value="${v}"${mode0===v?' checked':''}><span>${l}</span></label>`).join('')}</div>
+      <div class="goal-mode-panel" data-mode="days"${mode0==='days'?'':' hidden'}>
+        <div class="day-picker">${WEEKDAYS.map((d,i)=>`<label class="check-box"><input type="checkbox" name="days" value="${i}"${days0.includes(i)?' checked':''}><span>${escapeHTML(d.slice(0,3))}</span></label>`).join('')}</div>
+      </div>
+      <div class="goal-mode-panel" data-mode="dates"${mode0==='dates'?'':' hidden'}>
+        <div class="goal-dates" id="goal-dates">${dates0.map(dateRow).join('')}</div>
+        <button type="button" class="plain-link" id="goal-add-date">Add another date</button>
+      </div>
+      <p class="field-eg" id="goal-mode-eg"></p>
+    </fieldset>
+    <div class="field" id="goal-target-field"${mode0==='dates'?' hidden':''}><label for="goal-target">How many times?</label>
+      <input id="goal-target" name="target" type="number" min="1" max="31" value="${g?g.target:(period==='month'?12:5)}">
     </div>
     <p id="goal-error" class="field-error" role="alert"></p>
     <div class="dialog-actions">
       <button class="button outline small" type="button" data-action="close-modal">Cancel</button>
-      <button class="button small" type="submit">Set it</button>
+      <button class="button small" type="submit">${g?'Save changes':'Set it'}</button>
     </div>
   </form>`, () => {
-    $('#goal-form').addEventListener('submit', async ev => {
+    const form=$('#goal-form'), eg=$('#goal-mode-eg'), targetField=$('#goal-target-field');
+    const md=d=>d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    const explain={
+      daily:'Each morning VIRI asks whether you did it the day before, and the bar fills from your answers.',
+      days:'VIRI asks the morning after each day you pick.',
+      dates:`VIRI asks only the morning after each date, and the goal is every one of them. Dates fall ${span}, ${md(start)} – ${md(end)}.`};
+    const mode=()=>form.querySelector('input[name=mode]:checked').value;
+    const sync=()=>{const m=mode();
+      form.querySelectorAll('.goal-mode-panel').forEach(p=>{p.hidden=p.dataset.mode!==m;});
+      targetField.hidden=m==='dates'; eg.textContent=explain[m];};
+    form.querySelectorAll('input[name=mode]').forEach(r=>r.addEventListener('change',sync)); sync();
+    /* a stale message next to the browser's own date check is worse than none */
+    form.addEventListener('input',()=>{$('#goal-error').textContent='';});
+    $('#goal-add-date').addEventListener('click',()=>{const box=$('#goal-dates');
+      if(box.children.length>=31)return; box.insertAdjacentHTML('beforeend',dateRow('')); box.lastElementChild.focus();});
+    form.addEventListener('submit', async ev => {
       ev.preventDefault();
-      const fd=new FormData(ev.target);
-      const btn=ev.target.querySelector('button[type=submit]'), label=btn.innerHTML;
+      const fd=new FormData(form), m=mode(), err=$('#goal-error'); err.textContent='';
+      let checkDays=null, checkDates=null, target=Number(fd.get('target'))||0;
+      if(m==='days'){
+        checkDays=fd.getAll('days').map(Number).filter(n=>n>=0&&n<=6);
+        if(!checkDays.length){err.textContent='Pick at least one day.';return;}
+      }
+      if(m==='dates'){
+        checkDates=[...new Set(fd.getAll('dates').map(String).filter(Boolean))].sort();
+        if(!checkDates.length){err.textContent='Add at least one date.';return;}
+        if(checkDates.some(d=>d<lo||d>hi)){err.textContent=`Every date has to fall ${span}, ${md(start)} – ${md(end)}.`;return;}
+        target=checkDates.length;
+      }
+      if(!(target>=1&&target<=31)){err.textContent='How many times? Between 1 and 31.';return;}
+      const btn=form.querySelector('button[type=submit]'), label=btn.innerHTML;
       btn.disabled=true; btn.textContent='Saving…';
-      const r=await dbAddGoal({period, title:fd.get('title'), target:fd.get('target')});
-      if(r.error){btn.disabled=false;btn.innerHTML=label;$('#goal-error').textContent=r.error.message;return;}
-      save(); closeModal(); render(false); toast('Goal set.');
+      const r=g?await dbUpdateGoal(g.id,{title:fd.get('title'),target,checkDays,checkDates})
+               :await dbAddGoal({period,title:fd.get('title'),target,checkDays,checkDates});
+      if(r.error){btn.disabled=false;btn.innerHTML=label;err.textContent=r.error.message;return;}
+      save(); closeModal(); render(false); toast(g?'Goal updated.':'Goal set.');
     });
   });
 }
@@ -2002,6 +2095,7 @@ function profilePage(){
       ${goalsPanel(state.goals,{own:true})}
     </header>
     <section class="pf-week"><p class="rail-label">Your week <span class="period-dates">${weekRangeLabel()}</span></p>${weekList(state.routines,{own:true})}</section>
+    ${goalHistory()}
     ${galleryStrip(state.gallery,{own:true})}
     <nav class="pf-tabs" aria-label="Your profile">
       ${[['sessions','Sessions'],['studios','Saved studios'],['going','Going to']].map(([k,label])=>
@@ -2308,7 +2402,8 @@ function logAttended(id){
     withIds:[],went:Math.max(1,(p.going||[]).length),fromPlan:p.id});
   state.logged=[...(state.logged||[]),id];
   if(typeof dbAddSession==='function'){
-    dbPush(dbAddSession(state.posts[state.posts.length-1]),'that session');
+    const post=state.posts[state.posts.length-1];
+    dbPush(dbAddSession(post).then(r=>{if(r&&r.data&&r.data.id)post.id=r.data.id;return r;}),'that session');
     dbPush(dbAddPlan({id,title:p.title,cat:p.cat,place:p.place,start:p.start,dur:p.dur}),'your week');
     dbPush(dbAnswerPlan(id),'the answer');
   }
@@ -2338,56 +2433,66 @@ function shrinkImage(file,maxW=900){return new Promise(res=>{
       res(c.toDataURL('image/jpeg',.75));};
     img.onerror=()=>res('');img.src=fr.result;};
   fr.onerror=()=>res('');fr.readAsDataURL(file);});}
-function postActivity(pre){
+/* Your own sessions can be changed after they are posted: the same form,
+   filled in, saving over the original. */
+function editSession(id){
+  const p=(state.posts||[]).find(x=>String(x.id)===String(id));
+  if(!p){toast('That session could not be found. Refresh and try again.');return;}
+  postActivity(null,p);
+}
+function postActivity(pre,edit){
   postPhoto='';
-  const dur0=Math.round(Number(pre&&pre.dur)||45);
+  let keepPhoto=!!(edit&&edit.photo);
+  const dur0=Math.round(Number(edit?edit.duration:(pre&&pre.dur))||45);
+  const miles0=edit?(parseFloat(edit.distance)||''):'';
+  const act0=edit?edit.activity:(pre&&pre.cat);
   const friends=(state.connections||[]).map(id=>personById(id)).filter(Boolean);
   const v=(x)=>escapeHTML(x||'');
-  openModal(pre?'Log this session':'Log a session',
-   `<p class="small" style="margin-bottom:20px">${pre?'Everything from your plan is filled in. Change anything you like.':'This is saved to your profile.'}</p>
+  openModal(edit?'Edit this session':pre?'Log this session':'Log a session',
+   `<p class="small" style="margin-bottom:20px">${edit?'Change anything, then save.':pre?'Everything from your plan is filled in. Change anything you like.':'This is saved to your profile.'}</p>
     <form id="post-form">
       <div class="field"><label for="post-title">Name this session</label>
-        <input id="post-title" name="title" required maxlength="70" value="${v(pre&&pre.title)}" placeholder="A lunchtime walk with a friend"></div>
+        <input id="post-title" name="title" required maxlength="70" value="${v(edit?edit.title:(pre&&pre.title))}" placeholder="A lunchtime walk with a friend"></div>
       <div class="field"><label for="post-activity">Activity</label>
-        <input id="post-activity" name="activity" maxlength="40" value="${v(pre&&pre.cat)}" placeholder="Pilates" list="post-cats">
+        <input id="post-activity" name="activity" maxlength="40" value="${v(act0)}" placeholder="Pilates" list="post-cats">
         <datalist id="post-cats">${JOIN_FORMS.filter(x=>x!==JOIN_ANY.forms&&x!=='Other').map(c=>`<option>${escapeHTML(c)}</option>`).join('')}</datalist></div>
       <div class="field"><label for="post-place">Where</label>
-        <input id="post-place" name="place" maxlength="60" value="${v(pre&&pre.place)}" placeholder="Club Pilates Dupont"></div>
+        <input id="post-place" name="place" maxlength="60" value="${v(edit?edit.place:(pre&&pre.place))}" placeholder="Club Pilates Dupont"></div>
       <fieldset class="interest-fieldset"><legend>How long</legend>
         <div class="post-pair">
           <label class="post-unit"><input id="post-hours" name="hours" type="number" inputmode="numeric" min="0" max="23" step="1" value="${Math.floor(dur0/60)}"><span>hours</span></label>
           <label class="post-unit"><input id="post-minutes" name="minutes" type="number" inputmode="numeric" min="0" max="59" step="1" value="${dur0%60}"><span>minutes</span></label>
         </div></fieldset>
-      <div class="field" id="post-distance-field"${isDistanceActivity(pre&&pre.cat)?'':' hidden'}><label for="post-distance">Distance <span class="field-optional">Optional</span></label>
-        <div class="post-pair"><label class="post-unit"><input id="post-distance" name="distance" type="number" inputmode="decimal" min="0" max="500" step="0.01" placeholder="6.2"><span>miles</span></label></div>
+      <div class="field" id="post-distance-field"${isDistanceActivity(act0)?'':' hidden'}><label for="post-distance">Distance <span class="field-optional">Optional</span></label>
+        <div class="post-pair"><label class="post-unit"><input id="post-distance" name="distance" type="number" inputmode="decimal" min="0" max="500" step="0.01" placeholder="6.2" value="${miles0}"><span>miles</span></label></div>
         <p class="field-eg">For runs, walks, hikes and rides. Leave it blank if you did not track it.</p></div>
       <div class="field"><label for="post-description">How was it?</label>
-        <textarea id="post-description" name="description" maxlength="400" placeholder="Share a little about your ritual."></textarea></div>
+        <textarea id="post-description" name="description" maxlength="400" placeholder="Share a little about your ritual.">${v(edit&&edit.description)}</textarea></div>
       <div class="field"><label for="post-photo">A photo <span class="field-optional">Optional</span></label>
-        <div class="photo-drop" id="post-drop" data-has="0">
+        <div class="photo-drop" id="post-drop" data-has="${keepPhoto?1:0}">
           <input id="post-photo" type="file" accept="image/*" class="visually-hidden">
           <div class="photo-empty"><p class="photo-lede">Drag a photo here, or <button type="button" class="plain-link" id="post-pick">choose a file</button>.</p></div>
-          <div class="photo-editor"><figure class="post-shot"><img id="post-preview" alt="Your photo"></figure>
+          <div class="photo-editor"><figure class="post-shot"><img id="post-preview" alt="Your photo"${keepPhoto?` src="${v(edit.photo)}"`:''}></figure>
             <p class="photo-swap"><button type="button" class="plain-link" id="post-repick">Choose another</button>
               <button type="button" class="plain-link" id="post-unpick">Remove</button></p></div>
         </div></div>
-      <fieldset class="interest-fieldset"><legend>Who you went with <span class="field-optional">Optional</span></legend>
+      ${edit?'<p class="small">Who you went with cannot be changed here yet.</p>':`<fieldset class="interest-fieldset"><legend>Who you went with <span class="field-optional">Optional</span></legend>
         ${friends.length
           ? `<div class="check-grid">${friends.map(p=>
               `<label class="check-box"><input type="checkbox" name="withIds" value="${escapeHTML(p.id)}"><span>${escapeHTML(p.name)}</span></label>`).join('')}</div>`
           : '<p class="small">You can tag the people you have connected to. Connect with someone first and they appear here.</p>'}
-      </fieldset>
+      </fieldset>`}
       <p id="post-error" class="field-error" role="alert"></p>
-      <div class="dialog-actions"><button class="button small" type="submit">Post activity</button></div>
+      <div class="dialog-actions"><button class="button small" type="submit">${edit?'Save changes':'Post activity'}</button></div>
     </form>`,
    ()=>{
      const drop=$('#post-drop'), file=$('#post-photo'), prev=$('#post-preview');
      const take=async f=>{const d=await shrinkImage(f);
        if(!d){$('#post-error').textContent='That file could not be read as an image.';return;}
-       postPhoto=d;prev.src=d;drop.dataset.has='1';$('#post-error').textContent='';};
+       postPhoto=d;keepPhoto=false;prev.src=d;drop.dataset.has='1';$('#post-error').textContent='';};
      $('#post-pick')?.addEventListener('click',()=>file.click());
      $('#post-repick')?.addEventListener('click',()=>file.click());
-     $('#post-unpick')?.addEventListener('click',()=>{postPhoto='';file.value='';drop.dataset.has='0';});
+     $('#post-unpick')?.addEventListener('click',()=>{postPhoto='';keepPhoto=false;file.value='';drop.dataset.has='0';});
      file.addEventListener('change',()=>{if(file.files?.[0])take(file.files[0]);});
      ['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('is-over');}));
      ['dragleave','dragend'].forEach(t=>drop.addEventListener(t,e=>{
@@ -2404,6 +2509,24 @@ function postActivity(pre){
        const minutes=Math.round((Number(f.hours)||0)*60+(Number(f.minutes)||0));
        if(minutes<1){$('#post-error').textContent='How long was it? Add hours, minutes or both.';return;}
        const miles=!distField.hidden&&Number(f.distance)>0?Math.round(Number(f.distance)*100)/100:0;
+       if(edit){
+         /* changed only if a new photo was chosen, or one it had was removed */
+         const photoChanged=!!postPhoto||(!!edit.photo&&!keepPhoto);
+         Object.assign(edit,{title:String(f.title).trim(),activity:String(f.activity||'').trim(),
+           place:String(f.place||'').trim(),duration:minutes,distance:miles?`${miles} mi`:'',
+           description:String(f.description||'').trim()});
+         if(photoChanged&&!postPhoto){edit.photo='';edit.photoPath='';}
+         if(typeof dbUpdateSession==='function')dbPush((async()=>{
+           if(photoChanged&&postPhoto){
+             const path=await dbUploadPhoto(postPhoto,'session');
+             if(!path)return {error:{message:'The photo could not be uploaded.'}};
+             edit.photoPath=path;edit.photo=await dbPhotoUrl(path);render(false);}
+           return dbUpdateSession(edit,{photoChanged});
+         })(),'those changes');
+         if(photoChanged&&postPhoto)edit.photo=postPhoto;
+         save();closeModal();render(false);toast('Session updated.');
+         return;
+       }
        const withIds=[...e.target.querySelectorAll('input[name="withIds"]:checked')].map(i=>i.value);
        state.posts.push({title:String(f.title).trim(),activity:String(f.activity||'').trim(),
          place:String(f.place||'').trim(),duration:minutes,distance:miles?`${miles} mi`:'',
@@ -2416,8 +2539,10 @@ function postActivity(pre){
          const post=state.posts[state.posts.length-1];
          dbPush((async()=>{
            if(postPhoto){const path=await dbUploadPhoto(postPhoto,'session');
-             if(path)post.photo=path;}
+             if(path){post.photo=path;post.photoPath=path;}}
            const r=await dbAddSession(post);
+           /* keep the id, so the session can be edited without a reload */
+           if(r&&r.data&&r.data.id)post.id=r.data.id;
            if(post.photo&&!/^data:/.test(post.photo))post.photo=await dbPhotoUrl(post.photo);
            render(false); return r;
          })(),'that session');
@@ -2657,7 +2782,7 @@ function initPageMotion(){
   revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('is-revealed');revealObserver.unobserve(entry.target);}}),{threshold:.08,rootMargin:'0px 0px -30px 0px'});
   targets.forEach(el=>{el.classList.add('will-reveal');revealObserver.observe(el);});
 }
-function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':if(signedIn()){location.replace('#/feed');return;}html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'check-email':html=checkEmailPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'profile':html=profilePage();break;case 'member':html=memberPage(id);if(typeof ensureMember==='function')ensureMember(id);break;case 'feed':html=feedPage();break;case 'find':html=findPage();break;case 'messages':html=messagesPage();break;case 'settings':html=settingsPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=privacyPage();break;case 'terms':html=termsPage();break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you','check-email':'Check your email',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',profile:'Your circle',member:'A member',feed:'Feed',find:'Find your people',messages:'Messages',settings:'Settings',book:'Book this class',privacy:'Your privacy',terms:'Terms of service'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#auth-form'))bindAuth();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='find'){$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();runSearch();});if(typeof dbRoutineMatches==='function'&&state.roomMatches===undefined){state.roomMatches=[];dbRoutineMatches().then(()=>{if(location.hash==='#/find')render(false);});}if(state.found===undefined||state.found===null)runSearch();}if(path==='messages'){$('#msg-form')?.addEventListener('submit',e=>{e.preventDefault();sendMessage(e.target);});const b=$('#msg-body');if(b)b.scrollTop=b.scrollHeight;if(msgThread&&typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);}/* Fetch on arrival, not on every render — render() re-runs this block, so an
+function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':if(signedIn()){location.replace('#/feed');return;}html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'check-email':html=checkEmailPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'profile':html=profilePage();break;case 'member':html=memberPage(id);if(typeof ensureMember==='function')ensureMember(id);break;case 'feed':html=feedPage();break;case 'find':html=findPage();break;case 'messages':html=messagesPage();break;case 'settings':html=settingsPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=privacyPage();break;case 'terms':html=termsPage();break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you','check-email':'Check your email',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',profile:'Your circle',member:'A member',feed:'Feed',find:'Find your people',messages:'Messages',settings:'Settings',book:'Book this class',privacy:'Your privacy',terms:'Terms of service'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#auth-form'))bindAuth();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='find'){$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();runSearch();});if(typeof dbRoutineMatches==='function'&&state.roomMatches===undefined){state.roomMatches=[];dbRoutineMatches().then(()=>{if(location.hash==='#/find')render(false);});}if(state.found===undefined||state.found===null)runSearch();}if(path==='profile'&&signedIn()&&!goalHistoryLoaded&&typeof dbLoadGoalHistory==='function'){goalHistoryLoaded=true;dbLoadGoalHistory().then(r=>{if(r===null)state.goalHistory=null;if(location.hash==='#/profile')render(false);});}if(path==='messages'){$('#msg-form')?.addEventListener('submit',e=>{e.preventDefault();sendMessage(e.target);});const b=$('#msg-body');if(b)b.scrollTop=b.scrollHeight;if(msgThread&&typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);}/* Fetch on arrival, not on every render — render() re-runs this block, so an
    unguarded fetch-then-render is an infinite loop. The flag clears when you
    leave, so coming back fetches again. */
 if(path!=='feed')feedFetched=false;
@@ -2686,7 +2811,7 @@ case 'book-new':bookChoose(t.dataset.id,'new');break;
 case 'book-plan':bookChoose(t.dataset.id,'plan');break;
 case 'ex-zoom':exZoom(t.dataset.dir);break;
 case 'ex-reset':ex={...ex,cat:'All',members:false,query:'',venue:null};render(false);break;
-case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':{const nowOn=!state.saved.includes(id);state.saved=nowOn?[...state.saved,id]:state.saved.filter(x=>x!==id);if(typeof dbSetStudio==='function')dbPush(dbSetStudio(id,nowOn),'that studio');save();render(false);}toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':pendingPlans().length?attendModal():postActivity();break;case 'post-new':closeModal();postActivity();break;case 'attend-yes':logAttended(t.dataset.id);break;case 'attend-no':skipAttended(t.dataset.id);break;case 'finish-next':{const n=(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start)[0];if(n){n.start=Date.now()-(n.dur+5)*60000;save();render(false);toast('Moved into the past. The + now has something to ask you.');}break;}case 'attend-more':{const p=takePlan(t.dataset.id);closeModal();postActivity(p);break;}case 'show-friends':friendsModal();break;case 'show-requests':requestsModal();break;case 'edit-bio':bioModal();break;case 'add-gallery':addGalleryPhoto();break;case 'add-routine':routineModal(t.dataset.id);break;case 'add-goal':goalModal(t.dataset.id);break;case 'remove-goal':removeGoal(t.dataset.id);break;case 'goal-yes':answerGoal(t.dataset.id,t.dataset.day,true);break;case 'goal-no':answerGoal(t.dataset.id,t.dataset.day,false);break;case 'remove-routine':removeRoutine(t.dataset.id);break;case 'open-photo':{const who=(location.hash||'').startsWith('#/member/')?personById(location.hash.split('/')[2]):null;openLightbox(who?(who.gallery||[]):(state.gallery||[]),Number(t.dataset.index)||0);break;}case 'photo-prev':lightboxAt=(lightboxAt-1+lightboxOf.length)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'photo-next':lightboxAt=(lightboxAt+1)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'remove-photo':removeGalleryPhoto(t.dataset.id);break;case 'edit-photo':photoModal();break;case 'accept-request':exConnect(t.dataset.id);break;case 'decline-request':respondToRequest(t.dataset.id,'declined');break;case 'withdraw-request':respondToRequest(t.dataset.id,'withdrawn');break;case 'remove-friend':respondToRequest(t.dataset.id,'removed');break;case 'msg-open':msgThread=t.dataset.id;render(false);if(typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);break;case 'log-out':dbSignOut().then(()=>{$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Signed out.');location.hash='#/';render(false);});break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':toast('Added to your plan. In the live product this books you alongside them.');break;case 'session-talk':toast('Comments are part of this design. Writing one is not wired up in the preview yet.');break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':{const v=t.dataset.id;findActivities=findActivities.includes(v)?findActivities.filter(x=>x!==v):[...findActivities,v];runSearch();break;}case 'edit-profile':editProfileModal();break;case 'person-menu':personMenu(t.dataset.id,t.dataset.name);break;case 'report-person':closeModal();reportModal(t.dataset.id,t.dataset.name);break;case 'block-person':closeModal();blockConfirm(t.dataset.id,t.dataset.name);break;case 'block-confirm':doBlock(t.dataset.id,t.dataset.name);break;case 'unblock-person':doUnblock(t.dataset.id,t.dataset.name);break;case 'toggle-show-age':toggleShowAge(t.checked);break;case 'export-data':exportMyData(t);break;case 'delete-account':deleteAccountModal();break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
+case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':{const nowOn=!state.saved.includes(id);state.saved=nowOn?[...state.saved,id]:state.saved.filter(x=>x!==id);if(typeof dbSetStudio==='function')dbPush(dbSetStudio(id,nowOn),'that studio');save();render(false);}toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':pendingPlans().length?attendModal():postActivity();break;case 'post-new':closeModal();postActivity();break;case 'edit-session':editSession(t.dataset.id);break;case 'attend-yes':logAttended(t.dataset.id);break;case 'attend-no':skipAttended(t.dataset.id);break;case 'finish-next':{const n=(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start)[0];if(n){n.start=Date.now()-(n.dur+5)*60000;save();render(false);toast('Moved into the past. The + now has something to ask you.');}break;}case 'attend-more':{const p=takePlan(t.dataset.id);closeModal();postActivity(p);break;}case 'show-friends':friendsModal();break;case 'show-requests':requestsModal();break;case 'edit-bio':bioModal();break;case 'add-gallery':addGalleryPhoto();break;case 'add-routine':routineModal(t.dataset.id);break;case 'add-goal':goalModal(t.dataset.id);break;case 'edit-goal':goalModal(null,t.dataset.id);break;case 'remove-goal':removeGoal(t.dataset.id);break;case 'goal-yes':answerGoal(t.dataset.id,t.dataset.day,true);break;case 'goal-no':answerGoal(t.dataset.id,t.dataset.day,false);break;case 'remove-routine':removeRoutine(t.dataset.id);break;case 'open-photo':{const who=(location.hash||'').startsWith('#/member/')?personById(location.hash.split('/')[2]):null;openLightbox(who?(who.gallery||[]):(state.gallery||[]),Number(t.dataset.index)||0);break;}case 'photo-prev':lightboxAt=(lightboxAt-1+lightboxOf.length)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'photo-next':lightboxAt=(lightboxAt+1)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'remove-photo':removeGalleryPhoto(t.dataset.id);break;case 'edit-photo':photoModal();break;case 'accept-request':exConnect(t.dataset.id);break;case 'decline-request':respondToRequest(t.dataset.id,'declined');break;case 'withdraw-request':respondToRequest(t.dataset.id,'withdrawn');break;case 'remove-friend':respondToRequest(t.dataset.id,'removed');break;case 'msg-open':msgThread=t.dataset.id;render(false);if(typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);break;case 'log-out':dbSignOut().then(()=>{$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Signed out.');location.hash='#/';render(false);});break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':toast('Added to your plan. In the live product this books you alongside them.');break;case 'session-talk':toast('Comments are part of this design. Writing one is not wired up in the preview yet.');break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':{const v=t.dataset.id;findActivities=findActivities.includes(v)?findActivities.filter(x=>x!==v):[...findActivities,v];runSearch();break;}case 'edit-profile':editProfileModal();break;case 'person-menu':personMenu(t.dataset.id,t.dataset.name);break;case 'report-person':closeModal();reportModal(t.dataset.id,t.dataset.name);break;case 'block-person':closeModal();blockConfirm(t.dataset.id,t.dataset.name);break;case 'block-confirm':doBlock(t.dataset.id,t.dataset.name);break;case 'unblock-person':doUnblock(t.dataset.id,t.dataset.name);break;case 'toggle-show-age':toggleShowAge(t.checked);break;case 'export-data':exportMyData(t);break;case 'delete-account':deleteAccountModal();break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
 $('#menu-button').addEventListener('click',()=>{const open=$('#menu-panel').hidden;$('#menu-panel').hidden=!open;$('#menu-button').setAttribute('aria-expanded',String(open));});
 bindAccountMenu();
 document.addEventListener('click',e=>{if(!e.target.closest('.site-header')){$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');}});

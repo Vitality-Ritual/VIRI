@@ -205,6 +205,7 @@ const rowToSession = r => ({
   distance: r.distance || '',
   description: r.note || '',
   photo: r.photo_path || '',
+  photoPath: r.photo_path || '',
   went: r.went_count || 1,
   withIds: r.withIds || [],
   date: r.happened_at,
@@ -262,6 +263,25 @@ async function dbAddSession(p){
       p.withIds.map(id => ({ session_id: data.id, profile_id: id })));
   }
   return { data, error };
+}
+
+/* Editing a logged session. Who was tagged is left alone: tags are saved but
+   not yet read back, so there is nothing reliable to show or change. The photo
+   column is only written when the photo actually changed. */
+async function dbUpdateSession(p, { photoChanged = false } = {}){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  if (!p.id) return { error: { message: 'That session is still saving. Try again in a moment.' } };
+  const row = {
+    title: p.title,
+    activity: p.activity || null,
+    place: p.place || null,
+    duration_min: Number(p.duration) || null,
+    distance: p.distance || null,
+    note: p.description || null
+  };
+  if (photoChanged) row.photo_path = p.photoPath || null;
+  return written(c.from('sessions').update(row).eq('id', p.id).eq('profile_id', authUser.id),
+    'Those changes could not be saved.');
 }
 
 async function dbAddPlan(plan){
@@ -1108,6 +1128,7 @@ async function dbLoadGoals(profileId){
       return scoreGoal({
         id: g.id, period: g.period, periodStart: g.period_start,
         title: g.title, target: g.target, createdAt: g.created_at,
+        checkDays: g.check_days || null, checkDates: g.check_dates || null,
         answers: Object.fromEntries(mine.map(k => [k.on_date, !!k.done]))
       });
     });
@@ -1116,7 +1137,28 @@ async function dbLoadGoals(profileId){
   return out;
 }
 
-async function dbAddGoal({ period, title, target }){
+/* Every goal you have set whose week or month is over, newest first. The
+   current period's goals stay in state.goals; this is the record behind them. */
+async function dbLoadGoalHistory(){
+  const c = db(); if (!c || !authUser) return [];
+  const { data: goals, error } = await c.from('goals').select('*')
+    .eq('profile_id', authUser.id).order('period_start', { ascending: false }).limit(300);
+  if (error) return null;
+  const past = (goals || []).filter(g => g.period_start !== periodStart(g.period));
+  let checks = [];
+  if (past.length) {
+    const { data } = await c.from('goal_checkins').select('goal_id,on_date,done').in('goal_id', past.map(g => g.id));
+    checks = data || [];
+  }
+  state.goalHistory = past.map(g => scoreGoal({
+    id: g.id, period: g.period, periodStart: g.period_start, title: g.title, target: g.target,
+    createdAt: g.created_at,
+    answers: Object.fromEntries(checks.filter(k => k.goal_id === g.id).map(k => [k.on_date, !!k.done]))
+  }));
+  return state.goalHistory;
+}
+
+async function dbAddGoal({ period, title, target, checkDays = null, checkDates = null }){
   const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
   const text = String(title || '').trim();
   if (!text) return { error: { message: 'Give the goal a name.' } };
@@ -1124,13 +1166,33 @@ async function dbAddGoal({ period, title, target }){
   if (have >= GOALS_PER_PERIOD) return { error: { message: `Three ${period === 'week' ? 'weekly' : 'monthly'} goals is the limit. Remove one first.` } };
   const { data, error } = await c.from('goals').insert({
     profile_id: authUser.id, period, period_start: periodStart(period),
-    title: text, target: Number(target) || 1
+    title: text, target: Number(target) || 1,
+    /* only sent when used, so an every-day goal still saves before 016 is run */
+    ...(checkDays ? { check_days: checkDays } : {}),
+    ...(checkDates ? { check_dates: checkDates } : {})
   }).select().maybeSingle();
+  if (error && /check_(days|dates)/.test(error.message || '')) return { error: { message: 'Asking on chosen days needs the latest database update (016). Pick "Every day" for now.' } };
   if (error) return { error };
   state.goals = [...(state.goals || []), scoreGoal({
     id: data.id, period, periodStart: data.period_start, title: text,
-    target: Number(target) || 1, answers: {}, createdAt: data.created_at || new Date().toISOString()
+    target: Number(target) || 1, answers: {}, createdAt: data.created_at || new Date().toISOString(),
+    checkDays, checkDates
   })];
+  return { data: true };
+}
+
+/* Changing a goal after it is set: its name, its target, or when to ask. */
+async function dbUpdateGoal(id, { title, target, checkDays = null, checkDates = null }){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const text = String(title || '').trim();
+  if (!text) return { error: { message: 'Give the goal a name.' } };
+  const row = { title: text, target: Number(target) || 1, check_days: checkDays, check_dates: checkDates };
+  const { error } = await written(c.from('goals').update(row).eq('id', id).eq('profile_id', authUser.id),
+    'That goal could not be changed.');
+  if (error) return { error: /check_(days|dates)|schema cache/.test(error.message || '')
+    ? { message: 'Goals can be edited once the latest database update (016) is run.' } : error };
+  const g = (state.goals || []).find(x => x.id === id);
+  if (g) { Object.assign(g, { title: text, target: Number(target) || 1, checkDays, checkDates }); scoreGoal(g); }
   return { data: true };
 }
 
@@ -1163,7 +1225,15 @@ async function dbCheckIn(goalId, onDate, done){
    the later of the period's start and the day the goal was set: a monthly goal
    set on the 4th used to be asked about the 1st, 2nd and 3rd. A goal with no
    recorded start (an old cached copy) asks about nothing until reloaded. */
+/* Whether a goal is asked about on a given day: every day, on chosen weekdays,
+   or on chosen dates. Asked the morning after, as ever. */
+function goalAsksOn(g, d){
+  if (g.checkDates && g.checkDates.length) return g.checkDates.includes(asDate(d));
+  if (g.checkDays && g.checkDays.length) return g.checkDays.includes(d.getDay());
+  return true;
+}
 function goalsAwaitingAnswer(){
+
   const today = new Date(); today.setHours(0,0,0,0);
   const out = [];
   for (const g of state.goals || []) {
@@ -1173,6 +1243,7 @@ function goalsAwaitingAnswer(){
     if (set > from) from.setTime(set.getTime());
     for (let d = new Date(from); d < today; d.setDate(d.getDate() + 1)) {
       const day = asDate(d);
+      if (!goalAsksOn(g, d)) continue;
       if ((g.answers || {})[day] === undefined) { out.push({ goal: g, day }); break; }
     }
   }

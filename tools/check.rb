@@ -38,7 +38,6 @@ Encoding.default_internal = Encoding::UTF_8
 
 ROOT   = ENV['VIRI_ROOT'] || File.expand_path('..', __dir__)   # VIRI_ROOT: point at a copy, for testing the checks
 SITE   = File.join(ROOT, 'dist-elevated')
-LIVE   = 'https://raw.githubusercontent.com/Vitality-Ritual/ViRi/gh-pages'
 JSC    = '/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc'
 JS     = %w[app.js db.js explore-data.js]
 CACHED = %w[app.js db.js explore-data.js styles.css]
@@ -59,10 +58,17 @@ def in_comment?(s, i)
   !!(s[line_start...i] =~ %r{(^|[^:'"`])//})
 end
 
+# Read the live copy through the GitHub API, not raw.githubusercontent.com: the
+# raw host caches for minutes, so straight after a deploy it served the previous
+# version and the cache-stamp check passed when it should have failed.
+TOKEN_FILE = File.expand_path('~/.config/viri/gh_token.txt')
 def live(name)
   @live ||= {}
   return @live[name] if @live.key?(name)
-  out, _err, st = Open3.capture3('curl', '-sf', '-m', '20', "#{LIVE}/#{name}")
+  args = ['curl', '-sf', '-m', '20', '-H', 'Accept: application/vnd.github.raw']
+  args += ['-H', "Authorization: token #{File.read(TOKEN_FILE).strip}"] if File.exist?(TOKEN_FILE)
+  args << "https://api.github.com/repos/Vitality-Ritual/ViRi/contents/#{name}?ref=gh-pages"
+  out, _err, st = Open3.capture3(*args)
   @live[name] = st.success? ? out.force_encoding('UTF-8') : nil
 end
 
