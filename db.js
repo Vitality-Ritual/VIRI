@@ -1107,7 +1107,7 @@ async function dbLoadGoals(profileId){
       const mine = checks.filter(k => k.goal_id === g.id);
       return scoreGoal({
         id: g.id, period: g.period, periodStart: g.period_start,
-        title: g.title, target: g.target,
+        title: g.title, target: g.target, createdAt: g.created_at,
         answers: Object.fromEntries(mine.map(k => [k.on_date, !!k.done]))
       });
     });
@@ -1129,7 +1129,7 @@ async function dbAddGoal({ period, title, target }){
   if (error) return { error };
   state.goals = [...(state.goals || []), scoreGoal({
     id: data.id, period, periodStart: data.period_start, title: text,
-    target: Number(target) || 1, answers: {}
+    target: Number(target) || 1, answers: {}, createdAt: data.created_at || new Date().toISOString()
   })];
   return { data: true };
 }
@@ -1159,12 +1159,18 @@ async function dbCheckIn(goalId, onDate, done){
 }
 
 /* The oldest day since a goal began that has not been answered yet, so the
-   prompt catches up rather than only ever asking about yesterday. */
+   prompt catches up rather than only ever asking about yesterday. "Began" is
+   the later of the period's start and the day the goal was set: a monthly goal
+   set on the 4th used to be asked about the 1st, 2nd and 3rd. A goal with no
+   recorded start (an old cached copy) asks about nothing until reloaded. */
 function goalsAwaitingAnswer(){
   const today = new Date(); today.setHours(0,0,0,0);
   const out = [];
   for (const g of state.goals || []) {
     const from = new Date(g.periodStart + 'T00:00:00');
+    const set = g.createdAt ? new Date(g.createdAt) : new Date(today);
+    set.setHours(0,0,0,0);
+    if (set > from) from.setTime(set.getTime());
     for (let d = new Date(from); d < today; d.setDate(d.getDate() + 1)) {
       const day = asDate(d);
       if ((g.answers || {})[day] === undefined) { out.push({ goal: g, day }); break; }
