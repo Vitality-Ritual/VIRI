@@ -338,6 +338,9 @@ strong{font-weight:500}
 .goal-history .goal.is-met .goal-count{color:var(--ink)}
 .session-edit{margin-left:10px;font-size:12.5px}
 .session-delete{margin-right:auto;font-size:12.5px;color:#9d4137}
+.auth-forgot{margin:-8px 0 0;font-size:13px}
+.auth-forgot a{border-bottom:1px solid var(--line-2);color:var(--muted)}
+.auth-sent{margin:18px 0;font-size:15px;line-height:1.7;color:var(--ink)}
 .session-thread{border-top:1px solid var(--line);margin-top:14px;padding-top:12px}
 .comment{margin-bottom:12px}
 .comment-head{margin:0;font-size:13px;color:var(--ink)}

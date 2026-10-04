@@ -69,7 +69,7 @@ function dbClaimUrlSession(){
   if (/access_token=|error_description=|type=recovery/.test(h)) {
     const failed = /error/.test(h);
     history.replaceState(null, '', location.pathname + location.search);
-    return failed ? 'error' : 'claimed';
+    return failed ? 'error' : (/type=recovery/.test(h) ? 'recovery' : 'claimed');
   }
   return null;
 }
@@ -107,6 +107,30 @@ async function dbSignIn(email, password){
   const res = await c.auth.signInWithPassword({ email, password });
   if (!res.error) { authUser = res.data.user; await dbLoadProfile(); }
   return res;
+}
+
+/* Forgotten passwords. The email's link comes back to the bare site with
+   #access_token=…&type=recovery, which dbClaimUrlSession recognises, and the
+   app opens the "choose a new password" page signed in for that one purpose.
+   The request answers the same way whether or not the address has an
+   account, so the form cannot be used to find out who is a member. */
+async function dbSendPasswordReset(email){
+  const c = db(); if (!c) return { error: { message: 'Not connected to the server.' } };
+  const addr = String(email || '').trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(addr)) return { error: { message: 'Enter the email address you signed up with.' } };
+  const { error } = await c.auth.resetPasswordForEmail(addr, { redirectTo: location.origin + location.pathname });
+  if (error && /rate|seconds|too many/i.test(error.message || ''))
+    return { error: { message: 'Too many tries just now. Wait a minute and try again.' } };
+  return { data: true };
+}
+
+async function dbUpdatePassword(password){
+  const c = db();
+  if (!c || !authUser) return { error: { message: 'That link has expired or has already been used. Ask for a new one.' } };
+  const { error } = await c.auth.updateUser({ password });
+  if (error) return { error: /different|same/i.test(error.message || '')
+    ? { message: 'Choose a password different from your old one.' } : error };
+  return { data: true };
 }
 
 async function dbSignOut(){
