@@ -157,31 +157,23 @@
   }
   var VENUES = [
     /* Washington, DC */
-    V('dc-cl-nv', 'Club Pilates', 'dc', 'Navy Yard', -77.0022, 38.8772, 'Pilates'),
     V('dc-cb-nm', 'CycleBar', 'dc', 'NoMa', -77.0033, 38.9046, 'Cycling'),
     /* New York */
-    V('ny-cl-wb', 'Club Pilates', 'nyc', 'Williamsburg', -73.9580, 40.7150, 'Pilates'),
     V('ny-cb-fl', 'CycleBar', 'nyc', 'Flatiron', -73.9925, 40.7412, 'Cycling'),
     V('ny-cb-nd', 'CycleBar', 'nyc', 'NoMad', -73.9841, 40.7439, 'Cycling'),
     V('ny-cb-ue', 'CycleBar', 'nyc', 'Upper East Side', -73.9625, 40.7665, 'Cycling'),
     V('ny-cb-nh', 'CycleBar', 'nyc', 'NoHo', -73.9902, 40.7299, 'Cycling'),
     /* Los Angeles */
-    V('la-cl-sl', 'Club Pilates', 'la', 'Silver Lake', -118.2716, 34.0862, 'Pilates'),
     V('la-cb-so', 'CycleBar', 'la', 'Sherman Oaks', -118.4526, 34.1512, 'Cycling'),
     V('la-cb-cc', 'CycleBar', 'la', 'Culver City', -118.4122, 34.0065, 'Cycling'),
     /* Miami */
-    V('mi-cl-wy', 'Club Pilates', 'mia', 'Wynwood', -80.1988, 25.8022, 'Pilates'),
     /* Boston */
-    V('bo-cl-sp', 'Club Pilates', 'bos', 'Seaport', -71.0438, 42.3516, 'Pilates'),
     V('bo-cb-ar', 'CycleBar', 'bos', 'Somerville', -71.0791, 42.3916, 'Cycling'),
     /* Chicago */
-    V('ch-cl-wp', 'Club Pilates', 'chi', 'Wicker Park', -87.6752, 41.9082, 'Pilates'),
     V('ch-cb-rn', 'CycleBar', 'chi', 'River North', -87.6329, 41.8954, 'Cycling'),
     /* Philadelphia */
-    V('ph-cl-fi', 'Club Pilates', 'phl', 'Fishtown', -75.1306, 39.9724, 'Pilates'),
     V('ph-cb-cc', 'CycleBar', 'phl', 'Center City', -75.1673, 39.9487, 'Cycling'),
     /* Atlanta */
-    V('at-cl-wm', 'Club Pilates', 'atl', 'West Midtown', -84.4126, 33.7864, 'Pilates'),
     /* Barre3: every studio Barre3 lists inside these cities, read off its own
        finder at barre3.com/studio-locations on 4 Oct 2026. These replaced one
        invented studio per city, placed only so pins would not stack; none of
@@ -201,6 +193,94 @@
     V('ph-b3-rt', 'Barre3', 'phl', 'Rittenhouse', -75.1659, 39.9503, 'Barre'),
     V('at-b3-bh', 'Barre3', 'atl', 'Buckhead', -84.3898, 33.8025, 'Barre'),
     V('at-b3-bk', 'Barre3', 'atl', 'Brookhaven', -84.3316, 33.8270, 'Barre'),
+    /* Club Pilates: every open studio it lists inside these cities, 4 Oct 2026, read
+       off its studio pages and geocoded by the Census from each published address
+       (three it could not match were placed by hand). Left out: studios whose pages
+       say "coming soon", two just outside New York City, and one whose address the
+       geocoder put in the wrong ZIP. Earlier entries for the same studio kept their ids. */
+    /* Washington, DC */
+    V('dc-cl-georgetown', 'Club Pilates', 'dc', 'Georgetown', -77.0627, 38.9045, 'Pilates'),
+    V('dc-cl-logancircl', 'Club Pilates', 'dc', 'Logan Circle', -77.0320, 38.9120, 'Pilates'),
+    V('dc-cl-mountverno', 'Club Pilates', 'dc', 'Mount Vernon Triangle', -77.0161, 38.9014, 'Pilates'),
+    V('dc-cl-nv', 'Club Pilates', 'dc', 'Navy Yard', -77.0054, 38.8765, 'Pilates'),
+    V('dc-cl-tenleytown', 'Club Pilates', 'dc', 'Tenleytown', -77.0793, 38.9474, 'Pilates'),
+    /* New York */
+    V('ny-cl-astoria', 'Club Pilates', 'nyc', 'Astoria', -73.9255, 40.7616, 'Pilates'),
+    V('ny-cl-bayridge', 'Club Pilates', 'nyc', 'Bay Ridge', -74.0251, 40.6207, 'Pilates'),
+    V('ny-cl-clintonhil', 'Club Pilates', 'nyc', 'Clinton Hill', -73.9632, 40.6937, 'Pilates'),
+    V('ny-cl-cobblehill', 'Club Pilates', 'nyc', 'Cobble Hill', -73.9935, 40.6893, 'Pilates'),
+    V('ny-cl-downtownbr', 'Club Pilates', 'nyc', 'Downtown Brooklyn', -73.9791, 40.6855, 'Pilates'),
+    V('ny-cl-gramercy', 'Club Pilates', 'nyc', 'Gramercy', -73.9813, 40.7374, 'Pilates'),
+    V('ny-cl-harlem', 'Club Pilates', 'nyc', 'Harlem', -73.9542, 40.8039, 'Pilates'),
+    V('ny-cl-harlem2', 'Club Pilates', 'nyc', 'Harlem', -73.9419, 40.8063, 'Pilates'),
+    V('ny-cl-kingshighw', 'Club Pilates', 'nyc', 'Kings Highway', -73.9719, 40.6043, 'Pilates'),
+    V('ny-cl-midtowneas', 'Club Pilates', 'nyc', 'Midtown East', -73.9707, 40.7518, 'Pilates'),
+    V('ny-cl-midtownwes', 'Club Pilates', 'nyc', 'Midtown West', -73.9914, 40.7704, 'Pilates'),
+    V('ny-cl-millbasin', 'Club Pilates', 'nyc', 'Mill Basin', -73.9233, 40.6092, 'Pilates'),
+    V('ny-cl-parkslope', 'Club Pilates', 'nyc', 'Park Slope', -73.9719, 40.6763, 'Pilates'),
+    V('ny-cl-pennstatio', 'Club Pilates', 'nyc', 'Penn Station', -73.9891, 40.7529, 'Pilates'),
+    V('ny-cl-sheepshead', 'Club Pilates', 'nyc', 'Sheepshead Bay', -73.9525, 40.5868, 'Pilates'),
+    V('ny-cl-southslope', 'Club Pilates', 'nyc', 'South Slope', -73.9897, 40.6652, 'Pilates'),
+    V('ny-cl-tribeca', 'Club Pilates', 'nyc', 'Tribeca', -74.0094, 40.7141, 'Pilates'),
+    V('ny-cl-uppereasts', 'Club Pilates', 'nyc', 'Upper East Side', -73.9535, 40.7714, 'Pilates'),
+    V('ny-cl-uppereasts3', 'Club Pilates', 'nyc', 'Upper East Side', -73.9629, 40.7627, 'Pilates'),
+    V('ny-cl-uppereasts2', 'Club Pilates', 'nyc', 'Upper East Side', -73.9482, 40.7787, 'Pilates'),
+    V('ny-cl-upperwests', 'Club Pilates', 'nyc', 'Upper West Side', -73.9712, 40.7879, 'Pilates'),
+    V('ny-cl-westchelse', 'Club Pilates', 'nyc', 'West Chelsea', -74.0057, 40.7509, 'Pilates'),
+    V('ny-cl-wb', 'Club Pilates', 'nyc', 'Williamsburg', -73.9632, 40.7174, 'Pilates'),
+    /* Los Angeles */
+    V('la-cl-baldwinhil', 'Club Pilates', 'la', 'Baldwin Hills', -118.3557, 34.0199, 'Pilates'),
+    V('la-cl-brentwood', 'Club Pilates', 'la', 'Brentwood', -118.4650, 34.0539, 'Pilates'),
+    V('la-cl-burbank', 'Club Pilates', 'la', 'Burbank', -118.3097, 34.1818, 'Pilates'),
+    V('la-cl-culvercity', 'Club Pilates', 'la', 'Culver City', -118.3937, 34.0034, 'Pilates'),
+    V('la-cl-echopark', 'Club Pilates', 'la', 'Echo Park', -118.2587, 34.0773, 'Pilates'),
+    V('la-cl-glassellpa', 'Club Pilates', 'la', 'Glassell Park', -118.2348, 34.1123, 'Pilates'),
+    V('la-cl-glendale', 'Club Pilates', 'la', 'Glendale', -118.2551, 34.1505, 'Pilates'),
+    V('la-cl-lacienega', 'Club Pilates', 'la', 'La Cienega', -118.3762, 34.0908, 'Pilates'),
+    V('la-cl-littletoky', 'Club Pilates', 'la', 'Little Tokyo', -118.2433, 34.0502, 'Pilates'),
+    V('la-cl-marinadelr', 'Club Pilates', 'la', 'Marina Del Rey', -118.4377, 33.9845, 'Pilates'),
+    V('la-cl-miraclemil', 'Club Pilates', 'la', 'Miracle Mile', -118.3441, 34.0617, 'Pilates'),
+    V('la-cl-northholly', 'Club Pilates', 'la', 'North Hollywood', -118.3733, 34.1626, 'Pilates'),
+    V('la-cl-pacificpal', 'Club Pilates', 'la', 'Pacific Palisades', -118.5248, 34.0465, 'Pilates'),
+    V('la-cl-shermanoak', 'Club Pilates', 'la', 'Sherman Oaks', -118.4321, 34.1482, 'Pilates'),
+    V('la-cl-southpasad', 'Club Pilates', 'la', 'South Pasadena', -118.1504, 34.1134, 'Pilates'),
+    V('la-cl-tarzana', 'Club Pilates', 'la', 'Tarzana', -118.5415, 34.1711, 'Pilates'),
+    V('la-cl-valleyglen', 'Club Pilates', 'la', 'Valley Glen', -118.4166, 34.1867, 'Pilates'),
+    V('la-cl-westhollyw', 'Club Pilates', 'la', 'West Hollywood', -118.3495, 34.0907, 'Pilates'),
+    V('la-cl-westla', 'Club Pilates', 'la', 'West LA', -118.4313, 34.0388, 'Pilates'),
+    /* Miami */
+    V('mi-cl-brickell', 'Club Pilates', 'mia', 'Brickell', -80.1960, 25.7644, 'Pilates'),
+    V('mi-cl-coralgable', 'Club Pilates', 'mia', 'Coral Gables', -80.2575, 25.7498, 'Pilates'),
+    V('mi-cl-miamishore', 'Club Pilates', 'mia', 'Miami Shores', -80.1934, 25.8629, 'Pilates'),
+    V('mi-cl-wy', 'Club Pilates', 'mia', 'Midtown Miami', -80.1935, 25.8070, 'Pilates'),
+    V('mi-cl-southbeach', 'Club Pilates', 'mia', 'South Beach', -80.1414, 25.7939, 'Pilates'),
+    V('mi-cl-southmiami', 'Club Pilates', 'mia', 'South Miami', -80.2884, 25.7044, 'Pilates'),
+    /* Boston */
+    V('bo-cl-assemblyro', 'Club Pilates', 'bos', 'Assembly Row', -71.0778, 42.3921, 'Pilates'),
+    V('bo-cl-backbay', 'Club Pilates', 'bos', 'Back Bay', -71.0711, 42.3509, 'Pilates'),
+    V('bo-cl-brookline', 'Club Pilates', 'bos', 'Brookline', -71.1229, 42.3419, 'Pilates'),
+    V('bo-cl-newton', 'Club Pilates', 'bos', 'Newton', -71.1927, 42.3297, 'Pilates'),
+    /* Chicago */
+    V('ch-cl-edgebrook', 'Club Pilates', 'chi', 'Edgebrook', -87.7693, 42.0119, 'Pilates'),
+    V('ch-cl-lakeview', 'Club Pilates', 'chi', 'Lakeview', -87.6457, 41.9339, 'Pilates'),
+    V('ch-cl-lincolnpar', 'Club Pilates', 'chi', 'Lincoln Park', -87.6601, 41.9186, 'Pilates'),
+    V('ch-cl-logansquar', 'Club Pilates', 'chi', 'Logan Square', -87.7102, 41.9309, 'Pilates'),
+    V('ch-cl-northcente', 'Club Pilates', 'chi', 'North Center', -87.6791, 41.9548, 'Pilates'),
+    V('ch-cl-oakpark', 'Club Pilates', 'chi', 'Oak Park', -87.7929, 41.8886, 'Pilates'),
+    V('ch-cl-ravenswood', 'Club Pilates', 'chi', 'Ravenswood', -87.6763, 41.9689, 'Pilates'),
+    V('ch-cl-rivernorth', 'Club Pilates', 'chi', 'River North', -87.6328, 41.8956, 'Pilates'),
+    V('ch-cl-southloop', 'Club Pilates', 'chi', 'South Loop', -87.6307, 41.8730, 'Pilates'),
+    V('ch-cl-westloop', 'Club Pilates', 'chi', 'West Loop', -87.6510, 41.8817, 'Pilates'),
+    V('ch-cl-wp', 'Club Pilates', 'chi', 'Wicker Park', -87.6712, 41.9063, 'Pilates'),
+    /* Philadelphia */
+    V('ph-cl-rittenhous', 'Club Pilates', 'phl', 'Rittenhouse', -75.1678, 39.9497, 'Pilates'),
+    /* Atlanta */
+    V('at-cl-brookhaven', 'Club Pilates', 'atl', 'Brookhaven', -84.3154, 33.8856, 'Pilates'),
+    V('at-cl-buckhead', 'Club Pilates', 'atl', 'Buckhead', -84.3880, 33.8207, 'Pilates'),
+    V('at-cl-chastain', 'Club Pilates', 'atl', 'Chastain', -84.3809, 33.8740, 'Pilates'),
+    V('at-cl-inmanpark', 'Club Pilates', 'atl', 'Inman Park', -84.3492, 33.7568, 'Pilates'),
+    V('at-cl-tocohills', 'Club Pilates', 'atl', 'Toco Hills', -84.3101, 33.8153, 'Pilates'),
+    V('at-cl-vinings', 'Club Pilates', 'atl', 'Vinings', -84.4822, 33.8383, 'Pilates'),
     /* Pure Barre: every studio it lists inside these cities, 4 Oct 2026, from its studio
        pages and, where those were rate-limited, its own studio finder (Census-geocoded).
        Five earlier entries were the same studio and kept their ids; three matched none. */
