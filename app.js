@@ -1205,6 +1205,9 @@ function sessionStats(s){
   return `<div class="session-stats">${cells.map(([k,v])=>
     `<span><span class="session-k">${escapeHTML(k)}</span><span class="session-v">${escapeHTML(v)}</span></span>`).join('')}</div>`;
 }
+/* Your own sessions, and the samples shown on your own empty profile. Someone
+   else's session always arrives with an id that is not in your posts. */
+const sessionIsMine=(s,by)=>!by&&(!s.id||(state.posts||[]).some(x=>x.id===s.id));
 function sessionCard(s,by){
   if(s.ago===undefined)s=sessionView(s);
   return `<article class="session">
@@ -1220,7 +1223,7 @@ function sessionCard(s,by){
     ${s.img?`<figure class="session-shot"><img src="${/^(data:|https?:|blob:)/.test(s.img)?s.img:A+s.img}" alt="" loading="lazy"></figure>`:''}
     <div class="session-foot">
       ${s.withLine?`${whoStack(s.withIds)}<span class="small">with ${escapeHTML(s.withLine)}</span>`:''}
-      <button class="button small" data-action="session-join">Join ${by?'them':'me'} next time</button>
+      ${sessionIsMine(s,by)?'':`<button class="button small" data-action="session-join">Join them next time</button>`}
       <button class="plain-link session-talk" data-action="session-talk">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-8 8H5l-2 2V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z"/></svg>${s.comments||0}</button>
     </div>
@@ -2373,9 +2376,17 @@ function routineOccurrences(){
   }
   return out.sort((x,y)=>x.start-y.start);
 }
-/* routineOccurrences() only returns slots that are over, so nothing more to check here */
+/* A session already logged by hand that day, for the same activity, is the
+   same session the routine is asking about. Asking anyway made "I went" add
+   a second copy of a run that was already on the profile. */
+const loggedByHand=p=>{
+  const day=new Date(p.start).toDateString(), act=String(p.cat||'').trim().toLowerCase();
+  return !!act&&(state.posts||[]).some(x=>x.date&&new Date(x.date).toDateString()===day
+    &&String(x.activity||'').trim().toLowerCase()===act);
+};
+/* routineOccurrences() only returns slots that are over */
 const pendingPlans=()=>routineOccurrences()
-  .filter(p=>!(state.logged||[]).includes(p.id));
+  .filter(p=>!(state.logged||[]).includes(p.id)&&!loggedByHand(p));
 function attendModal(){
   const list=pendingPlans();
   if(!list.length)return postActivity();
@@ -2403,7 +2414,7 @@ function logAttended(id){
   state.logged=[...(state.logged||[]),id];
   if(typeof dbAddSession==='function'){
     const post=state.posts[state.posts.length-1];
-    dbPush(dbAddSession(post).then(r=>{if(r&&r.data&&r.data.id)post.id=r.data.id;return r;}),'that session');
+    dbPush(dbAddSession(post).then(r=>{if(r&&r.data&&r.data.id){post.id=r.data.id;render(false);}return r;}),'that session');
     dbPush(dbAddPlan({id,title:p.title,cat:p.cat,place:p.place,start:p.start,dur:p.dur}),'your week');
     dbPush(dbAnswerPlan(id),'the answer');
   }
@@ -2483,7 +2494,7 @@ function postActivity(pre,edit){
           : '<p class="small">You can tag the people you have connected to. Connect with someone first and they appear here.</p>'}
       </fieldset>`}
       <p id="post-error" class="field-error" role="alert"></p>
-      <div class="dialog-actions"><button class="button small" type="submit">${edit?'Save changes':'Post activity'}</button></div>
+      <div class="dialog-actions">${edit?'<button type="button" class="plain-link session-delete" id="post-delete">Delete this session</button>':''}<button class="button small" type="submit">${edit?'Save changes':'Post activity'}</button></div>
     </form>`,
    ()=>{
      const drop=$('#post-drop'), file=$('#post-photo'), prev=$('#post-preview');
@@ -2499,6 +2510,15 @@ function postActivity(pre,edit){
        if(t==='dragleave'&&drop.contains(e.relatedTarget))return;drop.classList.remove('is-over');}));
      drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('is-over');
        const f=e.dataTransfer?.files?.[0];if(f)take(f);});
+     /* two taps, so a stray one cannot remove a session */
+     $('#post-delete')?.addEventListener('click',async e=>{
+       const b=e.currentTarget;
+       if(b.dataset.armed!=='1'){b.dataset.armed='1';b.textContent='Tap again to delete';return;}
+       b.disabled=true;b.textContent='Deleting…';
+       const r=await dbDeleteSession(edit);
+       if(r.error){b.disabled=false;b.dataset.armed='';b.textContent='Delete this session';$('#post-error').textContent=r.error.message;return;}
+       save();closeModal();render(false);toast('Session deleted.');
+     });
      /* miles appear once the activity is one that has them */
      const distField=$('#post-distance-field');
      $('#post-activity').addEventListener('input',e=>{distField.hidden=!isDistanceActivity(e.target.value);});
