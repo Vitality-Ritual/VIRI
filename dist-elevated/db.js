@@ -256,6 +256,7 @@ async function dbLoadSessions(){
   await Promise.all(state.posts.map(async p => { p.photo = await dbPhotoUrl(p.photo); }));
   await dbAttachTags(state.posts);
   await dbLoadComments(state.posts.map(p => p.id));
+  await dbLoadLikes(state.posts.map(p => p.id));
 }
 
 async function dbLoadPlans(){
@@ -355,6 +356,32 @@ async function dbLoadComments(sessionIds){
   for (const r of data || []) state.comments[r.session_id].push(
     { id: r.id, sessionId: r.session_id, authorId: r.author_id, body: r.body, at: r.created_at });
   await dbPeople((data || []).map(r => r.author_id));
+}
+
+/* Likes: who has liked each session, seen by the same people as the session.
+   020's trigger tells the owner, once per person per session. */
+async function dbLoadLikes(sessionIds){
+  const c = db(); if (!c || !authUser) return;
+  const ids = [...new Set(sessionIds || [])].filter(Boolean);
+  state.likes = state.likes || {};
+  if (!ids.length) return;
+  const { data, error } = await c.from('session_likes').select('session_id,profile_id').in('session_id', ids);
+  if (error) return;                       /* before 020 the table does not exist */
+  for (const id of ids) state.likes[id] = [];
+  for (const r of data || []) state.likes[r.session_id].push(r.profile_id);
+  await dbPeople((data || []).map(r => r.profile_id));
+}
+
+async function dbSetLike(sessionId, on){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Sign in to like a session.' } };
+  if (on) {
+    const { error } = await c.from('session_likes').insert({ session_id: sessionId, profile_id: authUser.id });
+    if (error && error.code !== '23505') return { error: /session_likes|schema cache|does not exist/.test(error.message || '')
+      ? { message: 'Likes switch on once the latest database update (020) is run.' } : error };
+    return { data: true };
+  }
+  return written(c.from('session_likes').delete().eq('session_id', sessionId).eq('profile_id', authUser.id),
+    'That like could not be taken back.');
 }
 
 async function dbAddComment(sessionId, body){
@@ -583,6 +610,8 @@ async function dbExportData(){
   /* Comments you wrote. Before 018 the table does not exist, so nothing to add. */
   const comments = await c.from('session_comments').select('*').eq('author_id', authUser.id);
   out.session_comments = comments.error ? [] : (comments.data || []);
+  const likes = await c.from('session_likes').select('*').eq('profile_id', authUser.id);
+  out.session_likes = likes.error ? [] : (likes.data || []);
   const notes = await c.from('notifications').select('*').eq('recipient_id', authUser.id);
   out.notifications = notes.error ? [] : (notes.data || []);
 
@@ -1051,6 +1080,7 @@ async function dbLoadFeed(){
   }
   await dbAttachTags(out);
   await dbLoadComments(out.map(s => s.id));
+  await dbLoadLikes(out.map(s => s.id));
   state.feed = out;
   return out;
 }
