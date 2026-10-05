@@ -1879,6 +1879,37 @@ summary.pf-section-head::-webkit-details-marker{display:none}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
   clip:rect(0 0 0 0);white-space:nowrap;border:0}
 
+/* ---- guest passes (Explore tab, and the preview step of Add to your week) ---- */
+.ex-views{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 0}
+.view-tab{appearance:none;background:none;border:1px solid var(--line);font-family:var(--body);font-weight:300;
+  font-size:12.5px;letter-spacing:.06em;color:var(--muted);padding:9px 16px;cursor:pointer;transition:color .25s,border-color .25s,background .25s}
+.view-tab:hover{color:var(--cocoa);border-color:var(--line-2)}
+.view-tab.active{color:var(--cocoa);border-color:var(--cocoa);background:var(--paper)}
+.pass-view{padding:26px 0 70px}
+.pass-lead{margin:0 0 26px;max-width:62ch;font-size:14px;line-height:1.7;color:var(--muted)}
+.pass-h{font-size:13px;letter-spacing:.14em;text-transform:uppercase;font-weight:400;color:var(--cocoa);margin:30px 0 14px}
+.pass-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px}
+.pass-card{display:flex;flex-direction:column;gap:10px;background:var(--paper);border:1px solid var(--line);padding:18px}
+.pass-card.mine{grid-column:1/-1}
+.pass-who{display:flex;align-items:center;gap:11px;color:var(--ink);text-decoration:none}
+.pass-who b{font-weight:400}
+.pass-what{margin:0;font-size:14.5px;line-height:1.55;color:var(--ink)}
+.pass-what b{font-weight:400}
+.pass-card .small,.pass-card p{margin-top:0;margin-bottom:0}
+.pass-note-text{font-size:13.5px;line-height:1.55;color:var(--muted);font-style:italic}
+.pass-act{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:auto}
+.pass-status{font-size:12.5px;letter-spacing:.04em;color:var(--muted)}
+.pass-status.ok{color:var(--cocoa)}
+.pass-reqs{list-style:none;margin:2px 0 0;padding:0}
+.pass-reqs li{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-top:1px solid var(--line);font-size:14px}
+.pass-empty{margin:0;max-width:60ch}
+.pass-dates{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:7px;margin:0 0 16px}
+.pass-dates .check-box{justify-content:center;padding:10px 6px;text-align:center;font-size:13px}
+.pass-box{margin-top:18px;padding-top:6px;border-top:1px solid var(--line)}
+.pass-lead+.pass-dates{margin-top:0}
+.pass-box .pass-lead{margin:0 0 12px}
+.pass-preview{margin:0 0 6px}
+
 /* On the very smallest phones (320px) five 44px header icons are still ~10px too wide, so
    they narrow a little; the height, which is what a thumb needs, stays 44px. Last in the file
    on purpose: the 44px phone rule above it would otherwise win by coming later. */

@@ -130,6 +130,7 @@ function artDate(s){if(!s)return null;const [y,m,d]=s.split('-').map(Number);ret
 const fmtLong=s=>{const d=artDate(s);return d?d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'';};
 const fmtShort=s=>{const d=artDate(s);return d?d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';};
 const articles=[
+  {id:'fall-things-to-do',category:'Mindset',title:'8 Actually Interesting Ways to Keep Yourself Busy This Fall',titleLines:['8 Actually Interesting','Ways to Keep Yourself','Busy This Fall'],img:'',author:'Margaret Cole',date:'2026-10-05',desc:'Eight alternatives to scrolling and TV, from a wellness challenge to a book club.',body:`<p>Tired of scrolling or watching TV being your main pass-times?  Let’s talk about some alternatives to spice up your life this fall.</p><h2>1. Start a Fitness/Wellness Challenge</h2><p>It’s still the season of new beginnings (in my opinion), so commit to a fitness/wellness challenge, big or small.  Always wanted to try 75 Hard or a variation of this?  There’s still time left in the year.  Want to try waking up at 5am for a week?  It’s only a few days, test yourself to see if you can do it.  Been forgetting to drink enough water recently?  How about you try to drink 64 oz for 10 days straight.  The possibilities are endless, and testing yourself is such a fun way to occupy your mind—plus VIRI just built in a ‘goal setting’ feature, so we can help you track your progress along the way.</p><h2>2. Have AI Teach You Something</h2><p>I think most of us aren’t actually using AI to its full capacity.  I’ve found that AI can actually be fun when you learn to use it in the right ways.  Say you have a 30-minute commute to work each day.  Perhaps you put in your headphones, turn on the Claude voice feature, and then have it give you a 30-minute French lesson every morning on your way to work.  Want to take a personal finance class without spending thousands on registering through a college?  Have Claude create a one-semester curriculum with twice-weekly classes that you “attend.”  Want to create a business but don’t know where to start?  Have Claude walk you through every step.</p><h2>3. Start a Substack</h2><p>I know everyone has one nowadays but maybe it’s because typing out your thoughts, opinions, stories, and knowledge is incredibly healthy and beneficial for you.  Substack is free to join and you can design your page exactly how you like, write whatever you want, and decide who your target audience is.  Maybe your target audience is just you—that is completely okay!  Maybe your family and friends have all been asking how you’re doing and instead of writing the same text over and over again you decide it’s more fun to write a little blog, accompanied with pictures, and then send it out in a weekly newsletter to them.</p><h2>4. Create Better Organizational Systems</h2><p>Impossible to go through your email inbox because there are tens of thousands of messages in it?  Create folders and sort your emails into them over the course of a few weeks.  Unsubscribe from the annoying newsletters that keep clouding everything up.  Same goes for the files on your computer.</p><p>Hard to find things in your kitchen cabinets?  Spend an afternoon rearranging and re-shelving everything.  Messy closet?  First, go through all your clothes.  Next, you can restructure your shelf/cabinet labeling if it currently doesn’t make sense.  Decide the order in which you want to hang your hangers if everything seems too random right now.</p><h2>5. Learn How to Do a Beauty Service Yourself</h2><p>In my <a href="#/read/saving-money">money saving</a> article, one hack I listed was learning how to do your hair or nails yourself instead of paying for these services.  Teach yourself how to trim your dead ends in a few minutes with a Youtube tutorial.  Practice doing your own nails and once you’ve gotten the basics down learn more complicated designs like french tips, nail art, etc.  Maybe you can even make some money out of it by offering your services to others once you’ve gotten good enough.</p><h2>6. Plan Your Next Trip</h2><p>This can be real or fictional, take place in three months or three years.  Trip planning can be so fun and as delusional as you want it to be.  Have a week of PTO that you don’t know what to do with next year yet?  Why not brainstorm a few ideas, write out an itinerary for yourself, and spend some time researching a new place.</p><h2>7. Fall-Themed Cooking/Baking</h2><p>The vast majority of us already need to cook multiple times a week in order to get by as adults, but let’s bring back the fun in cooking/baking this season.  What are some ways that you can make your meals more fall?  Bored on a rainy Saturday?  Make some banana bread.  Try out a good pumpkin soup recipe.  The other day I saw chai chocolate chip cookies on a menu—if you try this one you have to let me know.  Plus coming back to your home smelling like fresh baked goods or soup is so underrated.</p><h2>8. Start a Book Club</h2><p>I often find myself saying that I want to read more, but without a built-in accountability structure, this often falls apart.  While it may take some effort to coordinate, find a book you’ve been wanting to read and ask a few friends if they want to get together to read it too.  This doesn’t have to be as daunting as reading an entire book each month—if work is super busy, you could set a goal of having read a few chapters a month and talking about it over coffee.  You can also do the same thing with a TV show or movie series you’ve been wanting to watch!</p>`},
   {id:'office-dressing',category:'Style',title:'What We’re Actually Wearing to the Office',titleLines:['What We’re Actually','Wearing to the Office'],img:'office-dressing.webp',author:'Annabel Green',date:'2026-10-03',desc:'Start with what you love, learn your office, and build from there.',body:`<p>Dressing for the office comes with a certain rigidity, and that&rsquo;s fine. The best-dressed people know the dress code and wear it well.</p><h2>Start With What You Love</h2><p>Open your closet and pull out the pieces you reach for most. Ask yourself why you like them: the way the trouser falls, the fabric, the color on your skin. Those answers will help guide your future purchases and help you find your own style.</p><h2>Where to Shop</h2><p>Ann Taylor is the go-to for classic, polished workwear, like a tailored sheath dress or a suiting set. Banana Republic does well with timeless pieces in quality fabrics like Italian wool. Tuckernuck adds a preppy touch. Stick to the classic cuts, since the trendier styles tend to lean &ldquo;elevated business casual.&rdquo;</p><h2>Find Your Neutrals</h2><p>Look at the range of colors in your own skin, from lightest to deepest. Clothes in that range, like ivory, camel, taupe, and espresso, may look good on you.</p><p>Seasons can also change your palette. The gloom of fall and winter invites deeper colors, like chocolate brown, and burgundy. Spring makes room for brighter shades, like soft pinks and light blues. Your neutrals stay the foundation, and the season decides how much color to layer on top.</p><h2>Trends Worth Borrowing</h2><ul><li><b>Eyelet blouses:</b> light and feminine, best in white or ivory.</li><li><b>All black:</b> a black turtleneck with black pants looks clean and sleek.</li><li><b>Soft bohemian:</b> flowing sleeves and earthy tones, kept muted and tailored.</li><li><b>French luxury:</b> think Balmain, with sharp shoulders and structured jackets.</li><li><b>The high-neck white blouse:</b> light, airy, and conservative.</li></ul><h2>The D.C. Dress Code</h2><p>Washington dresses conservatively, so keep your colors to navy, charcoal, black, ivory, and camel. The pant length matters too. A flowy wide-leg trouser goes with a heel. With ballet flats or loafer mules, choose a straighter or slightly cropped leg that ends at the ankle. Tailor each pair to the shoe you&rsquo;ll wear with it.</p><h2>Dressing Up the Not-Quite-Formal</h2><p>Pieces from outside the workwear aisle can work too. A conservative blouse from Zara pairs well with a formal trouser. Get a feel for how your office dresses before you start mixing, and take cues from the people you admire there.</p><h2>The Short List</h2><ul><li>Loafer mules</li><li>Flowy wide-leg trousers, tailored to the shoe</li><li>Ballet flats</li><li>A tailored sheath dress</li><li>A clean blazer</li><li>A black turtleneck</li><li>A high-neck white blouse</li><li>An eyelet blouse</li><li>A conservative blouse (Zara works)</li></ul><h2>The Bottom Line</h2><p>Modest cuts, conservative colors, quality staples, and a well-fitted hem look polished because they&rsquo;ve always worked. Start with what you love, learn your office, and build from there.</p>`},
  {id:'busy-personality-trait',category:'Mindset',title:'It’s Time to Stop Acting Like Being Busy is a Personality Trait',titleLines:['It’s Time to Stop','Acting Like Being Busy','is a Personality Trait'],img:'busy-desk.webp',author:'Margaret Cole',date:'2026-10-02',desc:'Five months into my first full-time job, I stopped calling myself busy — and my life finally felt under control.',body:`<p>I will admit, when I started my first full time job back in May, I probably said the words “I’m so busy” at least five times a day.  And to an extent, this was true—I was training for a marathon, cooking for myself, spending most of my day working, trying to manage my social life, and attempting to get 8 hours of sleep a night.  Objectively, at least 90% of my time awake was spent doing things, but back then, I didn’t actually understand what being busy meant.  In my mind, as you went up in the corporate ladder, you’d get paid more to do less, but boy was I wrong.</p><p>During my very first full team meeting roughly a week into starting my job, one of the firm’s top executives commended a director for having stayed at the office until 3 a.m. the previous night to finish a deck.  I was shocked, first at the fact that he had worked until 3 a.m. the night before, but more so that you would have never known unless this executive had pointed it out.  One thing I began to notice after this meeting was that I was actually the least busy person at my firm.  Objectively, every other analyst or director who had been at the firm longer than me had more work on their plate, but they just never actually said so.</p><p>Take my boss, as an example.  He is arguably the most busy person at my firm aside from the CEO.  Not only does he oversee almost every client portfolio that the firm has, but he also writes reports (something an analyst should be doing but that he simply enjoys), is in meetings all day long, takes international work trips multiple times a year, makes client pitches, and on top of all this he lives an hour commute from the office, has a wife and four children, and trains for Ironman triathlons every year.  Not once has he said to me “I’m so busy.”</p><p>After that first team meeting, I stopped saying I was busy at work.  Breaking the habit around friends was more difficult, although I have gotten better at this.  I noticed though whenever I would hang out with friends or try to get in touch with people, the phrase “work has been so busy” was constantly circulating through the air.  And whenever it did, I would get so frustrated and think to myself <em>I can’t believe they’re complaining about being busy when I do so much more than them.</em>  Imagine how my coworkers, imagine how that director felt hearing me say this during my very first week of work.</p><p>And now, almost five months into my job, I have gotten significantly busier than I was at the beginning, both professionally and personally—think about the fact that I am writing this article right now.  But the peculiar thing is that my life feels way more under control now than it did back then because I finally stopped thinking about myself as being busy.</p><p class="prose-break">Aside from the mindset shift of understanding the “busyness” of everyone else around you, defining your priorities is the most important next step here.  Now I simply see myself as fulfilling everything that I choose to prioritize on a day-to-day basis.</p><p>So, if I were starting this shift over again, I would define 3-5 key priorities that I currently want to dedicate my time towards.  A few ideas might be receiving a promotion, getting enough sleep, exercising, saving money, or developing a hobby.  Once you’ve defined your priorities, take a look at your calendar and ask yourself, <em>if someone were to look at my calendar, would they be able to identify what my priorities are?</em>  This is key.  Physically build your priorities into your schedule.  This doesn’t mean you have to put everything you do into an actual calendar, but ask yourself a few times a week, <em>did my time this week actually reflect my defined priorities?</em>  And if it didn’t, that’s a sign that you need to readjust something.</p><p>After learning these lessons, I can confidently say that I am not “so busy” anymore.  So the next time you sit down to catch up with your friend over coffee, I want you to ask yourself before you say the words, <em>would my boss, my CEO, or the humble director define themselves as “so busy” if I asked them how they were doing?</em></p>`},
  {id:'saving-money',category:'Mindset',title:'13 Ways I Save Money as a Post-Grad Girl Living on My Own',titleLines:['13 Ways I Save Money','as a Post-Grad Girl','Living on My Own'],img:'money-autumn.jpg',author:'Margaret Cole',date:'2026-10-01',desc:'The small decisions I make to save money while still living my best life.',body:`<p>I graduated from college four months ago and was able to immediately start renting my own studio apartment in Washington, DC with no financial assistance.  A high-paying job is not what made this possible — in fact, by the most recent metrics, I am considered lower-middle class.  The way I was able to do it was by making conscious decisions to save money both before I moved here and after I started working full time.  Here are 13 small ways I save money as a post-grad girl living on my own.</p><p>Let’s start with the basics.</p><h2>1. High-yield savings account (emergency fund)</h2><p>If your savings aren’t currently in a high-yield savings account (HYSA), it is time for you to immediately find a new bank and transfer them.  HYSAs give you roughly 10 times the annual interest rate a traditional bank does, and most of these accounts are completely free to open and incur no annual fee.  If you have $1,000 in your account, your bank will give you an additional $30 to $35 a year just for keeping your money there.  And while $30 isn’t very much, let’s say you have $20,000 in your account — that’s an additional $600 to $700 a year.  My HYSA also functions as my “emergency fund.”  An emergency fund is exactly what it sounds like: money set aside for unanticipated emergencies such as unexpected medical bills, car repair expenses, family travel, getting laid off from a job, etc.  Generally, your emergency fund should cover 3 to 6 months of your essential living expenses and it is recommended that you do not touch this money.  If you start building an emergency fund, specifically in a HYSA, you’re setting yourself up for success later down the line and giving yourself free money through annual interest rates.</p><h2>2. Brokerage account &amp; Roth IRA / 401(k)</h2><p>Once you’ve gotten #1 under your belt, investments are how you grow your additional money and prevent yourself from overspending.  Many banks have a built-in investing feature, so you can invest your money in the stock market within seconds, just by transferring it from your savings to a brokerage account.  If you are just getting into investing for the first time, the most low-risk way to grow your money is by investing it into mutual funds, such as the S&amp;P 500 (sometimes traded as VOO).  If you are looking for detailed instructions on how to invest in the S&amp;P and what the S&amp;P 500 is, let me know and I’ll write up an article for you.</p><p>Along these same lines, either enrolling in your company’s 401(k) program or opening a separate Roth IRA is another great way to accumulate wealth over a long period of time.  I would recommend having both a brokerage account and a Roth IRA/401(k), as they have different benefits to your long-term wealth.  There are many ways you can choose to invest your money, but my general preference is that every month, any money that exceeds my emergency fund cap gets split 50/50 and goes directly into my two investment accounts.</p><h2>3. Paying off your credit card in full every month</h2><p>This one is short and sweet.  You should not be spending money that you don’t have, and so if you don’t feel comfortable paying off your full credit card bill in a given month, that’s a sign that you’re spending too much money.</p><h2>4. Consider getting a roommate if you can’t afford your lifestyle</h2><p>Most of the young 20-somethings at my corporate office live with roommates, and honestly, I believe this is an incredibly lucrative financial decision.  Before you decide to live on your own, you need to ask yourself how much living alone is really worth to you.  While it is certainly inconvenient at times to accommodate your living conditions with someone else’s, you will literally save tens of thousands of dollars per year by splitting the cost of rent with someone else.  My rent, which I pay on my own, consumes over 40% of my salary, a percentage I frankly do not recommend for anyone trying to save money in their early 20s, so this is a tip I would think about deeply before you tie yourself down to a lease.</p><h2>5. Meal prepping</h2><p>I meal prep all of my lunches and dinners.  In a given week, I might go out to eat once, but most normal weeks I try to cook every meal on my own.  Depending on ingredient costs, by choosing to meal prep instead of buying your lunch out, you could be saving $15+ per meal.  Another expense to consider when trying to save money by meal prepping is how expensive your protein of choice is.  In terms of meat, your cheapest options are likely chicken and ground beef, followed by red meat and then various types of fish.</p><h2>6. Avoiding meal and grocery delivery services</h2><p>I have completely deleted these apps off my phone, because when they are on my phone I become too tempted to use them.  Delivery fees and taxes sometimes make a given meal on a delivery service app double what it would have been before, so instead of spending $10 on a coffee and pastry you might be spending $20.  While this might seem like a negligible amount one time, the reality is that it’s rarely ever just one time once you start using these services.</p><h2>7. Consider using public transit if the time is similar to Ubering</h2><p>Again, choosing convenience over your wallet is a slippery slope, so before I choose to Uber anywhere, I always check the time it would take to get to the given location by both car and public transit — and if the difference is negligible, I opt for public transit.</p><h2>8. Take your cards off Apple Pay</h2><p>This is one I struggle with, but using Apple Pay 100% makes me spend money more easily.  The act of physically taking out your card to pay for something forces you to actually think about a purchase you are about to make before you simply tap your phone.  Even though the difference is only seconds, I saved thousands on credit card bills last year by removing my card from Apple Pay.</p><h2>9. Turn on your banking notifications</h2><p>If your banking app sends you alerts when you spend money, turn on your notifications.  Although it may be annoying to constantly be alerted any time you spend a few bucks on coffee, groceries, etc., physically seeing the number in your account go down is often enough to prompt you to reconsider spending more.</p><h2>10. Don’t buy new clothes before you’ve gone through your wardrobe first</h2><p>I make it a priority to go through my closet roughly once every two months to evaluate the necessity of each piece of clothing I own.  I also force myself to be strict with buying new clothes by only having a set number of hangers and never buying more.  If I don’t have the hanger or closet space, I certainly don’t need the new item.</p><h2>11. Before buying a new item of clothing, ask how many outfits you can make with it</h2><p>If an item can only be worn logically with one specific pair of pants or one shirt, you likely wouldn’t benefit very much from buying it.  I always try to make sure I have at least 3 to 4 different items of clothing that I can wear a given top or bottom with before I consider buying it.</p><h2>12. Learn how to do cosmetic expenses yourself</h2><p>Beauty expenses such as getting your nails done or dyeing and cutting your hair add up massively over time.  I used to get my nails done once every three weeks and I ended up spending over $1,000 in a year on nails alone.  I eventually taught myself how to do my nails myself.  While this may take you a few weeks to learn, it’s a skill you can pick up quickly and it will save you thousands.  The same goes for your hair.  I used to get my hair professionally cut and dyed at a salon and it would often cost well over $200 per visit.  However, roughly a year ago, I decided to learn how to cut my hair myself from a simple 10-minute YouTube video and I have been trimming my hair for free ever since.  The same goes with a basic dye job, however, this can be a little more risky.  If you do your research and are very careful, you can turn this into another very cheap expense.</p><h2>13. Take advantage of free trials</h2><p>This one is specifically related to fitness class free trials.  Often, studios will have a first visit free or one-week free promotion in order to convince people to sign up for their service.  ClassPass also has an incredible offer where you can get your first month completely for free and trial up to 10 different workout classes during the month.  Before you choose to start paying for a workout service regularly, check if they have any promotions and take advantage of them.  In the past three months, I have not paid for a single workout class I have taken, all because of this hack.</p>`},
@@ -192,6 +193,7 @@ function readPage(id){if(id){const a=allArticles().find(x=>x.id===id);if(!a)retu
 /* No day, no time of day, no class: Explore lists studios now, and when
    somebody trains is something they tell us, not something we invent. */
 let ex={city:'dc',cat:'All',members:false,query:'',venue:null};
+let exView='studios';   /* 'studios' or 'passes': the two tabs under the city row */
 const exCity=()=>VIRI.cities.find(c=>c.id===ex.city)||VIRI.cities[0];
 const exVenue=id=>VIRI.venues.find(v=>v.id===id);
 const exPerson=id=>VIRI.people.find(p=>p.id===id);
@@ -539,16 +541,23 @@ function exList(){
 }
 
 /* ---- page ---- */
-function explorePage(){
-  return `<section class="page-head"><div class="wrap"><div class="page-head-row">
+function exHead(){return `<section class="page-head"><div class="wrap"><div class="page-head-row">
     <div>
     <h1>Every studio near you.<br>And who trains there.</h1>
     <p>Add the ones you go to, and VIRI finds the women who are in the room with you.</p></div>
-  </div></div></section>
-  <div class="wrap">
-    <div class="ex-cities" role="tablist" aria-label="City">${VIRI.cities.map(c=>
+  </div></div></section>`;}
+function exCityTabs(){return `<div class="ex-cities" role="tablist" aria-label="City">${VIRI.cities.map(c=>
       `<button role="tab" class="city-tab ${c.id===ex.city?'active':''}" data-action="ex-city" data-id="${c.id}"
         aria-selected="${c.id===ex.city}">${escapeHTML(c.name)}</button>`).join('')}</div>
+    <div class="ex-views" role="tablist" aria-label="What to look at">
+      <button role="tab" class="view-tab ${exView==='studios'?'active':''}" data-action="ex-view" data-view="studios" aria-selected="${exView==='studios'}">Studios</button>
+      <button role="tab" class="view-tab ${exView==='passes'?'active':''}" data-action="ex-view" data-view="passes" aria-selected="${exView==='passes'}">Available guest passes</button>
+    </div>`;}
+function explorePage(){
+  if(exView==='passes')return `${exHead()}<div class="wrap">${exCityTabs()}${passesView()}</div>`;
+  return `${exHead()}
+  <div class="wrap">
+    ${exCityTabs()}
     <div class="toolbar">
       <label class="search-field"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="m15 15 6 6"/></svg>
         <input type="search" id="ex-search" aria-label="Search studios" placeholder="A studio or a neighbourhood" value="${escapeHTML(ex.query)}"></label>
@@ -1821,7 +1830,7 @@ function weekList(routines,{own=false}={}){
   return `<ul class="week-list">${rs.map(r=>`<li>
     <div><strong>${escapeHTML(r.activity||r.venue||'Training')}</strong>
       <span class="small">${escapeHTML(WEEKDAYS[r.weekday])} &middot; ${escapeHTML(r.band)}${r.venue?' · '+escapeHTML(r.venue):''}</span></div>
-    ${own?`<span class="week-acts"><button class="plain-link" data-action="edit-routine" data-id="${escapeHTML(r.id)}">Edit</button><button class="plain-link" data-action="remove-routine" data-id="${escapeHTML(r.id)}">Remove</button></span>`:''}
+    ${own?`<span class="week-acts"><button class="plain-link" data-action="edit-routine" data-id="${escapeHTML(r.id)}">Edit</button><button class="plain-link" data-action="remove-routine" data-id="${escapeHTML(r.id)}">Remove</button><button class="plain-link" data-action="offer-pass" data-id="${escapeHTML(r.id)}">Guest pass</button></span>`:''}
   </li>`).join('')}</ul>
   ${own?`<button class="button small outline" data-action="add-routine">Add another</button>`:''}`;}
 
@@ -1901,16 +1910,10 @@ function routineModal(presetVenue,extra){
         toast(rest.length?`Updated, and added ${rest.length} more ${rest.length===1?'day':'days'}.`:'Updated.');
         return;
       }
-      btn.disabled=true; btn.textContent='Adding…';
-      const r=await dbAddRoutineDays({ venueId:String(fd.get('venueId')||''),
-        venueLabel:String(fd.get('venueLabel')||''), activity:String(fd.get('activity')||''),
-        days, band:String(fd.get('band')), joinedFrom:join.joinedFrom||'' });
-      if(r.error){btn.disabled=false;btn.innerHTML=label;$('#rt-error').textContent=r.error.message;return;}
-      if(typeof dbRoutineMatches==='function')await dbRoutineMatches();
-      const {added,duplicates}=r.data;
-      save(); closeModal(); render(false);
-      toast(added===1&&!duplicates ? 'Added to your week.'
-        : `Added ${added} ${added===1?'day':'days'} to your week.${duplicates?` ${duplicates} ${duplicates===1?'was':'were'} already there.`:''}`);
+      /* Nothing is saved yet: the next step shows how it will look, and is where
+         a guest pass can be offered. */
+      routinePreview({ venueId:String(fd.get('venueId')||''), venueLabel:String(fd.get('venueLabel')||''),
+        activity:String(fd.get('activity')||''), days, band:String(fd.get('band')) }, join);
     });
   });
 }
@@ -1920,6 +1923,224 @@ async function removeRoutine(id){
   if(r.error){toast(r.error.message);return;}
   if(typeof dbRoutineMatches==='function')await dbRoutineMatches();
   save(); render(false); toast('Removed.');
+}
+
+/* ===================== guest passes =====================
+   A member who has a guest pass she will not use lists it; another member asks
+   for it; the owner says yes or no; they arrange the rest between themselves.
+   VIRI does not hold, check or sell passes, and says so wherever one is offered.
+   For now every pass is visible to every signed-in member. */
+const PASS_TERMS='VIRI does not provide, check or sell guest passes, and the studio’s own rules apply. Arrange it directly with the member, and please never charge for a pass.';
+const passDateObj=iso=>{const [y,m,d]=String(iso).split('-').map(Number);return new Date(y,(m||1)-1,d||1);};
+const passWhen=p=>`${prettyDate(passDateObj(p.date))} &middot; ${escapeHTML(p.band)}`;
+/* the next four weeks' dates for the given weekdays, today included */
+function nextDates(weekdays){
+  const out=[], d0=new Date(); d0.setHours(0,0,0,0);
+  for(let i=0;i<28;i++){
+    const d=new Date(d0); d.setDate(d0.getDate()+i);
+    if(weekdays.includes(d.getDay()))out.push({iso:localDay(d),label:prettyDate(d)});
+  }
+  return out;
+}
+/* same rule routineModal uses to decide which studios are "near" her */
+function passCityId(venueId){
+  const v=((window.VIRI&&VIRI.venues)||[]).find(x=>x.id===venueId);
+  if(v)return v.city;
+  const cn=((state.profile&&state.profile.city)||'').toLowerCase();
+  const c=(VIRI.cities||[]).find(x=>cn&&cn.includes(x.name.split(',')[0].toLowerCase()));
+  return c?c.id:'';
+}
+function passFields(dates){
+  return `<fieldset class="interest-fieldset pass-box"><legend>Your guest pass</legend>
+    <p class="field-eg pass-lead">Which dates will you have it for? These are the next four weeks.</p>
+    <div class="pass-dates">${dates.map((d,i)=>`<label class="check-box"><input type="checkbox" name="passDate" value="${escapeHTML(d.iso)}"${i===0?' checked':''}><span>${escapeHTML(d.label)}</span></label>`).join('')}</div>
+    <div class="field"><label for="pass-spots">How many passes can you share?</label>
+      <select id="pass-spots" name="spots">${[1,2,3,4,5].map(n=>`<option>${n}</option>`).join('')}</select></div>
+    <div class="field"><label for="pass-note">A note <span class="field-optional">Optional</span></label>
+      <input id="pass-note" name="passNote" maxlength="200" placeholder="e.g. Works for any class that morning"></div>
+    <p class="field-eg">Every member signed in to VIRI can see this and ask you for it, and you decide who gets it. ${PASS_TERMS}</p></fieldset>`;
+}
+const readPassFields=form=>{const fd=new FormData(form);
+  return {dates:fd.getAll('passDate').map(String),spots:Number(fd.get('spots'))||1,note:String(fd.get('passNote')||'')};};
+
+/* Step two of adding to your week: how it will look, and the chance to offer a
+   guest pass. Nothing has been saved until the last button. */
+function routinePreview(v,join){
+  const hasPlace=!!String(v.venueLabel||'').trim();
+  const days=[...v.days].sort((a,b)=>a-b);
+  const dates=nextDates(days);
+  openModal('Here is how it will look',`<form id="rt-confirm">
+    <p class="dialog-copy">This is what goes into your week. Check it, then add it.</p>
+    <div class="rail-box pass-preview"><p class="rail-label">Your week <span class="period-dates">${weekRangeLabel()}</span></p>
+      ${days.map(d=>`<div class="rail-line"><b>${escapeHTML(WEEKDAYS[d])}</b> &middot; ${escapeHTML(v.band)}<br>${escapeHTML(v.activity||'Training')}${hasPlace?`<br><span class="small">${escapeHTML(v.venueLabel)}</span>`:''}</div>`).join('')}</div>
+    <p class="field-eg">This repeats every week.</p>
+    <div id="pass-offer" hidden>${passFields(dates)}</div>
+    ${hasPlace?'':'<p class="field-eg">To offer a guest pass, go back and say which studio it is for.</p>'}
+    <p id="rt-error" class="field-error" role="alert"></p>
+    <div class="dialog-actions">
+      <button class="button outline small" type="button" id="rt-back">Back</button>
+      <button class="button outline small" type="button" id="pass-toggle" aria-expanded="false"${hasPlace?'':' disabled'}>I have a guest pass</button>
+      <button class="button small" type="submit" id="rt-go">Add to my week</button>
+    </div></form>`,()=>{
+    let offering=false;
+    $('#rt-back').addEventListener('click',()=>routineModal(null,{activity:v.activity,venueLabel:v.venueLabel,venueId:v.venueId,
+      days:v.days,band:v.band,joinedFrom:join.joinedFrom||'',note:join.note||''}));
+    $('#pass-toggle').addEventListener('click',()=>{
+      offering=!offering;
+      $('#pass-offer').hidden=!offering;
+      $('#pass-toggle').textContent=offering?'No guest pass':'I have a guest pass';
+      $('#pass-toggle').setAttribute('aria-expanded',String(offering));
+      $('#rt-go').textContent=offering?'Add and list the pass':'Add to my week';
+    });
+    $('#rt-confirm').addEventListener('submit',async ev=>{
+      ev.preventDefault();
+      const btn=$('#rt-go'), label=btn.textContent, err=$('#rt-error');
+      const pass=offering?readPassFields(ev.target):null;
+      if(pass&&!pass.dates.length){err.textContent='Pick at least one date for the pass.';return;}
+      err.textContent=''; btn.disabled=true; btn.textContent='Adding…';
+      const r=await dbAddRoutineDays({venueId:v.venueId,venueLabel:v.venueLabel,activity:v.activity,days:v.days,band:v.band,joinedFrom:join.joinedFrom||''});
+      const already=!!r.error&&/already in your week/i.test(r.error.message);
+      if(r.error&&!(pass&&already)){btn.disabled=false;btn.textContent=label;err.textContent=r.error.message;return;}
+      if(!r.error&&typeof dbRoutineMatches==='function')await dbRoutineMatches();
+      let note='';
+      if(pass){
+        const pr=await dbCreateGuestPasses({venueId:v.venueId,venueLabel:v.venueLabel,cityId:passCityId(v.venueId),
+          activity:v.activity,band:v.band,...pass});
+        note=pr.error?` The guest pass was not listed: ${pr.error.message}`
+          :` Your guest pass is listed under Explore, Available guest passes.${pr.data.failure?` Some dates were not listed: ${pr.data.failure.message}`:''}`;
+      }
+      save(); closeModal(); render(false);
+      const added=r.error?0:r.data.added, dup=r.error?0:r.data.duplicates;
+      toast((r.error?'That was already in your week.'
+        :added===1&&!dup?'Added to your week.'
+        :`Added ${added} ${added===1?'day':'days'} to your week.${dup?` ${dup} ${dup===1?'was':'were'} already there.`:''}`)+note);
+    });
+  });
+}
+
+/* From a routine already in your week */
+function offerPassModal(id){
+  const r=(state.routines||[]).find(x=>x.id===id); if(!r)return;
+  if(!String(r.venue||'').trim()){toast('A guest pass needs a studio. Use Edit to say where this one is.');return;}
+  openModal('Offer a guest pass',`<form id="pass-form">
+    <p class="dialog-copy"><b>${escapeHTML(r.activity||'Training')}</b> &middot; ${escapeHTML(r.venue)}<br>${escapeHTML(WEEKDAYS[r.weekday])} &middot; ${escapeHTML(r.band)}</p>
+    ${passFields(nextDates([r.weekday]))}
+    <p id="pass-error" class="field-error" role="alert"></p>
+    <div class="dialog-actions"><button class="button outline small" type="button" data-action="close-modal">Cancel</button>
+      <button class="button small" type="submit">List the pass</button></div></form>`,()=>{
+    $('#pass-form').addEventListener('submit',async ev=>{
+      ev.preventDefault();
+      const pass=readPassFields(ev.target), err=$('#pass-error');
+      if(!pass.dates.length){err.textContent='Pick at least one date.';return;}
+      const btn=ev.target.querySelector('button[type=submit]'), label=btn.textContent;
+      err.textContent=''; btn.disabled=true; btn.textContent='Listing…';
+      const pr=await dbCreateGuestPasses({venueId:r.venueId,venueLabel:r.venue,cityId:passCityId(r.venueId),
+        activity:r.activity||'Training',band:r.band,...pass});
+      if(pr.error){btn.disabled=false;btn.textContent=label;err.textContent=pr.error.message;return;}
+      closeModal(); render(false);
+      toast((pr.data.duplicates?`Listed. ${pr.data.duplicates} ${pr.data.duplicates===1?'date was':'dates were'} already listed.`
+        :'Listed under Explore, Available guest passes.')+(pr.data.failure?` Some dates were not listed: ${pr.data.failure.message}`:''));
+    });
+  });
+}
+
+/* ---- the Explore tab ---- */
+const passOwnerLink=p=>{
+  const o=personById(p.ownerId)||{name:'A member'};
+  return `<a class="pass-who" href="#/member/${escapeHTML(p.ownerId)}"><span class="av-sm">${avatarFor(o)}</span><span><b>${escapeHTML(o.name)}</b>${o.area?`<br><span class="small">${escapeHTML(o.area)}</span>`:''}</span></a>`;
+};
+function passCard(p){
+  const ask=passBoard.asks[p.id], o=personById(p.ownerId)||{name:'A member'}, first=String(o.name||'her').split(' ')[0];
+  const act=!ask?`<button class="button small" data-action="pass-ask" data-id="${escapeHTML(p.id)}">Ask for this pass</button>`
+    :ask.status==='accepted'?`<span class="pass-status ok">She said yes</span> <a class="button small" href="#/messages" data-action="msg-open" data-id="${escapeHTML(p.ownerId)}">Message ${escapeHTML(first)}</a>`
+    :ask.status==='declined'?'<span class="pass-status">Not this time</span>'
+    :`<span class="pass-status">Requested</span> <button class="plain-link" data-action="pass-withdraw" data-id="${escapeHTML(ask.id)}">Withdraw</button>`;
+  return `<article class="pass-card">${passOwnerLink(p)}
+    <p class="pass-what"><b>${escapeHTML(p.venue)}</b><br>${escapeHTML(p.activity)} &middot; ${passWhen(p)}</p>
+    <p class="small">${p.left} ${p.left===1?'pass':'passes'} available</p>
+    ${p.note?`<p class="pass-note-text">&ldquo;${escapeHTML(p.note)}&rdquo;</p>`:''}
+    <div class="pass-act">${act}</div></article>`;
+}
+function myPassCard(p){
+  const reqs=passBoard.incoming.filter(q=>q.passId===p.id);
+  return `<article class="pass-card mine">
+    <p class="pass-what"><b>${escapeHTML(p.venue)}</b><br>${escapeHTML(p.activity)} &middot; ${passWhen(p)}</p>
+    <p class="small">${p.left} of ${p.spots} ${p.spots===1?'pass':'passes'} still available${p.note?` &middot; &ldquo;${escapeHTML(p.note)}&rdquo;`:''}</p>
+    ${reqs.length?`<ul class="pass-reqs">${reqs.map(q=>{
+      const who=personById(q.requesterId)||{name:'A member'};
+      return `<li><div><a href="#/member/${escapeHTML(q.requesterId)}"><b>${escapeHTML(who.name)}</b></a> asked for it${q.note?`<br><span class="small">&ldquo;${escapeHTML(q.note)}&rdquo;</span>`:''}</div>
+        <div class="pass-act">${q.status==='pending'
+          ?`<button class="button small" data-action="pass-answer" data-id="${escapeHTML(q.id)}" data-accept="1"${p.left<1?' disabled':''}>Say yes</button><button class="button small outline" data-action="pass-answer" data-id="${escapeHTML(q.id)}" data-accept="0">Not this time</button>`
+          :q.status==='accepted'?`<span class="pass-status ok">You said yes</span><a class="button small outline" href="#/messages" data-action="msg-open" data-id="${escapeHTML(q.requesterId)}">Message</a>`
+          :'<span class="pass-status">You said no</span>'}</div></li>`;}).join('')}</ul>`
+      :'<p class="small">Nobody has asked yet.</p>'}
+    <div class="pass-act"><button class="plain-link" data-action="pass-remove" data-id="${escapeHTML(p.id)}">Remove this pass</button></div></article>`;
+}
+function passesView(){
+  const city=exCity();
+  if(!signedIn())return `<section class="pass-view"><p class="pass-lead">Members share guest passes they will not use. Create your profile to see what is available near you.</p>${button('Create your profile','#/signup','small')}</section>`;
+  const b=passBoard;
+  if(!b.loaded)return '<section class="pass-view"><p class="small">Loading guest passes&hellip;</p></section>';
+  if(!b.ready)return '<section class="pass-view"><p class="small">Guest passes are not switched on yet.</p></section>';
+  const me=authUser&&authUser.id;
+  const mine=b.list.filter(p=>p.ownerId===me);
+  const open=b.list.filter(p=>p.ownerId!==me&&(!p.cityId||p.cityId===city.id)&&(p.left>0||b.asks[p.id]));
+  return `<section class="pass-view">
+    <p class="pass-lead">Members share the guest passes they will not use. Ask for one and the owner decides; the two of you arrange the rest. ${PASS_TERMS}</p>
+    ${mine.length?`<h2 class="pass-h">Yours</h2><div class="pass-grid">${mine.map(myPassCard).join('')}</div>`:''}
+    <h2 class="pass-h">Available in ${escapeHTML(city.name)}</h2>
+    ${open.length?`<div class="pass-grid">${open.map(passCard).join('')}</div>`
+      :`<p class="small pass-empty">No guest passes in ${escapeHTML(city.name)} right now. Got one you will not use? <button class="plain-link" data-action="add-routine">Add it to your week</button> and tap &ldquo;I have a guest pass&rdquo;.</p>`}
+  </section>`;
+}
+async function openPasses(passId){
+  exView='passes';
+  if(passId){const p=passBoard.list.find(x=>x.id===passId); if(p&&p.cityId)ex={...ex,city:p.cityId};}
+  if(location.hash.replace(/^#\/?/,'').split('/')[0]!=='explore'){location.hash='#/explore';}
+  passBoard.loaded=false; render(false);
+  await dbLoadGuestPasses();
+  if(exView==='passes'&&location.hash.replace(/^#\/?/,'').split('/')[0]==='explore')render(false);
+}
+function setExView(v){
+  if(v==='passes'){openPasses();return;}
+  exView='studios'; render(false);
+}
+function passAskModal(id){
+  const p=passBoard.list.find(x=>x.id===id); if(!p)return;
+  const o=personById(p.ownerId)||{name:'her'}, first=String(o.name).split(' ')[0];
+  openModal('Ask for this guest pass',`<form id="ask-form">
+    <p class="dialog-copy"><b>${escapeHTML(p.venue)}</b><br>${escapeHTML(p.activity)} &middot; ${passWhen(p)}</p>
+    <div class="field"><label for="ask-note">A note to ${escapeHTML(first)} <span class="field-optional">Optional</span></label>
+      <textarea id="ask-note" name="note" rows="3" maxlength="300" placeholder="Say hi, and anything she should know"></textarea></div>
+    <p class="field-eg">${escapeHTML(first)} decides, and nothing is promised until she says yes. Then you will see a Message button here to sort out the details. ${PASS_TERMS}</p>
+    <p id="ask-error" class="field-error" role="alert"></p>
+    <div class="dialog-actions"><button class="button outline small" type="button" data-action="close-modal">Cancel</button>
+      <button class="button small" type="submit">Send request</button></div></form>`,()=>{
+    $('#ask-form').addEventListener('submit',async ev=>{
+      ev.preventDefault();
+      const btn=ev.target.querySelector('button[type=submit]'), label=btn.textContent;
+      btn.disabled=true; btn.textContent='Sending…';
+      const r=await dbRequestPass(id,String(new FormData(ev.target).get('note')||''));
+      if(r.error){btn.disabled=false;btn.textContent=label;$('#ask-error').textContent=r.error.message;return;}
+      closeModal(); render(false); toast(`Request sent to ${first}.`);
+    });
+  });
+}
+async function withdrawPass(requestId){
+  const r=await dbWithdrawPassRequest(requestId);
+  if(r.error){toast(r.error.message);return;}
+  render(false); toast('Request withdrawn.');
+}
+async function answerPass(requestId,accept){
+  const r=await dbAnswerPassRequest(requestId,accept);
+  if(r.error){toast(r.error.message);return;}
+  render(false); toast(accept?'Said yes. Message her to sort out the details.':'Answered.');
+}
+async function removePass(btn,id){
+  if(btn.dataset.armed!=='1'){btn.dataset.armed='1';btn.textContent='Tap again to remove it';return;}
+  const r=await dbDeleteGuestPass(id);
+  if(r.error){toast(r.error.message);return;}
+  render(false); toast('Guest pass removed.');
 }
 
 /* Goals sit beside the details at the top of a profile, where somebody else
@@ -2259,7 +2480,7 @@ function profilePage(){
         <p class="rail-label">Your week <span class="period-dates">${weekRangeLabel()}</span></p>
         ${going.length?[...going].sort((a,b)=>a.weekday-b.weekday||(BAND_HOUR[a.band]??0)-(BAND_HOUR[b.band]??0)).map(r=>
           `<div class="rail-line"><b>${escapeHTML(WEEKDAYS[r.weekday])}</b> &middot; ${escapeHTML(r.band)}<br>${escapeHTML(r.activity||'Training')}${r.venue?`<br><span class="small">${escapeHTML(r.venue)}</span>`:''}
-            <span class="week-acts"><button class="plain-link" data-action="edit-routine" data-id="${escapeHTML(r.id)}">Edit</button><button class="plain-link" data-action="remove-routine" data-id="${escapeHTML(r.id)}">Remove</button></span></div>`).join('')
+            <span class="week-acts"><button class="plain-link" data-action="edit-routine" data-id="${escapeHTML(r.id)}">Edit</button><button class="plain-link" data-action="remove-routine" data-id="${escapeHTML(r.id)}">Remove</button><button class="plain-link" data-action="offer-pass" data-id="${escapeHTML(r.id)}">Guest pass</button></span></div>`).join('')
           :'<p class="small">Tell VIRI where you train and roughly when. That is how it finds the people who are there with you.</p>'}
         <button class="button small outline" data-action="add-routine">${going.length?'Add another':'Add to my week'}</button>
         <a class="text-link" href="#/explore">Find studios ${arrow}</a>
@@ -2552,6 +2773,8 @@ function noteText(n){
   if(n.kind==='tag')return `${who} said you went to <i>${escapeHTML(d.title||'a session')}</i> together`;
   if(n.kind==='like')return `${who} liked <i>${escapeHTML(d.title||'your session')}</i>`;
   if(n.kind==='join')return `${who} added your ${d.weekday!=null&&WEEKDAYS[d.weekday]?escapeHTML(WEEKDAYS[d.weekday])+' ':''}${escapeHTML(d.activity||'routine')}${d.place?` at ${escapeHTML(d.place)}`:''} to their week`;
+  if(n.kind==='pass_request')return `${who} asked for your guest pass${d.place?` at ${escapeHTML(d.place)}`:''}`;
+  if(n.kind==='pass_accept')return `${who} said yes to your guest pass request${d.place?` at ${escapeHTML(d.place)}`:''}`;
   return who;
 }
 function notificationsPage(){
@@ -2563,13 +2786,14 @@ function notificationsPage(){
         <span class="av-sm">${avatarFor(personById(n.actorId)||{name:'VIRI'})}</span>
         <span class="note-text"><span>${noteText(n)}</span><span class="small">${escapeHTML(prettyDate(n.at))}</span></span>
       </button></li>`).join('')}</ul>`
-      :'<p class="small">Nothing yet. When a friend likes or comments on one of your sessions, tags you in theirs, or adds your routine to their week, it shows up here.</p>'}
+      :'<p class="small">Nothing yet. When a friend likes or comments on one of your sessions, tags you in theirs, adds your routine to their week, or asks for a guest pass, it shows up here.</p>'}
   </section></div>`;
 }
 /* a comment opens its thread on your profile; a tag or a join opens the friend */
 function openNote(id){
   const n=(state.notifications||[]).find(x=>x.id===id); if(!n)return;
   if(n.sessionId)openThreads.add(String(n.sessionId));
+  if(n.kind==='pass_request'||n.kind==='pass_accept'){openPasses(n.passId);return;}
   if(n.kind==='comment'||n.kind==='like'){profileTab='sessions';goTo('#/profile');return;}
   goTo(`#/member/${n.actorId}`);
 }
@@ -2931,7 +3155,10 @@ function privacyPage(){return `<article class="article-detail legal">
 
   <h2>Who sees your sessions</h2>
   <p>Your sessions are visible to you and to your friends, and to nobody else. Friends can like a session and comment on it. You can delete any comment on your own sessions, and anyone can delete their own comments. Likes and comments are deleted when the session or the account is.</p>
-  <p>When a friend likes or comments on one of your sessions, says you went somewhere together, or adds one of your routines to their week, you get a notification inside VIRI.</p>
+  <p>When a friend likes or comments on one of your sessions, says you went somewhere together, adds one of your routines to their week, or asks for a guest pass you have offered, you get a notification inside VIRI.</p>
+
+  <h2>Guest passes</h2>
+  <p>If you offer a guest pass, it is visible to every member who is signed in to VIRI: your name and neighbourhood, the studio, the date, a rough time and any note you add. It is not visible to anyone who is not signed in. A member can ask you for it, and you decide. We keep the request and your answer until the pass or either account is deleted, or the date has long gone. VIRI does not provide, check or sell guest passes.</p>
 
   <h2>Why the optional fields matter</h2>
   <p>Your neighbourhood, your usual training times, the studios you save and the sessions you log together describe where you are likely to be, and when. That is the point of the product &mdash; it is how you find someone to train with &mdash; but it is genuinely sensitive, more so than it first appears.</p>
@@ -2955,7 +3182,7 @@ function privacyPage(){return `<article class="article-detail legal">
   <p>In <a href="#/settings">Settings</a>, at any time, without asking us:</p>
   <ul>
     <li><b>Download my data</b> gives you one file containing everything VIRI holds about you, with your photographs inside it rather than as links that expire.</li>
-    <li><b>Delete my account</b> removes your profile, sessions, goals, routines, plans, saved studios, messages, connections, comments, likes, notifications and photographs. It is immediate and we cannot undo it.</li>
+    <li><b>Delete my account</b> removes your profile, sessions, goals, routines, guest passes and requests for them, plans, saved studios, messages, connections, comments, likes, notifications and photographs. It is immediate and we cannot undo it.</li>
   </ul>
   <p>Depending on where you live you may have further rights &mdash; to correct information, to object to how it is used, or to complain to a regulator. Write to us and we will help.</p>
 
@@ -3006,6 +3233,7 @@ function termsPage(){return `<article class="article-detail legal">
   <p>VIRI shows you other members whose activities and training times overlap with yours, and lets you talk to them. That is all it is.</p>
   <p><b>We do not check who anybody is.</b> There is no identity verification, no background check, no vetting, and no screening of any kind. We do not confirm that a name is real, that a photograph is of the person using the account, or that anything written on a profile is true.</p>
   <p>We are not a party to anything you arrange with another member. We do not supervise meetings, we are not present at them, and we are not responsible for what members do.</p>
+  <p><b>Guest passes.</b> Members can offer guest passes they will not use, and ask each other for them. VIRI does not provide, check, hold or sell any pass, and cannot promise that a studio will honour one. Whether a pass is given, and how, is between the two members, and the studio’s own rules apply.</p>
   <p>We also do not run the studios or classes listed on VIRI, and we are not affiliated with them unless we say so. Check schedules, prices and requirements with the studio itself.</p>
 
   <h2 id="terms-meeting">6. Meeting other members</h2>
@@ -3035,7 +3263,7 @@ function termsPage(){return `<article class="article-detail legal">
     <li>harass, threaten, stalk or intimidate anybody</li>
     <li>post anything sexual, violent, hateful or discriminatory</li>
     <li>pretend to be someone else, or lie about who you are</li>
-    <li>use VIRI to advertise, recruit, sell or promote anything</li>
+    <li>use VIRI to advertise, recruit, sell or promote anything, which includes charging for a guest pass</li>
     <li>collect other members&rsquo; information, or share it outside VIRI</li>
     <li>use VIRI to arrange anything illegal</li>
     <li>try to break, overload or get around the security of the service</li>
@@ -3156,8 +3384,8 @@ else if(!feedFetched&&typeof dbLoadFeed==='function'){feedFetched=true;dbLoadFee
     if(btn)btn.disabled=false;
     if(r.error){toast(r.error.message);return;}
     form.reset();
-    toast(r.data==='check-email'?'Nearly there. Check your inbox and click the link to confirm.':r.data==='already'?'You are already on the list.':'You are on the list. Look out for the next one.');});if(path==='explore'){$('#ex-search').addEventListener('input',e=>{ex.query=e.target.value;exRefresh();});exBindMap();}}
-document.addEventListener('click',e=>{const t=e.target.closest('[data-action]');if(!t)return;const {action,id,index,category,view,kind,name,channel}=t.dataset;switch(action){case 'video-toggle':{const v=$('#'+(t.dataset.video||'about-video'));if(v.paused)v.play().catch(()=>toast('Video playback is unavailable in this browser.'));else v.pause();break;}case 'close-modal':closeModal();break;case 'join-back':joinStep=Math.max(0,joinStep-1);render(false);break;case 'studio-prev':studioIndex=Math.max(0,studioIndex-1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'studio-next':studioIndex=Math.min(STUDIO_LAST(),studioIndex+1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'ex-city':ex={...ex,city:t.dataset.id,venue:null};render(false);break;
+    toast(r.data==='check-email'?'Nearly there. Check your inbox and click the link to confirm.':r.data==='already'?'You are already on the list.':'You are on the list. Look out for the next one.');});if(path==='explore'&&$('#ex-search')){$('#ex-search').addEventListener('input',e=>{ex.query=e.target.value;exRefresh();});exBindMap();}}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-action]');if(!t)return;const {action,id,index,category,view,kind,name,channel}=t.dataset;switch(action){case 'video-toggle':{const v=$('#'+(t.dataset.video||'about-video'));if(v.paused)v.play().catch(()=>toast('Video playback is unavailable in this browser.'));else v.pause();break;}case 'close-modal':closeModal();break;case 'join-back':joinStep=Math.max(0,joinStep-1);render(false);break;case 'studio-prev':studioIndex=Math.max(0,studioIndex-1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'studio-next':studioIndex=Math.min(STUDIO_LAST(),studioIndex+1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'ex-view':setExView(t.dataset.view);break;case 'pass-ask':passAskModal(t.dataset.id);break;case 'pass-withdraw':withdrawPass(t.dataset.id);break;case 'pass-answer':answerPass(t.dataset.id,t.dataset.accept==='1');break;case 'pass-remove':removePass(t,t.dataset.id);break;case 'offer-pass':offerPassModal(t.dataset.id);break;case 'ex-city':ex={...ex,city:t.dataset.id,venue:null};render(false);break;
 
 case 'ex-cat':ex={...ex,cat:t.dataset.cat,cls:null};render(false);break;
 case 'ex-members':ex={...ex,members:!ex.members,cls:null};render(false);break;

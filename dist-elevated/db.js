@@ -421,7 +421,7 @@ async function dbLoadNotifications(){
     .order('created_at', { ascending: false }).limit(50);
   if (error) return;                      /* before 019 the table does not exist */
   state.notifications = (data || []).map(n => ({ id: n.id, kind: n.kind, actorId: n.actor_id,
-    sessionId: n.session_id, routineId: n.routine_id, detail: n.detail || {}, at: n.created_at, read: !!n.read_at }));
+    sessionId: n.session_id, routineId: n.routine_id, passId: n.pass_id, detail: n.detail || {}, at: n.created_at, read: !!n.read_at }));
   state.unseenNotes = state.notifications.filter(n => !n.read).length;
   await dbPeople(state.notifications.map(n => n.actorId));
 }
@@ -434,6 +434,114 @@ async function dbMarkNotificationsRead(){
   if (error) return { error };
   (state.notifications || []).forEach(n => { n.read = true; });
   state.unseenNotes = 0;
+  return { data: true };
+}
+
+/* ===================== guest passes (024) =====================
+   A member lists a pass she will not use; another member asks for it; the owner
+   says yes or no. VIRI holds none of it: no pass, no payment, no check. Kept in
+   plain variables rather than `state`, so a stale list is never saved to the
+   device and never shown to the next person who signs in on it. */
+const passBoard = { loaded: false, ready: true, list: [], asks: {}, incoming: [] };
+
+const localDay = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+async function dbLoadGuestPasses(){
+  const c = db(); if (!c || !authUser) { passBoard.loaded = true; return { error: { message: 'Not signed in.' } }; }
+  /* from yesterday, so a pass for today is still there whatever the time zone */
+  const from = new Date(); from.setDate(from.getDate() - 1);
+  const { data, error } = await c.from('guest_passes').select('*')
+    .gte('pass_date', localDay(from)).order('pass_date').order('created_at').limit(300);
+  if (error) { passBoard.ready = false; passBoard.loaded = true; passBoard.list = []; return { error }; }   /* before 024 */
+  passBoard.ready = true;
+  const today = localDay(new Date());
+  passBoard.list = (data || []).filter(r => r.pass_date >= today).map(r => ({
+    id: r.id, ownerId: r.owner_id, venueId: r.venue_id || '', venue: r.venue_label, cityId: r.city_id || '',
+    activity: r.activity, date: r.pass_date, band: r.time_band, spots: r.spots, left: r.spots_left,
+    note: r.note || '', createdAt: r.created_at
+  }));
+  const reqs = await c.from('guest_pass_requests').select('*').order('created_at');
+  passBoard.asks = {}; passBoard.incoming = [];
+  for (const q of reqs.data || []) {
+    const row = { id: q.id, passId: q.pass_id, requesterId: q.requester_id, note: q.note || '',
+                  status: q.status, at: q.created_at };
+    if (q.requester_id === authUser.id) passBoard.asks[q.pass_id] = row;
+    else passBoard.incoming.push(row);
+  }
+  passBoard.loaded = true;
+  await dbPeople([...passBoard.list.map(p => p.ownerId), ...passBoard.incoming.map(q => q.requesterId)]);
+  return { data: true };
+}
+
+/* One row per date, inserted one at a time so a date already listed is skipped
+   and counted instead of failing the lot. */
+async function dbCreateGuestPasses({ venueId, venueLabel, cityId, activity, band, dates, spots, note }){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const label = String(venueLabel || '').trim();
+  if (!label) return { error: { message: 'A guest pass needs a studio.' } };
+  const list = [...new Set(dates || [])].sort();
+  if (!list.length) return { error: { message: 'Pick at least one date.' } };
+  let added = 0, duplicates = 0, failure = null;
+  for (const date of list) {
+    const { error } = await c.from('guest_passes').insert({
+      owner_id: authUser.id, venue_id: venueId || null, venue_label: label, city_id: cityId || null,
+      activity, pass_date: date, time_band: band, spots: Number(spots) || 1,
+      spots_left: Number(spots) || 1, note: String(note || '').trim().slice(0, 200) || null
+    });
+    if (!error) added++;
+    else if (error.code === '23505') duplicates++;
+    else failure = failure || (/relation .* does not exist|schema cache/i.test(error.message || '')
+      ? { message: 'Guest passes are not switched on yet (the latest database update, 024, has not been run).' } : error);
+  }
+  if (!added && failure) return { error: failure };
+  if (!added) return { error: { message: 'That guest pass is already listed.' } };
+  await dbLoadGuestPasses();
+  return { data: { added, duplicates, failure } };
+}
+
+async function dbDeleteGuestPass(id){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const { error } = await written(c.from('guest_passes').delete().eq('id', id).eq('owner_id', authUser.id),
+    'That guest pass could not be removed.');
+  if (error) return { error };
+  passBoard.list = passBoard.list.filter(p => p.id !== id);
+  passBoard.incoming = passBoard.incoming.filter(q => q.passId !== id);
+  return { data: true };
+}
+
+async function dbRequestPass(passId, note){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const { data, error } = await c.from('guest_pass_requests')
+    .insert({ pass_id: passId, requester_id: authUser.id, note: String(note || '').trim().slice(0, 300) || null })
+    .select().maybeSingle();
+  if (error && error.code === '23505') return { error: { message: 'You have already asked for this one.' } };
+  if (error) return { error: { message: /row-level security/i.test(error.message || '')
+    ? 'That guest pass is no longer available.' : error.message } };
+  if (!data) return { error: { message: 'That request could not be sent.' } };
+  passBoard.asks[passId] = { id: data.id, passId, requesterId: authUser.id, note: data.note || '',
+                             status: data.status, at: data.created_at };
+  return { data: true };
+}
+
+async function dbWithdrawPassRequest(requestId){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const { error } = await written(c.from('guest_pass_requests').delete().eq('id', requestId).eq('requester_id', authUser.id),
+    'That request could not be withdrawn.');
+  if (error) return { error };
+  for (const k of Object.keys(passBoard.asks)) if (passBoard.asks[k].id === requestId) delete passBoard.asks[k];
+  return { data: true };
+}
+
+async function dbAnswerPassRequest(requestId, accept){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const { error } = await c.rpc('answer_pass_request', { p_request: requestId, p_accept: !!accept });
+  if (error) return { error: { message: error.message || 'That could not be saved.' } };
+  const q = passBoard.incoming.find(x => x.id === requestId);
+  if (q) {
+    q.status = accept ? 'accepted' : 'declined';
+    const p = passBoard.list.find(x => x.id === q.passId);
+    if (accept && p) p.left = Math.max(0, p.left - 1);
+  }
   return { data: true };
 }
 
@@ -674,6 +782,10 @@ async function dbExportData(){
   out.session_comments = comments.error ? [] : (comments.data || []);
   const likes = await c.from('session_likes').select('*').eq('profile_id', authUser.id);
   out.session_likes = likes.error ? [] : (likes.data || []);
+  const passes = await c.from('guest_passes').select('*').eq('owner_id', authUser.id);
+  out.guest_passes = passes.error ? [] : (passes.data || []);
+  const asks = await c.from('guest_pass_requests').select('*').eq('requester_id', authUser.id);
+  out.guest_pass_requests = asks.error ? [] : (asks.data || []);
   const notes = await c.from('notifications').select('*').eq('recipient_id', authUser.id);
   out.notifications = notes.error ? [] : (notes.data || []);
 
