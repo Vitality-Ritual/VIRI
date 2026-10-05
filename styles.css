@@ -362,6 +362,19 @@ strong{font-weight:500}
 .comment-form{display:flex;gap:8px;margin-top:10px}
 .comment-form input{flex:1;min-width:0}
 .week-acts{display:flex;gap:12px;flex:none}
+.mod-lede{margin:0 0 14px}
+.mod-h{font-family:var(--display);font-weight:400;font-size:1.1rem;color:var(--cocoa);margin:18px 0 10px}
+.mod-report{border:1px solid var(--line);background:var(--paper);padding:16px 18px;margin-bottom:12px}
+.mod-report.is-open{border-color:var(--line-2)}
+.mod-head,.mod-who,.mod-detail,.mod-outcome{margin:0 0 6px;font-size:14px;line-height:1.55}
+.mod-detail{color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}
+.mod-outcome{color:var(--muted)}
+.mod-acts{margin-top:10px}
+.mod-note{width:100%;margin-bottom:10px;font-size:14px}
+.mod-btns{display:flex;flex-wrap:wrap;gap:8px}
+.mod-danger{color:#9d4137;border-color:#9d4137}
+.mod-done summary{cursor:pointer;list-style:none}
+.mod-done summary::-webkit-details-marker{display:none}
 .session-like{display:inline-flex;align-items:center;gap:5px;color:var(--muted);font-size:13px}
 .session-like svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.6}
 .session-like.is-on{color:var(--grave)}
