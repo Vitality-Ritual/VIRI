@@ -857,12 +857,12 @@ function syncAccountLinks(){
     icon.innerHTML=on?`<span class="acc-av">${avatarFor(state.profile)}</span>${CHEV}`:HEADER_OUT.icon;
     icon.classList.toggle('account-button',on);
     icon.classList.toggle('icon-button',!on);
-    icon.setAttribute('aria-label',on?'Your account':'Sign up or log in');
+    icon.setAttribute('aria-label',on?(onPhone()?'Your account':'Your profile'):'Sign up or log in');
   }
   if(card)card.innerHTML=on
     ? `<p class="menu-label">${escapeHTML(state.profile.name)}</p><a href="#/profile">My profile</a><a href="#/settings">Settings</a><button class="plain-link" data-action="log-out">Log out</button>`
     : '';
-  if(icon){icon.setAttribute('aria-haspopup',on?'true':'false');if(!on)icon.removeAttribute('aria-expanded');else if(!icon.hasAttribute('aria-expanded'))icon.setAttribute('aria-expanded','false');}
+  if(icon){const menu=on&&onPhone();icon.setAttribute('aria-haspopup',menu?'true':'false');if(!menu)icon.removeAttribute('aria-expanded');else if(!icon.hasAttribute('aria-expanded'))icon.setAttribute('aria-expanded','false');}
   if(panel&&!on){panel.hidden=true;icon?.setAttribute('aria-expanded','false');}
   /* the phone carries the same four destinations as the signed-in top nav */
   const bar=$('#tabbar');
@@ -883,10 +883,12 @@ function syncAccountLinks(){
 }
 /* Hover opens it on a pointer, tap and keyboard open it everywhere else. The
    panel's own box reaches up to the button so the pointer never crosses a gap. */
-/* The avatar opens a small menu: My profile first, then Settings and Log out.
-   For a while it was only a link to your profile, but it kept the down-arrow,
-   so on your own profile — or on a phone, where the bottom bar already has
-   your profile — pressing it appeared to do nothing at all. */
+/* The avatar does two jobs, by screen. On a computer it is a link: pressing your
+   own face takes you to your own profile (Settings and Log out are in the
+   burger). On a phone the bottom bar already has your profile, so pressing it
+   there looked like it did nothing; there it opens a small menu instead. The
+   phone width is the one at which the bottom bar appears. */
+const onPhone=()=>window.matchMedia('(max-width:760px)').matches;
 function bindAccountMenu(){
   const btn=$('#account-button'), panel=$('#account-panel');
   if(panel)panel.hidden=true;
@@ -895,6 +897,7 @@ function bindAccountMenu(){
   btn.addEventListener('click',e=>{
     e.preventDefault();
     if(!signedIn()){goTo('#/login');return;}
+    if(!onPhone()){goTo('#/profile');return;}
     const open=panel.hidden;
     panel.hidden=!open; btn.setAttribute('aria-expanded',String(open));
     $('#menu-panel').hidden=true; $('#menu-button')?.setAttribute('aria-expanded','false');
@@ -2447,7 +2450,8 @@ function checkAdmin(){
   adminFor=me; adminIs=false; modData=undefined;
   dbIsAdmin().then(async ok=>{
     if(!authUser||authUser.id!==me)return;
-    adminIs=ok; if(ok)modData=await dbLoadReports();
+    adminIs=ok; if(!ok)return;           /* nothing changes for a non-admin, so no redraw to close a menu */
+    modData=await dbLoadReports();
     if(location.hash==='#/profile')render(false);
   });
 }

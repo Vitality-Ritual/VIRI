@@ -127,6 +127,8 @@ strong{font-weight:500}
 .account-button .chev{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.6;
   stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
 .account-button[aria-expanded="true"] .chev{transform:rotate(180deg)}
+/* on a computer the avatar is a link, not a menu, so no down-arrow */
+@media (min-width:761px){.account-button .chev{display:none}}
 /* the panel box reaches the button; the visible card is inset by its padding */
 .account-panel{position:absolute;right:0;top:100%;z-index:55;padding-top:10px;min-width:214px}
 .account-card{background:var(--paper);padding:20px 22px 22px;
