@@ -2914,7 +2914,7 @@ function postActivity(pre,edit){
 function privacyPage(){return `<article class="article-detail legal">
   <p class="eyebrow">VIRI</p>
   <h1>Your privacy</h1>
-  <p class="legal-date">Last updated 3 October 2026</p>
+  <p class="legal-date">Last updated 5 October 2026</p>
 
   <h2>Who we are</h2>
   <p>VIRI (Vitality Ritual) is a service for finding people to work out with. It is run by Margaret Cole, in Washington, DC. You can reach us about anything on this page at <a href="mailto:info@vitalityritual.org">info@vitalityritual.org</a>, and we will give you a postal address if you ask for one.</p>
@@ -2925,8 +2925,13 @@ function privacyPage(){return `<article class="article-detail legal">
   <p><b>Your profile.</b> Your name and the neighbourhood and city where you train are required. A photograph, a short bio, your college and year, and your industry are all optional. Your age is the one thing we require, because VIRI is for over-18s &mdash; but whether it appears on your profile is your choice, and it is off unless you turn it on. The activities you do and the times of week you usually train are what the search matches you on.</p>
   <p><b>What you do on VIRI:</b> sessions you log (activity, place, how long, how far, any note or photograph, the date, who you were with), classes you add to your plan, studios you save, people you connect with, and messages you send.</p>
   <p><b>Safety records:</b> if you report someone, we keep what you told us. If you block someone, we keep that too.</p>
-  <p><b>If you subscribe to the VIRI edit</b> we keep your email address, and nothing else, so we can send it to you. You do not need an account to subscribe, and subscribing does not make one. Every letter has an unsubscribe link, and you can ask us to remove you at any time.</p>
+  <p>Reports are read by the people who run VIRI. We can suspend an account, which hides the member and stops her signing in, or delete it. We record who took the action, when, and any note we made. A report about someone is kept after she leaves, because it is the record of what happened.</p>
+  <p><b>If you subscribe to the VIRI edit</b> we keep your email address, and the date you confirmed it, and nothing else, so we can send it to you. You do not need an account to subscribe, and subscribing does not make one. Every letter has an unsubscribe link, and you can ask us to remove you at any time.</p>
   <p>We do <b>not</b> collect analytics. There is no tracking pixel, no advertising network, and no third-party script on this site other than the one that connects you to our database. Nobody is following you around the internet on our behalf.</p>
+
+  <h2>Who sees your sessions</h2>
+  <p>Your sessions are visible to you and to your friends, and to nobody else. Friends can like a session and comment on it. You can delete any comment on your own sessions, and anyone can delete their own comments. Likes and comments are deleted when the session or the account is.</p>
+  <p>When a friend likes or comments on one of your sessions, says you went somewhere together, or adds one of your routines to their week, you get a notification inside VIRI.</p>
 
   <h2>Why the optional fields matter</h2>
   <p>Your neighbourhood, your usual training times, the studios you save and the sessions you log together describe where you are likely to be, and when. That is the point of the product &mdash; it is how you find someone to train with &mdash; but it is genuinely sensitive, more so than it first appears.</p>
@@ -2950,7 +2955,7 @@ function privacyPage(){return `<article class="article-detail legal">
   <p>In <a href="#/settings">Settings</a>, at any time, without asking us:</p>
   <ul>
     <li><b>Download my data</b> gives you one file containing everything VIRI holds about you, with your photographs inside it rather than as links that expire.</li>
-    <li><b>Delete my account</b> removes your profile, sessions, plans, saved studios, messages, connections and photographs. It is immediate and we cannot undo it.</li>
+    <li><b>Delete my account</b> removes your profile, sessions, goals, routines, plans, saved studios, messages, connections, comments, likes, notifications and photographs. It is immediate and we cannot undo it.</li>
   </ul>
   <p>Depending on where you live you may have further rights &mdash; to correct information, to object to how it is used, or to complain to a regulator. Write to us and we will help.</p>
 
@@ -2978,7 +2983,7 @@ function privacyPage(){return `<article class="article-detail legal">
 function termsPage(){return `<article class="article-detail legal">
   <p class="eyebrow">VIRI</p>
   <h1>Terms of service</h1>
-  <p class="legal-date">Last updated 3 October 2026</p>
+  <p class="legal-date">Last updated 5 October 2026</p>
 
   <p class="legal-lede">VIRI helps you find people to exercise with. We do not check who those people are. Meeting someone from VIRI is your decision and your risk, exactly as it would be if you met them at the gym without us. Please read <a href="#terms-meeting">Meeting other members</a> &mdash; it is the most important part of this page.</p>
 
@@ -3035,6 +3040,7 @@ function termsPage(){return `<article class="article-detail legal">
     <li>use VIRI to arrange anything illegal</li>
     <li>try to break, overload or get around the security of the service</li>
   </ul>
+  <p>Comments and messages are held to the same rules as everything else here: no harassment, no threats, nothing that outs or endangers someone. Report anything that crosses the line.</p>
   <p>Members who do these things lose their accounts.</p>
 
   <h2>9. Ending things</h2>

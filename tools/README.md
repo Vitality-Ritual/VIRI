@@ -20,6 +20,7 @@ new files; leave it off to check without touching anything. Deploy only on
 | syntax | a file that will not parse | scripted edits left the site blank |
 | functions | any top-level function or const that is live but missing locally | a `.*?` regex deleted eight functions, About, Studios and Contact among them |
 | writes | an update or delete in `db.js` not going through `written()` | row-level security made accept-request, mark-read and save-profile silently do nothing |
+| handlers | a button wired to a function that does not exist | the "Show my age" switch called `toggleShowAge`, never written, so it threw and did nothing |
 | roster | anything but `personById()` touching the sample roster | real members saw empty lists because code looked only at `VIRI.people` |
 | venues | duplicate ids, wrong category, a venue far from its city | a geocoder put a Manhattan gym in Queens |
 | cache | changed files deployed without a new `?v=` | changes that shipped looked like they had not |
