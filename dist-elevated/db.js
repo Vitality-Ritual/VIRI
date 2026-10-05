@@ -436,6 +436,57 @@ async function dbMarkNotificationsRead(){
   return { data: true };
 }
 
+/* ===================== moderation =====================
+   Only for the admins listed in `admins` (022). Every function here is also
+   refused by the database for anyone else, so hiding the tab is a courtesy, not
+   the protection. */
+async function dbIsAdmin(){
+  const c = db(); if (!c || !authUser) return false;
+  const { data, error } = await c.rpc('is_admin');
+  return !error && data === true;                 /* before 022 the function does not exist */
+}
+
+async function dbLoadReports(){
+  const c = db(); if (!c || !authUser) return null;
+  const { data, error } = await c.from('reports').select('*').order('created_at', { ascending: false }).limit(200);
+  if (error) return null;
+  const out = (data || []).map(r => ({ id: r.id, reporterId: r.reporter_id, reportedId: r.reported_profile_id,
+    reason: r.reason, detail: r.detail || '', status: r.status, at: r.created_at,
+    handledBy: r.handled_by || null, handledAt: r.handled_at || null, action: r.action || null, note: r.admin_note || '' }));
+  await dbPeople(out.flatMap(r => [r.reporterId, r.reportedId, r.handledBy]).filter(Boolean));
+  /* who is suspended right now, so "lift suspension" shows only where it applies */
+  const ids = [...new Set(out.map(r => r.reportedId).filter(Boolean))];
+  const sus = {};
+  if (ids.length) {
+    const p = await c.from('profiles').select('id,suspended_at').in('id', ids);
+    if (!p.error) for (const row of p.data || []) if (row.suspended_at) sus[row.id] = true;
+  }
+  return { reports: out, suspended: sus };
+}
+
+const adminError = e => e && e.code === '42501' ? { message: 'Only VIRI admins can do that.' }
+  : e && /could not find the function|schema cache/i.test(e.message || '') ? { message: 'Moderation needs the latest database update (022).' } : e;
+async function dbAdminResolve(reportId, status, note){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const { error } = await c.rpc('admin_resolve_report', { p_report: reportId, p_status: status, p_note: note || null });
+  return error ? { error: adminError(error) } : { data: true };
+}
+async function dbAdminSuspend(memberId, note){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const { error } = await c.rpc('admin_suspend', { p_member: memberId, p_note: note || null });
+  return error ? { error: adminError(error) } : { data: true };
+}
+async function dbAdminUnsuspend(memberId){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const { error } = await c.rpc('admin_unsuspend', { p_member: memberId });
+  return error ? { error: adminError(error) } : { data: true };
+}
+async function dbAdminDeleteAccount(memberId, note){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const { error } = await c.rpc('admin_delete_account', { p_member: memberId, p_note: note || null });
+  return error ? { error: adminError(error) } : { data: true };
+}
+
 /* Who was there, changed after the fact. Only the difference is written. */
 async function dbSetSessionTags(sessionId, before, after){
   const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
@@ -1094,12 +1145,30 @@ async function dbSubscribe(email, source){
   const c = db(); if (!c) return { error: { message: 'Subscribing is unavailable right now.' } };
   const addr = String(email || '').trim().toLowerCase();
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(addr)) return { error: { message: 'Please enter a valid email address.' } };
-  const { error } = await c.from('subscribers').insert({ email: addr, source: source || 'site' });
-  /* Already on the list is not a failure as far as the reader is concerned —
-     they asked to be subscribed and they are subscribed. */
-  if (error && error.code === '23505') return { data: 'already' };
-  if (error) return { error: { message: 'That did not save. Please try again in a moment.' } };
-  return { data: 'added' };
+  /* subscribe() (021) records the address and has the database email a
+     confirmation link; only confirmed addresses get the newsletter. It answers
+     the same way for a new, waiting or confirmed address, so the form cannot
+     be used to find out who is on the list. */
+  const { error } = await c.rpc('subscribe', { p_email: addr, p_source: source || 'site' });
+  if (!error) return { data: 'check-email' };
+  if (/subscribe|PGRST202|schema cache/.test((error.code || '') + ' ' + (error.message || ''))) {
+    /* before 021: the old direct insert */
+    const old = await c.from('subscribers').insert({ email: addr, source: source || 'site' });
+    if (old.error && old.error.code === '23505') return { data: 'already' };
+    if (old.error) return { error: { message: 'That did not save. Please try again in a moment.' } };
+    return { data: 'added' };
+  }
+  if (/valid email/i.test(error.message || '')) return { error: { message: 'Please enter a valid email address.' } };
+  return { error: { message: 'That did not save. Please try again in a moment.' } };
+}
+
+/* The link in the confirmation email. True when it matched a sign-up. */
+async function dbConfirmSubscription(token){
+  const c = db(); if (!c) return { error: { message: 'Not connected to the server.' } };
+  if (!/^[0-9a-f-]{36}$/i.test(String(token || ''))) return { data: false };
+  const { data, error } = await c.rpc('confirm_subscription', { p_token: token });
+  if (error) return { error };
+  return { data: !!data };
 }
 
 /* Up to GALLERY_MAX photographs per profile, the way somebody decides whether

@@ -2191,7 +2191,7 @@ function profilePage(){
   const list=mySessions();
   /* "Going to" listed classes from the old generated timetable; routines have no
      titles or times, so it showed nothing true. Your week covers it. */
-  const tab=profileTab==='going'?'sessions':profileTab;
+  const tab=(profileTab==='going'||(profileTab==='moderation'&&!amAdmin()))?'sessions':profileTab;
   return `<div class="wrap pf">
     <header class="pf-head pf-card">
       <span class="pf-avatar">${avatarFor(p)}
@@ -2229,12 +2229,14 @@ function profilePage(){
     <section class="pf-section"><div class="pf-section-head"><h2>Photos</h2></div>${galleryStrip(state.gallery,{own:true})}</section>
     <section class="pf-section pf-activity"><div class="pf-section-head"><h2>Activity</h2></div>
     <nav class="pf-tabs" aria-label="Your profile">
-      ${[['sessions','Sessions'],['studios','Saved studios']].map(([k,label])=>
+      ${[['sessions','Sessions'],['studios','Saved studios'],...(amAdmin()?[['moderation','Moderation'+(modOpenCount()?` (${modOpenCount()})`:'')]]:[])].map(([k,label])=>
         `<button class="pf-tab${tab===k?' is-on':''}" data-action="pf-tab" data-id="${k}"${tab===k?' aria-current="true"':''}>${label}</button>`).join('')}
     </nav>
     <div class="pf-main">
     <div class="pf-body">${
-      tab==='studios'
+      tab==='moderation'
+        ? moderationPanel()
+      : tab==='studios'
         ? (saved.length
             ? `<div class="pf-rows">${saved.map(s=>
                 `<a class="pf-row" href="#/studios/${s.id}"><b>${escapeHTML(s.name)}</b><span class="small">${escapeHTML(s.category)}</span>${arrow}</a>`).join('')}</div>`
@@ -2419,6 +2421,96 @@ function bindAuth(){$('#auth-form')?.addEventListener('submit',async e=>{
     : res.error.message; return;}
   toast('Welcome back to your circle.'); goTo('#/profile');
 });}
+
+/* ===================== newsletter confirmation ===================== */
+let subConfirm={token:null,status:'idle'};
+function confirmSubscriptionPage(token){
+  if(subConfirm.token!==token)subConfirm={token,status:'start'};
+  const s=subConfirm.status;
+  const body=s==='ok'
+    ? '<p class="eyebrow">The VIRI Edit</p><h1>You are subscribed.</h1><p>It arrives once a month. Every issue has a link at the bottom to stop it.</p>'
+    : s==='bad'
+      ? '<p class="eyebrow">The VIRI Edit</p><h1>That link did not work.</h1><p>It may have been copied only in part. Sign up again at the bottom of the Read page and use the newest email.</p>'
+      : '<p class="eyebrow">The VIRI Edit</p><h1>Confirming…</h1>';
+  return `<div class="wrap handoff"><div class="handoff-card thanks-card">${body}<p style="margin-top:18px">${button('Read The VIRI Edit','#/read','small')}</p></div></div>`;
+}
+
+/* ===================== moderation =====================
+   A tab on an admin's own profile, so her profile stays a normal profile. Kept
+   in plain variables, not `state`, because state is saved in the browser and an
+   admin tab must never outlive the sign-in it belongs to. */
+let adminFor=null, adminIs=false, modData=undefined;
+const amAdmin=()=>!!(authUser&&adminFor===authUser.id&&adminIs);
+function checkAdmin(){
+  const me=authUser&&authUser.id;
+  if(!me||adminFor===me||typeof dbIsAdmin!=='function')return;
+  adminFor=me; adminIs=false; modData=undefined;
+  dbIsAdmin().then(async ok=>{
+    if(!authUser||authUser.id!==me)return;
+    adminIs=ok; if(ok)modData=await dbLoadReports();
+    if(location.hash==='#/profile')render(false);
+  });
+}
+const modOpenCount=()=>modData&&modData.reports?modData.reports.filter(r=>r.status==='open').length:0;
+function modName(id){
+  const me=authUser&&authUser.id; if(id===me)return 'You';
+  const p=personById(id); return p?p.name:null;
+}
+function modPerson(id,fallback){
+  const n=modName(id); if(!n)return `<span class="small">${fallback}</span>`;
+  return isRealAccount(id)&&id!==(authUser&&authUser.id)?`<a class="person-link" href="#/member/${escapeHTML(id)}">${escapeHTML(n)}</a>`:escapeHTML(n);
+}
+function modReportCard(r){
+  const label=(REPORT_REASONS.find(x=>x[0]===r.reason)||[,r.reason||'Report'])[1];
+  const open=r.status==='open', sus=!!(modData.suspended||{})[r.reportedId];
+  const when=d=>new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  const outcome=open?'':({dismissed:'Dismissed',suspended:'Member suspended',deleted:'Account deleted'}[r.action]||'Handled');
+  return `<article class="mod-report${open?' is-open':''}">
+    <p class="mod-head"><b>${escapeHTML(label)}</b> <span class="small">${escapeHTML(when(r.at))}</span></p>
+    <p class="mod-who">About ${modPerson(r.reportedId,'A deleted member')} &middot; reported by ${modPerson(r.reporterId,'A member who has left')}</p>
+    ${r.detail?`<p class="mod-detail">&ldquo;${escapeHTML(r.detail)}&rdquo;</p>`:''}
+    ${open?'':`<p class="mod-outcome"><b>${escapeHTML(outcome)}</b> by ${escapeHTML(modName(r.handledBy)||'an admin')}${r.handledAt?` on ${escapeHTML(when(r.handledAt))}`:''}${r.note?` &mdash; ${escapeHTML(r.note)}`:''}</p>`}
+    <div class="mod-acts">
+      ${open?`<label class="visually-hidden" for="mod-note-${escapeHTML(r.id)}">Note, optional</label>
+        <input id="mod-note-${escapeHTML(r.id)}" class="mod-note" maxlength="500" placeholder="A note for the record (optional)">
+        <div class="mod-btns">
+          <button class="button small outline" data-action="mod-dismiss" data-id="${escapeHTML(r.id)}">Dismiss</button>
+          ${r.reportedId&&!sus?`<button class="button small outline" data-action="mod-suspend" data-id="${escapeHTML(r.id)}" data-member="${escapeHTML(r.reportedId)}">Suspend</button>`:''}
+          ${r.reportedId?`<button class="button small outline mod-danger" data-action="mod-delete" data-id="${escapeHTML(r.id)}" data-member="${escapeHTML(r.reportedId)}">Delete account</button>`:''}
+        </div>`:''}
+      ${sus?`<button class="plain-link" data-action="mod-unsuspend" data-id="${escapeHTML(r.id)}" data-member="${escapeHTML(r.reportedId)}">Lift suspension</button>`:''}
+      ${!open&&r.action==='dismissed'?`<button class="plain-link" data-action="mod-reopen" data-id="${escapeHTML(r.id)}">Reopen</button>`:''}
+    </div></article>`;
+}
+function moderationPanel(){
+  if(!amAdmin())return '';
+  if(modData===undefined)return '<p class="small">Loading reports…</p>';
+  if(modData===null)return '<p class="small">Reports could not be loaded. Refresh to try again.</p>';
+  const open=modData.reports.filter(r=>r.status==='open'), done=modData.reports.filter(r=>r.status!=='open');
+  return `<div class="mod">
+    <p class="small mod-lede">Only you and the other VIRI admins see this tab. Suspending hides a member and signs her out until you lift it. Deleting an account cannot be undone. Every action is recorded with your name.</p>
+    <h3 class="mod-h">Open (${open.length})</h3>
+    ${open.length?open.map(modReportCard).join(''):'<p class="small">Nothing waiting.</p>'}
+    ${done.length?`<details class="mod-done"><summary class="mod-h">Handled (${done.length})</summary>${done.map(modReportCard).join('')}</details>`:''}
+  </div>`;
+}
+/* suspend and delete take two taps, so a stray one cannot do either */
+async function modAct(btn){
+  const kind=btn.dataset.action.replace('mod-',''), rid=btn.dataset.id, member=btn.dataset.member;
+  if((kind==='suspend'||kind==='delete')&&btn.dataset.armed!=='1'){
+    btn.dataset.armed='1'; btn.dataset.label=btn.textContent; btn.textContent=kind==='delete'?'Tap again to delete for good':'Tap again to suspend'; return;
+  }
+  const note=((document.getElementById('mod-note-'+rid)||{}).value||'').trim();
+  btn.disabled=true;
+  const r=kind==='dismiss'?await dbAdminResolve(rid,'dismissed',note)
+        :kind==='reopen'?await dbAdminResolve(rid,'open','')
+        :kind==='suspend'?await dbAdminSuspend(member,note)
+        :kind==='unsuspend'?await dbAdminUnsuspend(member)
+        :await dbAdminDeleteAccount(member,note);
+  if(r.error){btn.disabled=false;btn.dataset.armed='';if(btn.dataset.label)btn.textContent=btn.dataset.label;toast(r.error.message);return;}
+  modData=await dbLoadReports(); render(false);
+  toast({dismiss:'Report dismissed.',reopen:'Report reopened.',suspend:'Member suspended.',unsuspend:'Suspension lifted.',delete:'Account deleted.'}[kind]);
+}
 
 /* ===================== notifications ===================== */
 function noteText(n){
@@ -3014,7 +3106,7 @@ function initPageMotion(){
   revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('is-revealed');revealObserver.unobserve(entry.target);}}),{threshold:.08,rootMargin:'0px 0px -30px 0px'});
   targets.forEach(el=>{el.classList.add('will-reveal');revealObserver.observe(el);});
 }
-function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':if(signedIn()){location.replace('#/feed');return;}html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'check-email':html=checkEmailPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'forgot':html=forgotPage();break;case 'notifications':html=notificationsPage();break;case 'reset-password':html=resetPasswordPage();break;case 'profile':html=profilePage();break;case 'member':html=memberPage(id);if(typeof ensureMember==='function')ensureMember(id);break;case 'feed':html=feedPage();break;case 'find':html=findPage();break;case 'messages':html=messagesPage();break;case 'settings':html=settingsPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=privacyPage();break;case 'terms':html=termsPage();break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you','check-email':'Check your email',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',forgot:'Forgot your password',notifications:'Notifications','reset-password':'Choose a new password',profile:'Your circle',member:'A member',feed:'Feed',find:'Find your people',messages:'Messages',settings:'Settings',book:'Book this class',privacy:'Your privacy',terms:'Terms of service'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#auth-form'))bindAuth();if(path==='forgot')bindForgot();if(path==='notifications'&&state.unseenNotes&&typeof dbMarkNotificationsRead==='function')dbMarkNotificationsRead().then(()=>syncAccountLinks());if(path==='reset-password')bindReset();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='find'){$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();runSearch();});if(typeof dbRoutineMatches==='function'&&state.roomMatches===undefined){state.roomMatches=[];dbRoutineMatches().then(()=>{if(location.hash==='#/find')render(false);});}if(state.found===undefined||state.found===null)runSearch();}if(path==='profile'&&signedIn()&&!goalHistoryLoaded&&typeof dbLoadGoalHistory==='function'){goalHistoryLoaded=true;dbLoadGoalHistory().then(r=>{if(r===null)state.goalHistory=null;if(location.hash==='#/profile')render(false);});}if(path==='messages'){$('#msg-form')?.addEventListener('submit',e=>{e.preventDefault();sendMessage(e.target);});const b=$('#msg-body');if(b)b.scrollTop=b.scrollHeight;if(msgThread&&typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);}/* Fetch on arrival, not on every render — render() re-runs this block, so an
+function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':if(signedIn()){location.replace('#/feed');return;}html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'check-email':html=checkEmailPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'forgot':html=forgotPage();break;case 'notifications':html=notificationsPage();break;case 'confirm-subscription':html=confirmSubscriptionPage(id);break;case 'reset-password':html=resetPasswordPage();break;case 'profile':html=profilePage();break;case 'member':html=memberPage(id);if(typeof ensureMember==='function')ensureMember(id);break;case 'feed':html=feedPage();break;case 'find':html=findPage();break;case 'messages':html=messagesPage();break;case 'settings':html=settingsPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=privacyPage();break;case 'terms':html=termsPage();break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you','check-email':'Check your email',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',forgot:'Forgot your password',notifications:'Notifications','confirm-subscription':'Confirm your subscription','reset-password':'Choose a new password',profile:'Your circle',member:'A member',feed:'Feed',find:'Find your people',messages:'Messages',settings:'Settings',book:'Book this class',privacy:'Your privacy',terms:'Terms of service'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#auth-form'))bindAuth();if(path==='forgot')bindForgot();if(path==='confirm-subscription'&&subConfirm.status==='start'){subConfirm.status='working';const tok=subConfirm.token;dbConfirmSubscription(tok).then(r=>{if(subConfirm.token!==tok)return;subConfirm.status=r&&r.data?'ok':'bad';if((location.hash||'').startsWith('#/confirm-subscription'))render(false);});}if(path==='notifications'&&state.unseenNotes&&typeof dbMarkNotificationsRead==='function')dbMarkNotificationsRead().then(()=>syncAccountLinks());if(path==='reset-password')bindReset();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='find'){$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();runSearch();});if(typeof dbRoutineMatches==='function'&&state.roomMatches===undefined){state.roomMatches=[];dbRoutineMatches().then(()=>{if(location.hash==='#/find')render(false);});}if(state.found===undefined||state.found===null)runSearch();}if(path==='profile'&&signedIn()&&!goalHistoryLoaded&&typeof dbLoadGoalHistory==='function'){goalHistoryLoaded=true;dbLoadGoalHistory().then(r=>{if(r===null)state.goalHistory=null;if(location.hash==='#/profile')render(false);});}if(path==='profile'&&signedIn())checkAdmin();if(path==='messages'){$('#msg-form')?.addEventListener('submit',e=>{e.preventDefault();sendMessage(e.target);});const b=$('#msg-body');if(b)b.scrollTop=b.scrollHeight;if(msgThread&&typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);}/* Fetch on arrival, not on every render — render() re-runs this block, so an
    unguarded fetch-then-render is an infinite loop. The flag clears when you
    leave, so coming back fetches again. */
 if(path!=='feed')feedFetched=false;
@@ -3027,7 +3119,7 @@ else if(!feedFetched&&typeof dbLoadFeed==='function'){feedFetched=true;dbLoadFee
     if(btn)btn.disabled=false;
     if(r.error){toast(r.error.message);return;}
     form.reset();
-    toast(r.data==='already'?'You are already on the list.':'You are on the list. Look out for the next one.');});if(path==='explore'){$('#ex-search').addEventListener('input',e=>{ex.query=e.target.value;exRefresh();});exBindMap();}}
+    toast(r.data==='check-email'?'Nearly there. Check your inbox and click the link to confirm.':r.data==='already'?'You are already on the list.':'You are on the list. Look out for the next one.');});if(path==='explore'){$('#ex-search').addEventListener('input',e=>{ex.query=e.target.value;exRefresh();});exBindMap();}}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-action]');if(!t)return;const {action,id,index,category,view,kind,name,channel}=t.dataset;switch(action){case 'video-toggle':{const v=$('#'+(t.dataset.video||'about-video'));if(v.paused)v.play().catch(()=>toast('Video playback is unavailable in this browser.'));else v.pause();break;}case 'close-modal':closeModal();break;case 'join-back':joinStep=Math.max(0,joinStep-1);render(false);break;case 'studio-prev':studioIndex=Math.max(0,studioIndex-1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'studio-next':studioIndex=Math.min(STUDIO_LAST(),studioIndex+1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'ex-city':ex={...ex,city:t.dataset.id,venue:null};render(false);break;
 
 case 'ex-cat':ex={...ex,cat:t.dataset.cat,cls:null};render(false);break;
@@ -3043,7 +3135,7 @@ case 'book-new':bookChoose(t.dataset.id,'new');break;
 case 'book-plan':bookChoose(t.dataset.id,'plan');break;
 case 'ex-zoom':exZoom(t.dataset.dir);break;
 case 'ex-reset':ex={...ex,cat:'All',members:false,query:'',venue:null};render(false);break;
-case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':{const nowOn=!state.saved.includes(id);state.saved=nowOn?[...state.saved,id]:state.saved.filter(x=>x!==id);if(typeof dbSetStudio==='function')dbPush(dbSetStudio(id,nowOn),'that studio');save();render(false);}toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':pendingPlans().length?attendModal():postActivity();break;case 'post-new':closeModal();postActivity();break;case 'edit-session':editSession(t.dataset.id);break;case 'open-note':openNote(t.dataset.id);break;case 'session-like':toggleLike(t.dataset.id);break;case 'attend-yes':logAttended(t.dataset.id);break;case 'attend-no':skipAttended(t.dataset.id);break;case 'finish-next':{const n=(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start)[0];if(n){n.start=Date.now()-(n.dur+5)*60000;save();render(false);toast('Moved into the past. The + now has something to ask you.');}break;}case 'attend-more':{const p=takePlan(t.dataset.id);closeModal();postActivity(p);break;}case 'show-friends':friendsModal();break;case 'show-requests':requestsModal();break;case 'edit-bio':bioModal();break;case 'add-gallery':addGalleryPhoto();break;case 'add-routine':routineModal(t.dataset.id);break;case 'add-goal':goalModal(t.dataset.id);break;case 'edit-goal':goalModal(null,t.dataset.id);break;case 'remove-goal':removeGoal(t.dataset.id);break;case 'goal-yes':answerGoal(t.dataset.id,t.dataset.day,true);break;case 'goal-no':answerGoal(t.dataset.id,t.dataset.day,false);break;case 'remove-routine':removeRoutine(t.dataset.id);break;case 'open-photo':{const who=(location.hash||'').startsWith('#/member/')?personById(location.hash.split('/')[2]):null;openLightbox(who?(who.gallery||[]):(state.gallery||[]),Number(t.dataset.index)||0);break;}case 'photo-prev':lightboxAt=(lightboxAt-1+lightboxOf.length)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'photo-next':lightboxAt=(lightboxAt+1)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'remove-photo':removeGalleryPhoto(t.dataset.id);break;case 'edit-photo':photoModal();break;case 'accept-request':exConnect(t.dataset.id);break;case 'decline-request':respondToRequest(t.dataset.id,'declined');break;case 'withdraw-request':respondToRequest(t.dataset.id,'withdrawn');break;case 'remove-friend':respondToRequest(t.dataset.id,'removed');break;case 'msg-open':msgThread=t.dataset.id;render(false);if(typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);break;case 'log-out':dbSignOut().then(()=>{$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Signed out.');location.hash='#/';render(false);});break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':joinSession(t.dataset.id);break;case 'session-talk':{const sid=t.dataset.id;if(!sid){toast('This is a sample session, so there is nobody to talk to yet.');break;}openThreads.has(sid)?openThreads.delete(sid):openThreads.add(sid);render(false);break;}case 'comment-delete':deleteComment(t.dataset.id,t.dataset.session);break;case 'edit-routine':{const r=(state.routines||[]).find(x=>x.id===t.dataset.id);if(r)routineModal(null,{editId:r.id,activity:r.activity,venueLabel:r.venue,venueId:r.venueId,days:[r.weekday],band:r.band});break;}case 'history-goal-delete':deleteHistoryGoal(t);break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':{const v=t.dataset.id;findActivities=findActivities.includes(v)?findActivities.filter(x=>x!==v):[...findActivities,v];runSearch();break;}case 'edit-profile':editProfileModal();break;case 'person-menu':personMenu(t.dataset.id,t.dataset.name);break;case 'report-person':closeModal();reportModal(t.dataset.id,t.dataset.name);break;case 'block-person':closeModal();blockConfirm(t.dataset.id,t.dataset.name);break;case 'block-confirm':doBlock(t.dataset.id,t.dataset.name);break;case 'unblock-person':doUnblock(t.dataset.id,t.dataset.name);break;case 'toggle-show-age':toggleShowAge(t.checked);break;case 'export-data':exportMyData(t);break;case 'delete-account':deleteAccountModal();break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
+case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':{const nowOn=!state.saved.includes(id);state.saved=nowOn?[...state.saved,id]:state.saved.filter(x=>x!==id);if(typeof dbSetStudio==='function')dbPush(dbSetStudio(id,nowOn),'that studio');save();render(false);}toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':pendingPlans().length?attendModal():postActivity();break;case 'post-new':closeModal();postActivity();break;case 'edit-session':editSession(t.dataset.id);break;case 'open-note':openNote(t.dataset.id);break;case 'mod-dismiss':case 'mod-suspend':case 'mod-delete':case 'mod-unsuspend':case 'mod-reopen':modAct(t);break;case 'session-like':toggleLike(t.dataset.id);break;case 'attend-yes':logAttended(t.dataset.id);break;case 'attend-no':skipAttended(t.dataset.id);break;case 'finish-next':{const n=(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start)[0];if(n){n.start=Date.now()-(n.dur+5)*60000;save();render(false);toast('Moved into the past. The + now has something to ask you.');}break;}case 'attend-more':{const p=takePlan(t.dataset.id);closeModal();postActivity(p);break;}case 'show-friends':friendsModal();break;case 'show-requests':requestsModal();break;case 'edit-bio':bioModal();break;case 'add-gallery':addGalleryPhoto();break;case 'add-routine':routineModal(t.dataset.id);break;case 'add-goal':goalModal(t.dataset.id);break;case 'edit-goal':goalModal(null,t.dataset.id);break;case 'remove-goal':removeGoal(t.dataset.id);break;case 'goal-yes':answerGoal(t.dataset.id,t.dataset.day,true);break;case 'goal-no':answerGoal(t.dataset.id,t.dataset.day,false);break;case 'remove-routine':removeRoutine(t.dataset.id);break;case 'open-photo':{const who=(location.hash||'').startsWith('#/member/')?personById(location.hash.split('/')[2]):null;openLightbox(who?(who.gallery||[]):(state.gallery||[]),Number(t.dataset.index)||0);break;}case 'photo-prev':lightboxAt=(lightboxAt-1+lightboxOf.length)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'photo-next':lightboxAt=(lightboxAt+1)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'remove-photo':removeGalleryPhoto(t.dataset.id);break;case 'edit-photo':photoModal();break;case 'accept-request':exConnect(t.dataset.id);break;case 'decline-request':respondToRequest(t.dataset.id,'declined');break;case 'withdraw-request':respondToRequest(t.dataset.id,'withdrawn');break;case 'remove-friend':respondToRequest(t.dataset.id,'removed');break;case 'msg-open':msgThread=t.dataset.id;render(false);if(typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);break;case 'log-out':dbSignOut().then(()=>{$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Signed out.');location.hash='#/';render(false);});break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':joinSession(t.dataset.id);break;case 'session-talk':{const sid=t.dataset.id;if(!sid){toast('This is a sample session, so there is nobody to talk to yet.');break;}openThreads.has(sid)?openThreads.delete(sid):openThreads.add(sid);render(false);break;}case 'comment-delete':deleteComment(t.dataset.id,t.dataset.session);break;case 'edit-routine':{const r=(state.routines||[]).find(x=>x.id===t.dataset.id);if(r)routineModal(null,{editId:r.id,activity:r.activity,venueLabel:r.venue,venueId:r.venueId,days:[r.weekday],band:r.band});break;}case 'history-goal-delete':deleteHistoryGoal(t);break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':{const v=t.dataset.id;findActivities=findActivities.includes(v)?findActivities.filter(x=>x!==v):[...findActivities,v];runSearch();break;}case 'edit-profile':editProfileModal();break;case 'person-menu':personMenu(t.dataset.id,t.dataset.name);break;case 'report-person':closeModal();reportModal(t.dataset.id,t.dataset.name);break;case 'block-person':closeModal();blockConfirm(t.dataset.id,t.dataset.name);break;case 'block-confirm':doBlock(t.dataset.id,t.dataset.name);break;case 'unblock-person':doUnblock(t.dataset.id,t.dataset.name);break;case 'toggle-show-age':toggleShowAge(t.checked);break;case 'export-data':exportMyData(t);break;case 'delete-account':deleteAccountModal();break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
 $('#menu-button').addEventListener('click',()=>{const open=$('#menu-panel').hidden;$('#menu-panel').hidden=!open;$('#menu-button').setAttribute('aria-expanded',String(open));});
 bindAccountMenu();
 document.addEventListener('click',e=>{if(!e.target.closest('.site-header')){$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');}});
