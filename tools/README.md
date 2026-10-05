@@ -21,6 +21,7 @@ new files; leave it off to check without touching anything. Deploy only on
 | functions | any top-level function or const that is live but missing locally | a `.*?` regex deleted eight functions, About, Studios and Contact among them |
 | writes | an update or delete in `db.js` not going through `written()` | row-level security made accept-request, mark-read and save-profile silently do nothing |
 | handlers | a button wired to a function that does not exist | the "Show my age" switch called `toggleShowAge`, never written, so it threw and did nothing |
+| account gate | an account-only button (add to my week, save, message, goals, passes) that a signed-out visitor could open, or a stale name in the list | "Add to my week" opened the signed-in form for visitors with no account |
 | roster | anything but `personById()` touching the sample roster | real members saw empty lists because code looked only at `VIRI.people` |
 | venues | duplicate ids, wrong category, a venue far from its city | a geocoder put a Manhattan gym in Queens |
 | cache | changed files deployed without a new `?v=` | changes that shipped looked like they had not |

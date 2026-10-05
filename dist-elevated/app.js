@@ -120,7 +120,7 @@ const STUDIO_PHOTO={cyclebar:'hero-cycling-studio.webp',solidcore:'hero-pilates.
   corepower:'hero-mats.jpg',soulcycle:'brand-soulcycle.jpg',orangetheory:'brand-orangetheory.webp',
   clubpilates:'pin-matclass.jpg',barrys:'brand-barrys.jpg',barre3:'barre-white.jpg'};
 const studioPhoto=s=>STUDIO_PHOTO[s.id]||null;
-function studioCard(s){const count=[128,96,84,112,105,76,93,68,74][studios.indexOf(s)];return `<article class="tile tile-studio" data-reveal><a href="#/studios/${s.id}"><div class="tile-plate"><img class="plate-photo" src="${A+studioPhoto(s)}" alt="" aria-hidden="true" loading="lazy"><h3 class="plate-name">${s.name}</h3><span class="plate-cat">${s.category}</span></div><p class="tile-meta"><span class="tile-index">${count} members</span></p></a></article>`;}
+function studioCard(s){return `<article class="tile tile-studio" data-reveal><a href="#/studios/${s.id}"><div class="tile-plate"><img class="plate-photo" src="${A+studioPhoto(s)}" alt="" aria-hidden="true" loading="lazy"><h3 class="plate-name">${s.name}</h3><span class="plate-cat">${s.category}</span></div></a></article>`;}
 function allStudiosCard(){return `<article class="tile tile-studio tile-all" data-reveal><a href="#/studios"><div class="tile-plate tile-plate-all"><h3 class="plate-name">All studios</h3><span class="plate-cat">See every one ${arrow}</span></div><p class="tile-meta"><span class="tile-index">${studios.length} in Washington, DC</span></p></a></article>`;}
 function statistics(){return `<section class="longevity-section"><a class="longevity-inner" href="#/signup" data-reveal><p class="eyebrow">Wellness goes beyond the workout</p><h2>Connection is part of longevity</h2><p class="longevity-figure"><strong>50%</strong> higher odds of survival</p><p class="longevity-lede">People with strong social ties outlived those without them across 148 studies and <a href="${studyURL}" target="_blank" rel="noopener">308,849 people</a>—an effect researchers put on par with quitting smoking. VIRI functions by bringing you the connections that already exist in your day-to-day routines.</p><span class="longevity-cta">Find your circle ${arrow}</span></a></section>`;}
 function joinFinale(){return `<section class="join-finale" aria-label="Join VIRI" data-reveal><div class="join-inner"><p class="eyebrow">Your people. Your pace. Your ritual.</p><h2>Find your circle</h2>${button('Join now','#/signup','light')}</div></section>`;}
@@ -3393,7 +3393,23 @@ else if(!feedFetched&&typeof dbLoadFeed==='function'){feedFetched=true;dbLoadFee
     if(r.error){toast(r.error.message);return;}
     form.reset();
     toast(r.data==='check-email'?'Nearly there. Check your inbox and click the link to confirm.':r.data==='already'?'You are already on the list.':'You are on the list. Look out for the next one.');});if(path==='explore'&&$('#ex-search')){$('#ex-search').addEventListener('input',e=>{ex.query=e.target.value;exRefresh();});exBindMap();}}
-document.addEventListener('click',e=>{const t=e.target.closest('[data-action]');if(!t)return;const {action,id,index,category,view,kind,name,channel}=t.dataset;switch(action){case 'video-toggle':{const v=$('#'+(t.dataset.video||'about-video'));if(v.paused)v.play().catch(()=>toast('Video playback is unavailable in this browser.'));else v.pause();break;}case 'close-modal':closeModal();break;case 'join-back':joinStep=Math.max(0,joinStep-1);render(false);break;case 'studio-prev':studioIndex=Math.max(0,studioIndex-1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'studio-next':studioIndex=Math.min(STUDIO_LAST(),studioIndex+1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'ex-view':setExView(t.dataset.view);break;case 'pass-ask':passAskModal(t.dataset.id);break;case 'pass-withdraw':withdrawPass(t.dataset.id);break;case 'pass-answer':answerPass(t.dataset.id,t.dataset.accept==='1');break;case 'pass-remove':removePass(t,t.dataset.id);break;case 'offer-pass':offerPassModal(t.dataset.id);break;case 'ex-city':ex={...ex,city:t.dataset.id,venue:null};render(false);break;
+/* Everything a visitor without an account cannot really do. Clicking any of these
+   while signed out goes to the sign-up page instead of opening a form that would
+   fail at the end. Listed rather than inferred, so a new public button is public
+   unless someone adds it here; tools/check.rb keeps every name below real. */
+const NEEDS_ACCOUNT=new Set(['add-routine','edit-routine','remove-routine','offer-pass','pass-ask','pass-withdraw','pass-answer','pass-remove',
+  'save-studio','book-existing','book-new','book-plan','join-event','post-activity','post-new','edit-session','session-like','session-join','session-talk',
+  'comment-delete','attend-yes','attend-no','finish-next','attend-more','add-goal','edit-goal','remove-goal','goal-yes','goal-no','history-goal-delete',
+  'edit-bio','edit-profile','add-gallery','remove-photo','edit-photo','show-friends','show-requests','accept-request','decline-request','withdraw-request',
+  'remove-friend','msg-open','person-menu','report-person','block-person','block-confirm','unblock-person','toggle-show-age','toggle-digest','export-data',
+  'delete-account','share-profile','open-note']);
+let authSettled=typeof dbBoot!=='function';   /* false until the saved sign-in has been looked for, so a member's first click is never mistaken for a visitor's */
+function needAccount(){
+  if($('#modal')&&$('#modal').open)closeModal();
+  toast('Create a free profile to do that.');
+  location.hash='#/signup';
+}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-action]');if(!t)return;const {action,id,index,category,view,kind,name,channel}=t.dataset;if(NEEDS_ACCOUNT.has(action)&&authSettled&&!signedIn()){e.preventDefault();needAccount();return;}switch(action){case 'video-toggle':{const v=$('#'+(t.dataset.video||'about-video'));if(v.paused)v.play().catch(()=>toast('Video playback is unavailable in this browser.'));else v.pause();break;}case 'close-modal':closeModal();break;case 'join-back':joinStep=Math.max(0,joinStep-1);render(false);break;case 'studio-prev':studioIndex=Math.max(0,studioIndex-1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'studio-next':studioIndex=Math.min(STUDIO_LAST(),studioIndex+1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'ex-view':setExView(t.dataset.view);break;case 'pass-ask':passAskModal(t.dataset.id);break;case 'pass-withdraw':withdrawPass(t.dataset.id);break;case 'pass-answer':answerPass(t.dataset.id,t.dataset.accept==='1');break;case 'pass-remove':removePass(t,t.dataset.id);break;case 'offer-pass':offerPassModal(t.dataset.id);break;case 'ex-city':ex={...ex,city:t.dataset.id,venue:null};render(false);break;
 
 case 'ex-cat':ex={...ex,cat:t.dataset.cat,cls:null};render(false);break;
 case 'ex-members':ex={...ex,members:!ex.members,cls:null};render(false);break;
@@ -3419,4 +3435,4 @@ render(false);
 /* The first render happens before the server answers, so it draws the
    signed-out site; this redraws once the session is known. */
 /* arriving from a password-reset email goes straight to choosing the new one */
-if(typeof dbBoot==='function')dbBoot().then(r=>{if(r&&r.claim==='recovery')history.replaceState(null,'','#/reset-password');render(false);}).catch(()=>{});
+if(typeof dbBoot==='function')dbBoot().then(r=>{authSettled=true;if(r&&r.claim==='recovery')history.replaceState(null,'','#/reset-password');render(false);}).catch(()=>{authSettled=true;});

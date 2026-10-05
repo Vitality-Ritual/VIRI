@@ -174,6 +174,21 @@ end
 undefined_calls.uniq.each { |action, fn| fail "button '#{action}' calls #{fn}(), which is defined nowhere" }
 ok "all #{app.scan(/case\s+'[\w-]+'\s*:/).length} dispatcher cases call functions that exist" if undefined_calls.empty?
 
+# Buttons that need an account are listed in NEEDS_ACCOUNT, and the dispatcher sends a
+# visitor without one to sign-up before the switch runs. A name in that list with no
+# case behind it is stale; a gate that is not applied protects nothing.
+set = app[/const NEEDS_ACCOUNT=new Set\(\[(.*?)\]\)/m, 1]
+if set.nil?
+  fail 'NEEDS_ACCOUNT is missing, so signed-out visitors can open account-only forms'
+else
+  listed = set.scan(/'([\w-]+)'/).flatten
+  cases = app.scan(/case\s+'([\w-]+)'\s*:/).flatten
+  stale = listed - cases
+  stale.each { |n| fail "NEEDS_ACCOUNT lists '#{n}', which no button handles" }
+  fail 'the click dispatcher no longer checks NEEDS_ACCOUNT before its switch' unless app.include?('NEEDS_ACCOUNT.has(action)&&authSettled&&!signedIn()')
+  ok "#{listed.length} account-only buttons all go to sign-up when signed out" if stale.empty? && app.include?('NEEDS_ACCOUNT.has(action)')
+end
+
 # ------------------------------------------------------------------ roster
 head 'roster (sample members)'
 roster_bad = 0
