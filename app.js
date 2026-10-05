@@ -290,6 +290,7 @@ function exMap(){
       <p class="map-credit">&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</p>
     </div>
     <p class="map-foot">${VIRI.venues.filter(v=>v.city===city.id).length} studios in ${escapeHTML(city.name)} &middot; drag to move &middot; locations approximate</p>
+    <p class="map-note">Studio locations are approximate and listings do not imply a partnership. Check schedules and prices with the studio itself.</p>
   </div>`;
 }
 function exFitCity(){
@@ -545,7 +546,6 @@ function explorePage(){
     <p>Add the ones you go to, and VIRI finds the women who are in the room with you.</p></div>
   </div></div></section>
   <div class="wrap">
-    ${info('Studio locations are approximate and listings do not imply a partnership. Check schedules and prices with the studio itself.')}
     <div class="ex-cities" role="tablist" aria-label="City">${VIRI.cities.map(c=>
       `<button role="tab" class="city-tab ${c.id===ex.city?'active':''}" data-action="ex-city" data-id="${c.id}"
         aria-selected="${c.id===ex.city}">${escapeHTML(c.name)}</button>`).join('')}</div>
@@ -2307,12 +2307,14 @@ function feedPage(){
 : (state.suggested||[]).length
   ? `<div class="feed-suggest">
        <p class="rail-label">People who train like you</p>
-       <p class="small feed-suggest-why">Your feed fills with sessions from your friends. These are members nearby whose week looks like yours.</p>
+       <p class="small feed-suggest-why">${(state.connections||[]).length?'Your friends have not logged a session yet. Meanwhile, these are members nearby whose week looks like yours.':'Your feed fills with sessions from your friends. These are members nearby whose week looks like yours.'}</p>
        ${(state.suggested||[]).map(p=>`<div class="find-row">
          <span class="av-md">${p.photo?`<img src="${escapeHTML(p.photo)}" alt="">`:escapeHTML(initials(p.name))}</span>
          <div class="find-who">
            <b>${escapeHTML(p.name)}</b>
            <span class="small">${escapeHTML([p.area,(p.interests||[]).slice(0,2).join(', ')].filter(Boolean).join(' · '))}</span>
+           ${p.usual?`<span class="small find-usual">Usually: ${escapeHTML(p.usual)}</span>`:''}
+           ${p.slotMatches&&p.slotMatches.length?`<span class="find-why">You both train ${escapeHTML(p.slotMatches.slice(0,2).map(r=>WEEKDAYS[r.weekday]+' '+r.band).join(' and '))}</span>`:''}
            ${p.shared&&p.shared.length?`<span class="find-why">You both do ${escapeHTML(p.shared.slice(0,2).join(' and '))}</span>`:''}
          </div>
          <button class="button small" data-action="ex-connect" data-id="${escapeHTML(p.id)}">Connect</button>

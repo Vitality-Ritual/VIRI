@@ -1135,11 +1135,27 @@ async function dbLoadSuggestions(){
   const people = await dbSearchPeople({ city: mine.city || mine.area || '' });
   const known = new Set([...(state.connections||[]), ...(state.requests||[]), ...(state.incoming||[])]);
   const overlap = (a, b) => (a||[]).filter(x => (b||[]).includes(x)).length;
-  state.suggested = people
-    .filter(p => !known.has(p.id) && !(state.blocked||[]).includes(p.id))
-    .map(p => ({ ...p,
-      score: overlap(p.interests, mine.interests) * 2 + overlap(p.times, mine.times),
-      shared: (p.interests||[]).filter(x => (mine.interests||[]).includes(x)) }))
+  const candidates = people.filter(p => !known.has(p.id) && !(state.blocked||[]).includes(p.id));
+  /* Their routines are already visible to members (that is how matching works),
+     so the card can say when she usually trains, and when that is when you do. */
+  const byPerson = {};
+  if (candidates.length) {
+    const { data } = await c.from('routines').select('profile_id,activity,weekday,time_band')
+      .in('profile_id', candidates.map(p => p.id));
+    for (const r of data || []) (byPerson[r.profile_id] = byPerson[r.profile_id] || [])
+      .push({ activity: r.activity || '', weekday: r.weekday, band: r.time_band });
+  }
+  const mySlots = new Set((state.routines || []).map(r => `${r.weekday}|${r.band}`));
+  state.suggested = candidates
+    .map(p => {
+      const rts = (byPerson[p.id] || []).sort((a, b) => a.weekday - b.weekday);
+      const slotMatches = rts.filter(r => mySlots.has(`${r.weekday}|${r.band}`));
+      return { ...p, routines: rts, slotMatches,
+        usual: rts.slice(0, 2).map(r => `${r.activity || 'Training'} ${WEEKDAYS[r.weekday].slice(0, 3)} ${r.band}`).join(' · '),
+        /* the same day and time is the strongest sign she is a fit */
+        score: overlap(p.interests, mine.interests) * 2 + overlap(p.times, mine.times) + slotMatches.length * 3,
+        shared: (p.interests||[]).filter(x => (mine.interests||[]).includes(x)) };
+    })
     .sort((a, b) => b.score - a.score)
     .slice(0, 6);
   return state.suggested;
@@ -1149,7 +1165,6 @@ async function dbLoadFeed(){
   const c = db(); if (!c || !authUser) { state.feed = []; return []; }
   const friends = (state.connections || []).filter(id => !(state.blocked || []).includes(id));
   if (!friends.length) { state.feed = []; await dbLoadSuggestions(); return []; }
-  state.suggested = [];
   const { data } = await c.from('sessions').select('*')
     .in('profile_id', friends)
     .order('happened_at', { ascending: false }).limit(40);
@@ -1165,6 +1180,9 @@ async function dbLoadFeed(){
   await dbLoadComments(out.map(s => s.id));
   await dbLoadLikes(out.map(s => s.id));
   state.feed = out;
+  /* friends who have not logged anything yet leave the feed just as empty as having
+     no friends, so suggest members nearby then too */
+  if (out.length) state.suggested = []; else await dbLoadSuggestions();
   return out;
 }
 
