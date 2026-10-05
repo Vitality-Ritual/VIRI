@@ -173,6 +173,7 @@ async function dbLoadProfile(){
     interests: data.activities || [],
     times: data.times || [],
     showAge: !!data.show_age,
+    emailDigest: data.email_digest !== false,
     eligibilityConfirmedAt: data.eligibility_confirmed_at || null,
     studios: []
   };
@@ -886,6 +887,27 @@ async function dbClaimPendingShowAge(){
     state.profile.showAge = want;
   }
   try { localStorage.removeItem('viri-pending-showage'); } catch (e) {}
+}
+
+/* The once-a-day summary email (023). On by default, and off with this switch or
+   with the stop link in any of the emails. */
+async function dbSetEmailDigest(on){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const { error } = await written(c.from('profiles').update({ email_digest: !!on }).eq('id', authUser.id),
+    'That setting could not be saved.');
+  if (error) return { error: /email_digest|schema cache/.test(error.message || '')
+    ? { message: 'This switch works once the latest database update (023) is run.' } : error };
+  if (state.profile) state.profile.emailDigest = !!on;
+  return { data: true };
+}
+
+/* The stop link in an email. Works without signing in: the token is the proof. */
+async function dbStopDigestEmails(token){
+  const c = db(); if (!c) return { error: { message: 'Not connected to the server.' } };
+  if (!/^[0-9a-f-]{36}$/i.test(String(token || ''))) return { data: false };
+  const { data, error } = await c.rpc('unsubscribe_digest', { p_token: token });
+  if (error) return { error };
+  return { data: !!data };
 }
 
 async function dbSetShowAge(on){
