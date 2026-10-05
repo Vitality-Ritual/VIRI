@@ -100,7 +100,7 @@ begin
       lines_html := lines_html || '<li style="margin:0 0 8px">and ' || (total - shown) || ' more</li>';
     end if;
 
-    subj := case when total = 1 then '1 new thing on VIRI' else total || ' new things on VIRI' end;
+    subj := case when total = 1 then '1 new notification on VIRI' else total || ' new notifications on VIRI' end;
     stop_link := 'https://vitalityritual.org/#/stop-emails/' || r.digest_token::text;
 
     perform net.http_post(
