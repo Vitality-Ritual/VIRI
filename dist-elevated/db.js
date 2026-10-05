@@ -529,6 +529,16 @@ async function dbAnswerPlan(classRef){
     .eq('profile_id', authUser.id).eq('class_ref', classRef), 'That answer could not be saved.');
 }
 
+/* "Did you go?" has to create the plan before it can mark it answered. They used
+   to be fired side by side, so the update raced the insert, matched no row and
+   reported nothing; written() now makes that failure visible, which is how it
+   was found. Always record an answer through this, never dbAnswerPlan alone. */
+async function dbRecordPlanAnswer(plan){
+  const added = await dbAddPlan(plan);
+  if (added && added.error) return added;
+  return dbAnswerPlan(plan.id);
+}
+
 async function dbDropPlan(classRef){
   const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
   return written(c.from('plans').delete().eq('profile_id', authUser.id).eq('class_ref', classRef), 'That plan could not be removed.');

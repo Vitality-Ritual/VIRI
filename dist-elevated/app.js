@@ -2711,8 +2711,7 @@ function logAttended(id){
   if(typeof dbAddSession==='function'){
     const post=state.posts[state.posts.length-1];
     dbPush(dbAddSession(post).then(r=>{if(r&&r.data&&r.data.id){post.id=r.data.id;render(false);}return r;}),'that session');
-    dbPush(dbAddPlan({id,title:p.title,cat:p.cat,place:p.place,start:p.start,dur:p.dur}),'your week');
-    dbPush(dbAnswerPlan(id),'the answer');
+    dbPush(dbRecordPlanAnswer({id,title:p.title,cat:p.cat,place:p.place,start:p.start,dur:p.dur}),'the answer');
   }
   save();closeModal();render(false);
   toast('Logged. You can add a photo or tag people any time.');
@@ -2720,8 +2719,7 @@ function logAttended(id){
 function skipAttended(id){
   state.logged=[...(state.logged||[]),id];
   const p=takePlan(id);
-  if(typeof dbAddPlan==='function'&&p)dbPush(dbAddPlan({id,title:p.title,cat:p.cat,place:p.place,start:p.start,dur:p.dur}),'your week');
-  if(typeof dbAnswerPlan==='function')dbPush(dbAnswerPlan(id),'the answer');
+  if(typeof dbRecordPlanAnswer==='function'&&p)dbPush(dbRecordPlanAnswer({id,title:p.title,cat:p.cat,place:p.place,start:p.start,dur:p.dur}),'the answer');
   save();closeModal();render(false);toast('Left off your sessions.');
 }
 /* ---- photos on a post ----
@@ -2870,7 +2868,7 @@ function postActivity(pre,edit){
            if(post.photo&&!/^data:/.test(post.photo))post.photo=await dbPhotoUrl(post.photo);
            render(false); return r;
          })(),'that session');
-         if(pre)dbPush(dbAnswerPlan(pre.id),'the answer');
+         if(pre)dbPush(dbRecordPlanAnswer({id:pre.id,title:pre.title,cat:pre.cat,place:pre.place,start:pre.start,dur:pre.dur}),'the answer');
        }
        save();closeModal();render(false);toast('Session added to your profile.');
      });
