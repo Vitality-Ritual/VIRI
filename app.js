@@ -99,10 +99,12 @@ function home(){return `<div class="home-page">
   
 </div></section>
 <section class="section edit-section"><div class="wrap"><div class="section-head" data-reveal><h2 class="section-title">The VIRI edit</h2><a class="text-link" href="#/read">All stories ${arrow}</a></div><div class="cards-three">${allArticles().slice(0,3).map((a,i)=>articleCard(a,i)).join('')}</div></div></section>
-<section class="testimonial" data-reveal><div class="wrap">
-  <p class="stars" aria-label="Five stars">★★★★★</p>
-  <blockquote>${reviews[0].text}</blockquote>
-  <p class="testimonial-by">${reviews[0].name} · Illustrative member story</p>
+<section class="home-facts" data-reveal><div class="wrap">
+  <ul class="home-facts-grid">
+    <li><strong>${Math.floor(VIRI.venues.length/50)*50}+</strong><span>studios and gyms to explore</span></li>
+    <li><strong>${VIRI.cities.length}</strong><span>cities to find your people in</span></li>
+    <li><strong>Free</strong><span>for women 18 and over</span></li>
+  </ul>
 </div></section>
 ${joinFinale()}</div>`;}
 /* the carousel runs to the end and stops on an All studios card rather than

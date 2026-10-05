@@ -1958,6 +1958,15 @@ summary.pf-section-head::-webkit-details-marker{display:none}
 @media (max-width:1000px){.feat-grid{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:560px){.feat-grid{grid-template-columns:1fr}.feat-grid li{padding:22px 20px 24px}}
 
+/* ---- home: three plain facts, where an invented testimonial used to be ---- */
+.home-facts{padding:clamp(56px,6.5vw,100px) 0;position:relative}
+.home-facts:before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:1px;height:clamp(30px,4vw,56px);background:var(--line)}
+.home-facts-grid{list-style:none;margin:0 auto;padding:0;max-width:900px;display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(18px,3vw,48px);text-align:center}
+.home-facts-grid li{display:flex;flex-direction:column;gap:12px;align-items:center}
+.home-facts-grid strong{font-family:var(--display);font-weight:400;font-size:clamp(2.6rem,5vw,4rem);line-height:.95;color:var(--cocoa)}
+.home-facts-grid span{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);max-width:20ch;line-height:1.7}
+@media (max-width:600px){.home-facts-grid{grid-template-columns:1fr;gap:34px}}
+
 /* On the very smallest phones (320px) five 44px header icons are still ~10px too wide, so
    they narrow a little; the height, which is what a thumb needs, stays 44px. Last in the file
    on purpose: the 44px phone rule above it would otherwise win by coming later. */
