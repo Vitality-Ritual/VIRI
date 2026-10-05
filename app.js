@@ -406,7 +406,43 @@ function exPersonCard(p,cls){
 
 function studiosPage(id){if(id){const s=studios.find(s=>s.id===id);if(!s)return notFound();return `<section class="page-head"><div class="wrap"><a class="text-link" href="#/studios">${arrowLeft} All studios</a><p class="eyebrow" style="margin-top:28px">${s.category}</p><h1>${s.name}</h1></div></section><div class="wrap studio-detail"><img src="${A+studioPhoto(s)}" alt="A studio space of the kind ${s.name} runs"><div class="studio-description"><h2>${s.intro}</h2><p>${s.description}</p><div class="studio-facts"><div><span class="small">The movement</span><br>${s.focus}</div></div><p class="small"><strong>Before you go</strong><br>${s.bring} Locations, formats, and amenities vary; confirm with the studio.</p><div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:20px"><a class="button" href="${s.url}" target="_blank" rel="noopener">Visit studio website ${arrow}</a><button class="button outline" data-action="save-studio" data-id="${s.id}" aria-pressed="${state.saved.includes(s.id)}">${state.saved.includes(s.id)?'Saved ✓':'Save studio'}</button></div></div></div><div class="wrap">${info('Studio listings are for discovery. VIRI has no booking integration or confirmed partnership with these brands.')}<div class="community-banner"><div><h3>Find someone to go with.</h3><p>Explore shared plans and people who enjoy ${s.category.toLowerCase()}.</p></div><a href="#/explore" class="button" data-action="studio-explore" data-category="${s.category}">Explore ${s.category.toLowerCase()} ${arrow}</a></div></div>`;}return `<section class="page-head"><div class="wrap"><p class="eyebrow">Discover a new ritual</p><h1>A studio for every kind of you.</h1><p>Add your favorite places to move, then find your people.</p></div></section><section class="wrap" style="padding-bottom:80px"><div class="explore-grid">${studios.map(studioCard).join('')}</div></section>`;}
 const phMark=()=>`<svg viewBox="0 0 48 40" aria-hidden="true"><rect x="1" y="1" width="46" height="38" rx="1"/><circle cx="16" cy="14" r="4.2"/><path d="M4 33l12-11 8 7 7-6 13 11"/></svg>`;
-function aboutPage(){return `<section class="about-hero is-placeholder"><div class="about-hero-ph" aria-hidden="true"><span class="ph-mark">${phMark()}</span><span class="ph-cap">Hero photograph<br>to come</span></div><div class="wrap"><p class="eyebrow">Vitality Ritual</p><h1>Build Community<br>Around What<br>Moves You.</h1>${button('join now','#/signup','light')}</div></section><section class="section"><div class="wrap about-story"><h2>Make a big city<br>feel a little smaller.</h2><div class="prose"><p>VIRI is a social network for people who want to live actively and connect locally. Build your own circle by discovering people in your area who share your interests, attend the same studios, take similar classes, follow similar routines, or have similar schedules.</p><p>Whether it’s finding a Pilates or yoga class, a new weight lifting buddy, or a partner to train for your next marathon with, VIRI helps you connect with people outside your existing network from across your city. Meet new people, build your community, and create your own corner of the city.</p></div></div></section>
+function aboutPage(){return `<section class="about-hero about-hero--week">
+  <img class="about-vr" src="${A}about-vr.svg" alt="" aria-hidden="true">
+  <div class="wrap about-hero-grid">
+    <div class="about-hero-copy">
+      <p class="eyebrow">Vitality Ritual</p>
+      <h1>Build Community<br>Around What<br>Moves You.</h1>
+      <p class="about-hero-sub">You already have a routine. VIRI shows you the women who share it.</p>
+      ${button('join now','#/signup','light')}
+    </div>
+    <div class="week-stack" role="img" aria-label="Examples of what VIRI shows: a weekly Pilates class with others who go, a guest pass offered, a monthly running goal at 26 of 40 miles, a long run logged with likes, and a friend adding your run to her week">
+      <div class="wk-col">
+        <article class="wk-card"><p class="wk-tag">Your week</p><p class="wk-what">Reformer Pilates</p><p class="wk-where">Tuesday &middot; 5&ndash;7am &middot; Dupont Circle</p><p class="wk-who"><span class="wk-av">AG</span><span class="wk-av">MR</span><span class="wk-av">+2</span><span class="wk-also">also go</span></p></article>
+        <article class="wk-card"><p class="wk-tag">Goals</p><p class="wk-what">Run 40 miles</p><p class="wk-where">This month &middot; 26 of 40</p><span class="wk-bar" aria-hidden="true"><span style="width:65%"></span></span></article>
+        <article class="wk-card"><p class="wk-tag">Friends</p><p class="wk-what wk-what-sm">Sam added your Thursday run to her week</p><p class="wk-where">Join them next time</p></article>
+      </div>
+      <div class="wk-col wk-col-2">
+        <article class="wk-card"><p class="wk-tag">Guest pass</p><p class="wk-what">Spin class</p><p class="wk-where">Thursday &middot; 5&ndash;7pm &middot; Navy Yard</p><p class="wk-pill">Ask for this pass</p></article>
+        <article class="wk-card"><p class="wk-tag">Sessions</p><p class="wk-what">Saturday long run</p><p class="wk-where">8.2 mi &middot; 1h 14m &middot; with SI</p><p class="wk-who wk-likes"><span aria-hidden="true">&#9825;</span> 3 &nbsp;&middot;&nbsp; 2 comments</p></article>
+      </div>
+      <p class="wk-note">An example of what you&rsquo;ll see</p>
+    </div>
+  </div></div></section><section class="section"><div class="wrap about-story"><h2>Make a big city<br>feel a little smaller.</h2><div class="prose"><p>VIRI is a social network for people who want to live actively and connect locally. Build your own circle by discovering people in your area who share your interests, attend the same studios, take similar classes, follow similar routines, or have similar schedules.</p><p>Whether it’s finding a Pilates or yoga class, a new weight lifting buddy, or a partner to train for your next marathon with, VIRI helps you connect with people outside your existing network from across your city. Meet new people, build your community, and create your own corner of the city.</p></div></div></section>
+<section class="section feat-section" data-reveal><div class="wrap">
+  <p class="eyebrow">What&rsquo;s inside</p>
+  <h2 class="feat-title">Built around the way you already train.</h2>
+  <ol class="feat-grid">
+    <li><span class="feat-no">01</span><h3>Your week</h3><p>Tell VIRI where you train and roughly when. It shows you the women who are in the same room at the same time.</p></li>
+    <li><span class="feat-no">02</span><h3>Explore</h3><p>More than 500 studios and gyms across Washington, DC, New York, Los Angeles, Miami, Boston, Chicago, Philadelphia and Atlanta, on a map you can search.</p></li>
+    <li><span class="feat-no">03</span><h3>Guest passes</h3><p>Got a guest pass you won&rsquo;t use? Offer it. Want to try a studio? Ask a member for one. VIRI doesn&rsquo;t hand out passes; you arrange it between you.</p></li>
+    <li><span class="feat-no">04</span><h3>Sessions</h3><p>Log a run, a class or a long walk with the time, the distance, a photo and who you went with.</p></li>
+    <li><span class="feat-no">05</span><h3>Goals</h3><p>Set a weekly or monthly goal, check in on the days you choose, and keep a record of every goal you finish.</p></li>
+    <li><span class="feat-no">06</span><h3>Friends</h3><p>Friends can like and comment on your sessions. See something you&rsquo;d go to? Tap &ldquo;Join them next time&rdquo; and it joins your week.</p></li>
+    <li><span class="feat-no">07</span><h3>Quiet notifications</h3><p>You see them inside VIRI. If you want email, it&rsquo;s one summary a day, and only on days something happened.</p></li>
+    <li><span class="feat-no">08</span><h3>Yours to control</h3><p>Women only. Your age stays hidden unless you show it, everything beyond your name and city is optional, and you can block, report or delete your account any time.</p></li>
+  </ol>
+  <div class="feat-cta">${button('Join VIRI','#/signup')}<a class="button outline" href="#/connect">Contact us ${arrow}</a></div>
+</div></section>
 <section class="philosophy" data-reveal><div class="philosophy-band">
   <figure class="philosophy-media"><img src="${A}studio-sculpt.jpg" alt="Women working out together in a bright studio" loading="lazy"></figure>
   <div class="philosophy-copy">
@@ -418,35 +454,7 @@ function aboutPage(){return `<section class="about-hero is-placeholder"><div cla
     <p class="philosophy-note">Our co-founder Margaret holds a BA in sociology, where course after course came back to the same finding \u2014 that community and connection sit underneath physical and mental wellbeing rather than beside them. VIRI is that idea, built for the hour of the day when people are already together and not yet talking.</p>
   </div>
 </div></section>
-<section class="section founders" data-reveal><div class="wrap">
-  <h2 class="founders-title"><span class="f-script">Meet&nbsp;the</span><span class="f-serif">Founders</span></h2>
-  <div class="founders-grid">
-    <article class="founder-letter">
-      <div class="prose">
-        <p>Growing up in Colorado, I was always active &mdash; running, skiing, swimming, tennis, golf, hiking, you name it. Making friends through fitness was easy, because my classmates were just as into the active lifestyle as I was. The pattern continued in college, but once I graduated and moved to Washington, DC, the disconnect between fitness and connection was obvious. Everyone was in their own world, but weirdly, right next to each other, often living parallel lives.</p>
-        <p>I would show up to my early morning workout classes and think the whole time, &ldquo;Why is she up at 5am too? When did she move here? Is she training for something? Maybe she works in corporate.&rdquo;</p>
-        <p>But we live in an age of digital connection, where walking up to someone in your workout class and starting a conversation is far harder than it sounds. That was when I realized we needed VIRI.</p>
-        <p>VIRI takes the routines you have already built and elevates them. Our goal is to connect you with the people nearby living the same lifestyle, because the power of social connection is backed by science. Whether you are looking for someone to chat with before class or an accountability partner, we guarantee that you will benefit.</p>
-      </div>
-      <p class="founders-sign"><span class="founder-signature">Margaret</span>
-        <span class="founders-role">Margaret Cole &middot; Co-founder</span></p>
-    </article>
-    <article class="founder-letter">
-      <div class="prose">
-        <p>I grew up in Colorado too, where exercise and friendship were often the same thing. Staying active never felt separate from being social &mdash; it simply was the social activity.</p>
-        <p>I was also a gymnast for almost a decade, which taught me that training is easier and far more rewarding with a team. The work felt lighter with others beside me, the hard days were shared, and I showed up knowing that people were counting on me. Motivation was built into the routine, and I never had to look far for it.</p>
-        <p>College worked much the same way. A big city does not. Most adults are absorbed in their own responsibilities, living in different neighborhoods and keeping different hours, so the routines that used to form without effort become much harder to find. Health and wellness are usually the first thing a full schedule pushes aside, even for people who care deeply.</p>
-        <p>I missed having a team, and I suspected many others did too. That is why we started VIRI &mdash; so that working out in company becomes as ordinary in a city as it was for me growing up. I have seen the difference between training alone and training together, and most people would choose the second if it were easier to find.</p>
-      </div>
-      <p class="founders-sign"><span class="founder-signature">Annabel</span>
-        <span class="founders-role">Annabel Green &middot; Co-founder</span></p>
-    </article>
-    <figure class="founders-photo" aria-label="Photograph of Margaret and Annabel — to come">
-      <span class="ph-mark">${phMark()}</span><span class="ph-cap">A photograph of<br>Margaret &amp; Annabel<br>to come</span>
-    </figure>
-  </div>
-  <a class="button outline founders-cta" href="#/connect">Contact us ${arrow}</a>
-</div></section>${joinSection()}`;}
+${joinSection()}`;}
 /* Where the contact form and the report notifications deliver. FormSubmit
    relays them without a backend, which this static site has no way to
    provide. The address is activated and sending; see relayDelivered in db.js
