@@ -32,6 +32,7 @@
 
 require 'json'
 require 'open3'
+require 'set'      # the Ruby that ships with macOS (2.6) does not load Set on its own
 
 Encoding.default_external = Encoding::UTF_8
 Encoding.default_internal = Encoding::UTF_8
@@ -155,6 +156,23 @@ app.to_enum(:scan, /\.from\(\s*['"`]\w+['"`]\s*\)\s*\.(insert|update|upsert|dele
   m = Regexp.last_match
   fail "app.js:#{line_of(app, m.begin(0))} writes to the database directly. Writes belong in db.js, where they are checked."
 end
+
+# ------------------------------------------------------------------ handlers
+# Every button is wired by a `case 'some-action':someFunction(...)` in one big
+# dispatcher. The "Show my age" switch called toggleShowAge for as long as anyone
+# can tell, a function that was never written, so pressing it threw and did
+# nothing. A call to a name defined nowhere is caught here instead of by a member.
+head 'handlers (every button calls something that exists)'
+defined = (inventory(app) + inventory(read('db.js')) + inventory(read('explore-data.js'), 2)).to_set
+undefined_calls = []
+app.scan(/case\s+'([\w-]+)'\s*:\s*(?:\{\s*)?(?:[\w$.]+\s*=\s*)?(?:await\s+)?([A-Za-z_$][\w$]*)\s*\(/).each do |action, fn|
+  next if defined.include?(fn)
+  next if %w[if for while switch return typeof closeModal render toast goTo save setTimeout confirm alert].include?(fn)
+  next if fn =~ /\A(?:Math|Object|Array|JSON|Number|String|Date|Promise|history|location|window|document|localStorage|navigator|console)\z/
+  undefined_calls << [action, fn]
+end
+undefined_calls.uniq.each { |action, fn| fail "button '#{action}' calls #{fn}(), which is defined nowhere" }
+ok "all #{app.scan(/case\s+'[\w-]+'\s*:/).length} dispatcher cases call functions that exist" if undefined_calls.empty?
 
 # ------------------------------------------------------------------ roster
 head 'roster (sample members)'
