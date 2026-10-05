@@ -86,7 +86,7 @@ function home(){return `<div class="home-page">
     <a class="panel-link" href="#/signup">Start your profile ${arrow}</a>
   </div>
 </section>
-<section class="section studio-section"><div class="wrap"><div class="section-head" data-reveal><h2 class="section-title">Find your next favorite</h2><div class="head-controls"><a class="text-link" href="#/studios">All studios ${arrow}</a></div></div><div class="studio-carousel"><button class="circle-button carousel-arrow" data-action="studio-prev" aria-label="Previous studios" disabled>‹</button><div class="cards-three" id="studio-grid" aria-live="polite" aria-label="Featured studios">${studioCards()}</div><button class="circle-button carousel-arrow" data-action="studio-next" aria-label="Next studios">›</button></div><p class="section-foot">Member counts are illustrative for this preview.</p></div></section>
+<section class="section studio-section"><div class="wrap"><div class="section-head" data-reveal><h2 class="section-title">Find your next favorite</h2><div class="head-controls"><a class="text-link" href="#/studios">All studios ${arrow}</a></div></div><div class="studio-carousel"><button class="circle-button carousel-arrow" data-action="studio-prev" aria-label="Previous studios" disabled>‹</button><div class="cards-three" id="studio-grid" aria-live="polite" aria-label="Featured studios">${studioCards()}</div><button class="circle-button carousel-arrow" data-action="studio-next" aria-label="Next studios">›</button></div></div></section>
 <section class="section longevity-split" data-reveal><div class="wrap">
   <div class="longevity-grid">
     <h2 class="longevity-title">Connection is part of longevity</h2>
