@@ -1967,6 +1967,16 @@ summary.pf-section-head::-webkit-details-marker{display:none}
 .home-facts-grid span{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);max-width:20ch;line-height:1.7}
 @media (max-width:600px){.home-facts-grid{grid-template-columns:1fr;gap:34px}}
 
+/* ---- Find: name, city, activity and time as labelled filters ---- */
+.find-filters{display:grid;grid-template-columns:minmax(0,2fr) repeat(3,minmax(0,1.15fr)) auto;gap:12px;align-items:end;max-width:none;margin-bottom:8px}
+.find-filters .field{margin:0}
+.find-filters label{display:block;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+.find-filters input,.find-filters select{width:100%;font-size:15px;padding:13px 14px}
+.find-filters .button{height:48px}
+.find-hint{margin:0 0 clamp(26px,3.2vw,40px)}
+@media (max-width:900px){.find-filters{grid-template-columns:1fr 1fr}.find-filters .find-name{grid-column:1/-1}.find-filters .button{grid-column:1/-1;width:100%}}
+@media (max-width:420px){.find-filters{gap:10px}.find-filters input,.find-filters select{font-size:14px;padding:11px 10px}.find-filters label{letter-spacing:.12em}}
+
 /* On the very smallest phones (320px) five 44px header icons are still ~10px too wide, so
    they narrow a little; the height, which is what a thumb needs, stays 44px. Last in the file
    on purpose: the 44px phone rule above it would otherwise win by coming later. */

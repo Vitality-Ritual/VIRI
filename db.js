@@ -1201,10 +1201,19 @@ async function dbMarkThreadRead(otherId){
 /* Who else trains the way you do. Blocked people are filtered here rather than
    in the query because the block may run in either direction and only
    blocked_with() can see both. */
-async function dbSearchPeople({ activities = [], times = [], city = '' } = {}){
+/* `cityTerms` are the spellings people actually type for one city ("New York",
+   "NYC", "Brooklyn"); a term starting with = must match the whole field, so
+   "LA" does not catch Atlanta. `name` is a fragment of a member's name. */
+async function dbSearchPeople({ activities = [], times = [], city = '', cityTerms = null, name = '' } = {}){
   const c = db(); if (!c || !authUser) return [];
   let q = c.from('profiles').select('*').neq('id', authUser.id).limit(60);
-  if (city) q = q.ilike('city', `%${city}%`);
+  const who = String(name || '').replace(/[%_\\,()"*]/g, ' ').trim();
+  if (who) q = q.ilike('name', `%${who}%`);
+  if (cityTerms && cityTerms.length) {
+    q = q.or(cityTerms.map(t => t.startsWith('=')
+      ? `city.ilike."${t.slice(1).replace(/"/g, '')}"`
+      : `city.ilike."*${t.replace(/"/g, '')}*"`).join(','));
+  } else if (city) q = q.ilike('city', `%${city}%`);
   if (activities.length) q = q.overlaps('activities', activities);
   if (times.length) q = q.overlaps('times', times);
   const { data, error } = await q;

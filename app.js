@@ -2582,7 +2582,6 @@ function findPage(){
   if(!signedIn())return authPage();
   const p=state.profile;
   const results=state.found||null;   /* null until a search has run */
-  const chips=(p&&p.interests||[]).slice(0,6);
   const card=m=>{const st=exLinked(m.id);
     return `<div class="find-row">
       <span class="av-md">${m.photo?`<img src="${escapeHTML(m.photo)}" alt="">`:escapeHTML(initials(m.name))}</span>
@@ -2601,13 +2600,26 @@ function findPage(){
     </div>`;};
   return `<section class="page-head"><div class="wrap"><p class="eyebrow">Find your people</p><h1>Who else trains<br>the way you do.</h1></div></section>
   <div class="wrap find">
-    <form class="find-bar" id="find-form">
-      <label class="visually-hidden" for="find-q">Search by city</label>
-      <input id="find-q" name="q" type="search" placeholder="${escapeHTML(p&&p.city?p.city:'A city')}" value="${escapeHTML(findCity)}">
+    <form class="find-bar find-filters" id="find-form">
+      <div class="field find-name"><label for="find-name">Name</label>
+        <input id="find-name" name="name" type="search" placeholder="Search for a friend by name" value="${escapeHTML(findName)}" autocomplete="off"></div>
+      <div class="field"><label for="find-city">City</label>
+        <select id="find-city" name="city">
+          <option value="near"${findCitySel==='near'?' selected':''}>Near me${p&&p.city?` (${escapeHTML(p.city)})`:''}</option>
+          <option value="any"${findCitySel==='any'?' selected':''}>Anywhere</option>
+          ${VIRI.cities.map(c=>`<option value="${c.id}"${findCitySel===c.id?' selected':''}>${escapeHTML(c.name)}</option>`).join('')}
+        </select></div>
+      <div class="field"><label for="find-act">Activity</label>
+        <select id="find-act" name="activity"><option value="">Any activity</option>
+          ${JOIN_FORMS.filter(x=>x!=='No preference'&&x!=='Other').map(x=>`<option${findAct===x?' selected':''}>${escapeHTML(x)}</option>`).join('')}
+        </select></div>
+      <div class="field"><label for="find-time">Usually trains</label>
+        <select id="find-time" name="time"><option value="">Any time</option>
+          ${JOIN_TIMES.map(x=>`<option${findTime===x?' selected':''}>${escapeHTML(x)}</option>`).join('')}
+        </select></div>
       <button class="button" type="submit">Search</button>
     </form>
-    ${chips.length?`<div class="find-chips">${chips.map(c=>
-      `<button class="chip${findActivities.includes(c)?' is-on':''}" data-action="find-chip" data-id="${escapeHTML(c)}">${escapeHTML(c)}</button>`).join('')}</div>`:''}
+    <p class="field-eg find-hint">Looking for someone you know? Type her name: it searches every city unless you choose one.</p>
     ${(state.roomMatches||[]).length?`<p class="rail-label find-head">In the room with you</p>
       <div class="find-results">${(state.roomMatches||[]).slice(0,6).map(m=>{
         const exact=(m.slots||[]).filter(s=>s.exact);
@@ -2624,20 +2636,43 @@ function findPage(){
             :`<button class="button small" data-action="ex-connect" data-id="${escapeHTML(m.id)}">Connect</button>`}
           ${safetyButton(m.id,m.name)}
         </div>`;}).join('')}</div>`:''}
-    ${results&&results.length?`<p class="rail-label find-head">Others nearby</p>`:''}
+    ${results&&results.length?`<p class="rail-label find-head">${escapeHTML(findScope)}</p>`:''}
     <div class="find-results">
       ${results===null
         ? '<p class="small">Finding people near you&hellip;</p>'
         : results.length
           ? results.map(card).join('')
-          : '<p class="small">Nobody matched. Try removing a filter, or widening the city.</p>'}
+          : `<p class="small">Nobody matched${findName?` &ldquo;${escapeHTML(findName)}&rdquo;`:''}. Try Anywhere, or set a filter back to Any.</p>`}
     </div>
   </div>`;}
 
 let findCity='', findActivities=[], feedFetched=false;
+let findName='', findCitySel='near', findAct='', findTime='', findScope='Others nearby';
+/* What people type for each Explore city. A leading = means the whole field must
+   match, for abbreviations that would otherwise match inside other names. */
+const CITY_TERMS={dc:['Washington','DC','D.C.'],nyc:['New York','NYC','Brooklyn','Manhattan','Queens','Bronx','Staten Island'],
+  la:['Los Angeles','=LA','=L.A.','Santa Monica','Hollywood'],mia:['Miami'],bos:['Boston','Cambridge','Somerville'],
+  chi:['Chicago'],phl:['Philadelphia','Philly'],atl:['Atlanta','=ATL']};
+function cityIdFromText(t){
+  const v=String(t||'').toLowerCase().trim(); if(!v)return '';
+  for(const [id,terms] of Object.entries(CITY_TERMS))
+    if(terms.some(x=>x.startsWith('=')?v===x.slice(1).toLowerCase():v.includes(x.toLowerCase())))return id;
+  return '';
+}
+function cityTermsFor(sel){
+  if(sel==='any')return null;
+  if(sel==='near'){const mine=(state.profile&&state.profile.city)||'';const id=cityIdFromText(mine);return id?CITY_TERMS[id]:(mine?[mine]:null);}
+  return CITY_TERMS[sel]||null;
+}
 async function runSearch(){
-  const q=$('#find-q'); if(q)findCity=q.value.trim();
-  state.found=await dbSearchPeople({ city:findCity||((state.profile&&state.profile.city)||''), activities:findActivities });
+  const f=$('#find-form');
+  if(f){const fd=new FormData(f);findName=String(fd.get('name')||'').trim();findCitySel=String(fd.get('city')||'near');
+    findAct=String(fd.get('activity')||'');findTime=String(fd.get('time')||'');}
+  /* a name means "find this person", so Near me widens to everywhere */
+  const sel=findName&&findCitySel==='near'?'any':findCitySel;
+  const cityName=sel==='any'?'':sel==='near'?((state.profile&&state.profile.city)||''):((VIRI.cities.find(c=>c.id===sel)||{}).name||'');
+  findScope=findName?`Matching "${findName}"${cityName?' in '+cityName:''}`:cityName?`Members in ${cityName}`:'Members everywhere';
+  state.found=await dbSearchPeople({ name:findName, cityTerms:cityTermsFor(sel), activities:findAct?[findAct]:[], times:findTime?[findTime]:[] });
   render(false);
 }
 function authPage(){return `<section class="auth-layout"><div class="auth-image"><img src="${A}studio-entry.jpg" alt="Two women arriving at the studio together"><h2>A new ritual.<br>A new circle.<br>A little more you.</h2></div><div class="auth-form"><p class="eyebrow">Welcome back</p><h1>Back to your circle.</h1><p>Sign in to your VIRI account.</p><form id="auth-form"><div class="field"><label for="auth-email">Email address</label><input id="auth-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required></div><div class="field"><label for="auth-pass">Password</label><input id="auth-pass" name="password" type="password" autocomplete="current-password" required></div><p class="auth-forgot"><a href="#/forgot">Forgot your password?</a></p><p id="auth-error" class="field-error" role="alert"></p><button class="button" type="submit" style="margin-top:18px">Open my profile</button></form><p class="small">New here? <a href="#/signup">Join VIRI</a></p></div></section>`;}
