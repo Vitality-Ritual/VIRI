@@ -355,8 +355,35 @@ async function dbLoadComments(sessionIds){
   if (error) return;                       /* before 018 the table does not exist */
   for (const id of ids) state.comments[id] = [];
   for (const r of data || []) state.comments[r.session_id].push(
-    { id: r.id, sessionId: r.session_id, authorId: r.author_id, body: r.body, at: r.created_at });
+    { id: r.id, sessionId: r.session_id, authorId: r.author_id, body: r.body, at: r.created_at,
+      parentId: r.parent_id || null });
+  await dbLoadCommentLikes((data || []).map(r => r.id));
   await dbPeople((data || []).map(r => r.author_id));
+}
+
+/* Who has liked each comment (025). Before 025 the table does not exist and
+   every comment simply shows no likes. */
+async function dbLoadCommentLikes(commentIds){
+  const c = db(); if (!c || !authUser) return;
+  const ids = [...new Set(commentIds || [])].filter(Boolean);
+  state.commentLikes = state.commentLikes || {};
+  if (!ids.length) return;
+  const { data, error } = await c.from('comment_likes').select('comment_id,profile_id').in('comment_id', ids);
+  if (error) return;
+  for (const id of ids) state.commentLikes[id] = [];
+  for (const r of data || []) state.commentLikes[r.comment_id].push(r.profile_id);
+}
+
+async function dbSetCommentLike(commentId, on){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Sign in to like a comment.' } };
+  if (on) {
+    const { error } = await c.from('comment_likes').insert({ comment_id: commentId, profile_id: authUser.id });
+    if (error && error.code !== '23505') return { error: /comment_likes|schema cache|does not exist/.test(error.message || '')
+      ? { message: 'Liking comments switches on once the latest database update (025) is run.' } : error };
+    return { data: true };
+  }
+  return written(c.from('comment_likes').delete().eq('comment_id', commentId).eq('profile_id', authUser.id),
+    'That like could not be taken back.');
 }
 
 /* Likes: who has liked each session, seen by the same people as the session.
@@ -385,19 +412,23 @@ async function dbSetLike(sessionId, on){
     'That like could not be taken back.');
 }
 
-async function dbAddComment(sessionId, body){
+async function dbAddComment(sessionId, body, parentId){
   const c = db(); if (!c || !authUser) return { error: { message: 'Sign in to comment.' } };
   const text = String(body || '').trim();
   if (!text) return { error: { message: 'Write something first.' } };
   if (text.length > 500) return { error: { message: 'A comment can be 500 characters at most.' } };
-  const { data, error } = await c.from('session_comments')
-    .insert({ session_id: sessionId, author_id: authUser.id, body: text }).select().maybeSingle();
+  const row = { session_id: sessionId, author_id: authUser.id, body: text };
+  if (parentId) row.parent_id = parentId;
+  const { data, error } = await c.from('session_comments').insert(row).select().maybeSingle();
+  if (error && parentId && /parent_id/.test(error.message || ''))
+    return { error: { message: 'Replies switch on once the latest database update (025) is run.' } };
   if (error) return { error: /session_comments|schema cache|does not exist/.test(error.message || '')
     ? { message: 'Comments switch on once the latest database update (018) is run.' } : error };
   if (!data) return { error: { message: 'That comment could not be posted.' } };
   state.comments = state.comments || {};
   (state.comments[sessionId] = state.comments[sessionId] || []).push(
-    { id: data.id, sessionId, authorId: authUser.id, body: data.body, at: data.created_at });
+    { id: data.id, sessionId, authorId: authUser.id, body: data.body, at: data.created_at,
+      parentId: data.parent_id || null });
   return { data: true };
 }
 
@@ -407,7 +438,7 @@ async function dbDeleteComment(id, sessionId){
     'That comment could not be removed.');
   if (error) return { error };
   if (state.comments && state.comments[sessionId])
-    state.comments[sessionId] = state.comments[sessionId].filter(x => x.id !== id);
+    state.comments[sessionId] = state.comments[sessionId].filter(x => x.id !== id && x.parentId !== id);
   return { data: true };
 }
 
@@ -782,6 +813,8 @@ async function dbExportData(){
   out.session_comments = comments.error ? [] : (comments.data || []);
   const likes = await c.from('session_likes').select('*').eq('profile_id', authUser.id);
   out.session_likes = likes.error ? [] : (likes.data || []);
+  const clikes = await c.from('comment_likes').select('*').eq('profile_id', authUser.id);
+  out.comment_likes = clikes.error ? [] : (clikes.data || []);
   const passes = await c.from('guest_passes').select('*').eq('owner_id', authUser.id);
   out.guest_passes = passes.error ? [] : (passes.data || []);
   const asks = await c.from('guest_pass_requests').select('*').eq('requester_id', authUser.id);
@@ -1280,6 +1313,23 @@ async function dbLoadSuggestions(){
     .sort((a, b) => b.score - a.score)
     .slice(0, 6);
   return state.suggested;
+}
+
+/* One session by id, for the post page. Row-level security decides whether it can
+   be seen at all; nothing comes back for a session that is not yours or a friend's. */
+async function dbLoadSession(id){
+  const c = db(); if (!c || !authUser) return null;
+  const { data, error } = await c.from('sessions').select('*').eq('id', id).maybeSingle();
+  if (error || !data) return null;
+  await dbPeople([data.profile_id]);
+  const sess = rowToSession(data);
+  sess.photo = await dbPhotoUrl(data.photo_path);
+  sess.ownerId = data.profile_id;
+  sess.by = data.profile_id === authUser.id ? null : (state.people[data.profile_id] || null);
+  await dbAttachTags([sess]);
+  await dbLoadComments([sess.id]);
+  await dbLoadLikes([sess.id]);
+  return sess;
 }
 
 async function dbLoadFeed(){

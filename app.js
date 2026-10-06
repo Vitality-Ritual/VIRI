@@ -1246,34 +1246,74 @@ function sessionStats(s){
    Comments sit under a session, seen and written by the people who can see the
    session at all: whoever logged it and her friends. The author can delete a
    comment; so can the session's owner, which is how an unwelcome one goes. */
-let openThreads=new Set();
+let openThreads=new Set(), replyingTo=null;
+/* Likes on a comment (025): a heart and a count. Your own comment shows its count
+   but cannot be liked by you, the same rule as sessions. Nobody is notified. */
+function commentLike(c,sid){
+  const who=(state.commentLikes||{})[c.id]||[], me=authUser&&authUser.id, liked=!!me&&who.includes(me), n=who.length;
+  if(c.authorId===me)return n?`<span class="comment-like is-mine" aria-label="${n} ${n===1?'like':'likes'}">${HEART}${n}</span>`:'';
+  if(!signedIn())return '';
+  return `<button class="plain-link comment-like${liked?' is-on':''}" data-action="comment-like" data-id="${escapeHTML(c.id)}" data-session="${escapeHTML(sid)}" aria-pressed="${liked}" aria-label="${liked?'Unlike':'Like'} this comment, ${n} ${n===1?'like':'likes'}">${HEART}${n||''}</button>`;
+}
+function commentItem(c,s,mine,me,replies){
+  const sid=String(s.id);
+  const who=c.authorId===me?((state.profile&&state.profile.name)||'You'):((personById(c.authorId)||{}).name||'A member');
+  const drop=c.authorId===me||mine;
+  /* replying to a reply joins the same thread, under the top comment */
+  const top=c.parentId||c.id;
+  return `<div class="comment${c.parentId?' is-reply':''}">
+    <p class="comment-head"><b>${escapeHTML(who)}</b> <span class="small">${escapeHTML(prettyDate(c.at))}</span></p>
+    <p class="comment-body">${escapeHTML(c.body)}</p>
+    <p class="comment-acts">${commentLike(c,sid)}${signedIn()?`<button class="plain-link" data-action="comment-reply" data-id="${escapeHTML(top)}" data-session="${escapeHTML(sid)}" data-name="${escapeHTML(String(who).split(' ')[0])}">Reply</button>`:''}${drop?`<button class="plain-link comment-x" data-action="comment-delete" data-id="${escapeHTML(c.id)}" data-session="${escapeHTML(sid)}" data-replies="${replies||0}">Delete</button>`:''}</p>
+  </div>`;
+}
 function commentThread(s,by){
   const list=(state.comments||{})[s.id]||[];
-  const mine=sessionIsMine(s,by), me=authUser&&authUser.id;
+  const mine=sessionIsMine(s,by), me=authUser&&authUser.id, sid=String(s.id);
+  const ids=new Set(list.map(c=>c.id));
+  const tops=list.filter(c=>!c.parentId||!ids.has(c.parentId));
   return `<div class="session-thread">
-    ${list.length?list.map(c=>{
-      const who=c.authorId===me?((state.profile&&state.profile.name)||'You'):((personById(c.authorId)||{}).name||'A member');
-      const drop=c.authorId===me||mine;
-      return `<div class="comment"><p class="comment-head"><b>${escapeHTML(who)}</b> <span class="small">${escapeHTML(prettyDate(c.at))}</span>${drop?` <button class="plain-link comment-x" data-action="comment-delete" data-id="${escapeHTML(c.id)}" data-session="${escapeHTML(String(s.id))}">Delete</button>`:''}</p>
-        <p class="comment-body">${escapeHTML(c.body)}</p></div>`;}).join('')
+    ${tops.length?tops.map(t=>{
+      const reps=list.filter(r=>r.parentId===t.id);
+      const first=String(t.authorId===me?'yourself':((personById(t.authorId)||{}).name||'her')).split(' ')[0];
+      return commentItem(t,s,mine,me,reps.length)+reps.map(r=>commentItem(r,s,mine,me,0)).join('')
+        +(replyingTo===t.id&&signedIn()?`<form class="comment-form is-reply" data-session="${escapeHTML(sid)}" data-parent="${escapeHTML(t.id)}"><input name="body" maxlength="500" required placeholder="Reply to ${escapeHTML(first)}" aria-label="Reply to ${escapeHTML(first)}"><button class="button small" type="submit">Reply</button><button class="plain-link" type="button" data-action="comment-reply-cancel">Cancel</button></form>`:'');
+    }).join('')
       :'<p class="small">No comments yet.</p>'}
-    ${signedIn()?`<form class="comment-form" data-session="${escapeHTML(String(s.id))}"><input name="body" maxlength="500" required placeholder="Add a comment" aria-label="Add a comment"><button class="button small" type="submit">Post</button></form>`:''}
+    ${signedIn()?`<form class="comment-form" data-session="${escapeHTML(sid)}"><input name="body" maxlength="500" required placeholder="Add a comment" aria-label="Add a comment"><button class="button small" type="submit">Post</button></form>`:''}
   </div>`;
 }
 document.addEventListener('submit',async e=>{
   const f=e.target&&e.target.closest&&e.target.closest('.comment-form'); if(!f)return;
   e.preventDefault();
-  const input=f.querySelector('input[name=body]'), btn=f.querySelector('button');
+  const input=f.querySelector('input[name=body]'), btn=f.querySelector('button[type=submit]');
   btn.disabled=true;
-  const r=await dbAddComment(f.dataset.session,input.value);
+  const r=await dbAddComment(f.dataset.session,input.value,f.dataset.parent||null);
   btn.disabled=false;
   if(r.error){toast(r.error.message);return;}
+  if(f.dataset.parent)replyingTo=null;
   render(false);
 });
-async function deleteComment(id,sessionId){
+/* Deleting a comment takes its replies with it, so that asks twice. */
+async function deleteComment(id,sessionId,btn){
+  const n=Number(btn&&btn.dataset.replies)||0;
+  if(n&&btn.dataset.armed!=='1'){btn.dataset.armed='1';btn.textContent=`Tap again: this also deletes ${n} ${n===1?'reply':'replies'}`;return;}
   const r=await dbDeleteComment(id,sessionId);
   if(r.error){toast(r.error.message);return;}
   render(false); toast('Comment removed.');
+}
+function startReply(id,sessionId){
+  replyingTo=id; openThreads.add(String(sessionId)); render(false);
+  const f=document.querySelector(`.comment-form[data-parent="${CSS.escape(id)}"] input`); if(f)f.focus();
+}
+/* the heart changes at once; if the server says no, it changes back */
+async function toggleCommentLike(id){
+  if(!signedIn())return;
+  const me=authUser.id; state.commentLikes=state.commentLikes||{};
+  const before=[...(state.commentLikes[id]||[])], on=!before.includes(me);
+  state.commentLikes[id]=on?[...before,me]:before.filter(x=>x!==me); render(false);
+  const r=await dbSetCommentLike(id,on);
+  if(r.error){state.commentLikes[id]=before;render(false);toast(r.error.message);}
 }
 /* "Join them next time" puts a friend's session into your own week. If they
    have a routine for it, it takes that routine's days and time; otherwise the
@@ -1326,19 +1366,20 @@ async function toggleLike(id){
  Someone
    else's session always arrives with an id that is not in your posts. */
 const sessionIsMine=(s,by)=>!by&&(!s.id||(state.posts||[]).some(x=>x.id===s.id));
-function sessionCard(s,by){
+function sessionCard(s,by,opts={}){
   if(s.ago===undefined)s=sessionView(s);
-  return `<article class="session">
+  const full=!!opts.full, link=s.id&&!full&&signedIn()?`#/post/${encodeURIComponent(String(s.id))}`:'';
+  return `<article class="session${full?' is-full':''}">
     ${by?`<div class="session-by"><span class="av-sm">${avatarFor(by)}</span>
       <span><b>${by.id&&isRealAccount(by.id)?`<a class="person-link" href="#/member/${escapeHTML(by.id)}">${escapeHTML(by.name)}</a>`:escapeHTML(by.name)}</b><span class="small">${escapeHTML(s.ago)} &middot; ${escapeHTML(s.place)}</span></span>
       ${by.id&&!state.connections.includes(by.id)
         ?`<button class="button small outline" data-action="ex-connect" data-id="${escapeHTML(by.id)}">Add friend</button>`
         :'<span class="tag">Friend</span>'}${safetyButton(by.id,by.name)}</div>`
      :`<p class="session-meta">${escapeHTML(s.ago)}${s.place?` &middot; ${escapeHTML(s.place)}`:''}${s.id&&(state.posts||[]).some(x=>x.id===s.id)?` <button class="plain-link session-edit" data-action="edit-session" data-id="${escapeHTML(String(s.id))}">Edit</button>`:''}</p>`}
-    <h3 class="session-title">${escapeHTML(s.title)}</h3>
+    <h3 class="session-title">${link?`<a href="${link}">${escapeHTML(s.title)}</a>`:escapeHTML(s.title)}</h3>
     ${sessionStats(s)}
     ${s.note?`<p class="session-note">${escapeHTML(s.note)}</p>`:''}
-    ${s.img?`<figure class="session-shot"><img src="${/^(data:|https?:|blob:)/.test(s.img)?s.img:A+s.img}" alt="" loading="lazy"></figure>`:''}
+    ${s.img?`<figure class="session-shot">${link?`<a href="${link}" aria-label="Open this post">`:''}<img src="${/^(data:|https?:|blob:)/.test(s.img)?s.img:A+s.img}" alt="" loading="lazy">${link?'</a>':''}</figure>`:''}
     <div class="session-foot">
       ${s.withLine?`${whoStack(s.withIds)}<span class="small">with ${escapeHTML(s.withLine)}</span>`:''}
       ${sessionIsMine(s,by)?'':`<button class="button small" data-action="session-join" data-id="${escapeHTML(String(s.id||''))}">Join them next time</button>`}
@@ -1346,8 +1387,39 @@ function sessionCard(s,by){
       <button class="plain-link session-talk" data-action="session-talk" data-id="${escapeHTML(String(s.id||''))}" aria-expanded="${!!(s.id&&openThreads.has(String(s.id)))}" aria-label="Comments">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-8 8H5l-2 2V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z"/></svg>${s.comments||0}</button>
     </div>
-    ${s.id&&openThreads.has(String(s.id))?commentThread(s,by):''}
+    ${full?likedBy(s):''}
+    ${s.id&&(full||openThreads.has(String(s.id)))?commentThread(s,by):''}
   </article>`;
+}
+/* ===================== one post on its own =====================
+   Opened from a post's title or photo, or from a notification. The session may
+   be in the feed, among your own, or neither (a link from a notification), in
+   which case it is fetched; row-level security decides whether it can be seen. */
+const postCache={}; let postLoading=null; const postAsked=new Set();
+function likedBy(s){
+  const who=((state.likes||{})[s.id]||[]).map(id=>id===(authUser&&authUser.id)?'You':((personById(id)||{}).name||'A member').split(' ')[0]);
+  return who.length?`<p class="post-liked">Liked by ${escapeHTML(who.slice(0,6).join(', '))}${who.length>6?` and ${who.length-6} more`:''}</p>`:'';
+}
+function findSession(id){
+  const f=(state.feed||[]).find(x=>String(x.id)===id); if(f)return {s:f,by:f.by};
+  const p=(state.posts||[]).find(x=>String(x.id)===id); if(p)return {s:p,by:null};
+  const c=postCache[id]; if(c)return {s:c,by:c.by||null};
+  return null;
+}
+function postPage(id){
+  if(!signedIn())return authPage();
+  id=decodeURIComponent(String(id||''));
+  const back=`<button class="plain-link post-back" data-action="post-back">${arrowLeft} Back</button>`;
+  const hit=findSession(id);
+  if(!hit){
+    if(postCache[id]===null)return `<div class="wrap post-wrap">${back}<p class="post-missing">This post isn&rsquo;t available. It may have been deleted, or it&rsquo;s only visible to her friends.</p></div>`;
+    if(postLoading!==id){postLoading=id;dbLoadSession(id).then(x=>{postCache[id]=x||null;postLoading=null;if(location.hash==='#/post/'+encodeURIComponent(id))render(false);});}
+    return `<div class="wrap post-wrap">${back}<p class="small">Loading the post&hellip;</p></div>`;
+  }
+  /* your own sessions may not have their comments loaded yet */
+  if(!(state.comments||{})[id]&&!postAsked.has(id)){postAsked.add(id);
+    Promise.all([dbLoadComments([id]),dbLoadLikes([id])]).then(()=>{if(location.hash==='#/post/'+encodeURIComponent(id))render(false);});}
+  return `<div class="wrap post-wrap">${back}${sessionCard(hit.s,hit.by,{full:true})}</div>`;
 }
 /* Local state updates at once so the page stays quick; the server write
    follows. If it fails, say so rather than letting someone believe something
@@ -2817,6 +2889,7 @@ function noteText(n){
   if(n.kind==='comment')return `${who} commented on <i>${escapeHTML(d.title||'your session')}</i>${d.excerpt?`: “${escapeHTML(d.excerpt)}”`:''}`;
   if(n.kind==='tag')return `${who} said you went to <i>${escapeHTML(d.title||'a session')}</i> together`;
   if(n.kind==='like')return `${who} liked <i>${escapeHTML(d.title||'your session')}</i>`;
+  if(n.kind==='reply')return `${who} replied to your comment on <i>${escapeHTML(d.title||'a session')}</i>${d.excerpt?`: “${escapeHTML(d.excerpt)}”`:''}`;
   if(n.kind==='join')return `${who} added your ${d.weekday!=null&&WEEKDAYS[d.weekday]?escapeHTML(WEEKDAYS[d.weekday])+' ':''}${escapeHTML(d.activity||'routine')}${d.place?` at ${escapeHTML(d.place)}`:''} to their week`;
   if(n.kind==='pass_request')return `${who} asked for your guest pass${d.place?` at ${escapeHTML(d.place)}`:''}`;
   if(n.kind==='pass_accept')return `${who} said yes to your guest pass request${d.place?` at ${escapeHTML(d.place)}`:''}`;
@@ -2831,7 +2904,7 @@ function notificationsPage(){
         <span class="av-sm">${avatarFor(personById(n.actorId)||{name:'VIRI'})}</span>
         <span class="note-text"><span>${noteText(n)}</span><span class="small">${escapeHTML(prettyDate(n.at))}</span></span>
       </button></li>`).join('')}</ul>`
-      :'<p class="small">Nothing yet. When a friend likes or comments on one of your sessions, tags you in theirs, adds your routine to their week, or asks for a guest pass, it shows up here.</p>'}
+      :'<p class="small">Nothing yet. When a friend likes or comments on one of your sessions, replies to your comment, tags you in theirs, adds your routine to their week, or asks for a guest pass, it shows up here.</p>'}
   </section></div>`;
 }
 /* a comment opens its thread on your profile; a tag or a join opens the friend */
@@ -2839,7 +2912,7 @@ function openNote(id){
   const n=(state.notifications||[]).find(x=>x.id===id); if(!n)return;
   if(n.sessionId)openThreads.add(String(n.sessionId));
   if(n.kind==='pass_request'||n.kind==='pass_accept'){openPasses(n.passId);return;}
-  if(n.kind==='comment'||n.kind==='like'){profileTab='sessions';goTo('#/profile');return;}
+  if(n.sessionId){goTo('#/post/'+encodeURIComponent(String(n.sessionId)));return;}
   goTo(`#/member/${n.actorId}`);
 }
 
@@ -3199,8 +3272,8 @@ function privacyPage(){return `<article class="article-detail legal">
   <p>We do <b>not</b> collect analytics. There is no tracking pixel, no advertising network, and no third-party script on this site other than the one that connects you to our database. Nobody is following you around the internet on our behalf.</p>
 
   <h2>Who sees your sessions</h2>
-  <p>Your sessions are visible to you and to your friends, and to nobody else. Friends can like a session and comment on it. You can delete any comment on your own sessions, and anyone can delete their own comments. Likes and comments are deleted when the session or the account is.</p>
-  <p>When a friend likes or comments on one of your sessions, says you went somewhere together, adds one of your routines to their week, or asks for a guest pass you have offered, you get a notification inside VIRI.</p>
+  <p>Your sessions are visible to you and to your friends, and to nobody else. Friends can like a session, comment on it, and like or reply to each other&rsquo;s comments. You can delete any comment on your own sessions, and anyone can delete their own comments. Likes and comments are deleted when the session or the account is.</p>
+  <p>When a friend likes or comments on one of your sessions, replies to your comment, says you went somewhere together, adds one of your routines to their week, or asks for a guest pass you have offered, you get a notification inside VIRI.</p>
 
   <h2>Guest passes</h2>
   <p>If you offer a guest pass, it is visible to every member who is signed in to VIRI: your name and neighbourhood, the studio, the date, a rough time and any note you add. It is not visible to anyone who is not signed in. A member can ask you for it, and you decide. We keep the request and your answer until the pass or either account is deleted, or the date has long gone. VIRI does not provide, check or sell guest passes.</p>
@@ -3416,7 +3489,7 @@ function initPageMotion(){
   revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('is-revealed');revealObserver.unobserve(entry.target);}}),{threshold:.08,rootMargin:'0px 0px -30px 0px'});
   targets.forEach(el=>{el.classList.add('will-reveal');revealObserver.observe(el);});
 }
-function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':if(signedIn()){location.replace('#/feed');return;}html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'check-email':html=checkEmailPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'forgot':html=forgotPage();break;case 'notifications':html=notificationsPage();break;case 'confirm-subscription':html=confirmSubscriptionPage(id);break;case 'stop-emails':html=stopEmailsPage(id);break;case 'reset-password':html=resetPasswordPage();break;case 'profile':html=profilePage();break;case 'member':html=memberPage(id);if(typeof ensureMember==='function')ensureMember(id);break;case 'feed':html=feedPage();break;case 'find':html=findPage();break;case 'messages':html=messagesPage();break;case 'settings':html=settingsPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=privacyPage();break;case 'terms':html=termsPage();break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you','check-email':'Check your email',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',forgot:'Forgot your password',notifications:'Notifications','confirm-subscription':'Confirm your subscription','stop-emails':'Stop the daily email','reset-password':'Choose a new password',profile:'Your circle',member:'A member',feed:'Feed',find:'Find your people',messages:'Messages',settings:'Settings',book:'Book this class',privacy:'Your privacy',terms:'Terms of service'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#auth-form'))bindAuth();if(path==='stop-emails'&&stopEmails.status==='start'){stopEmails.status='working';const tok=stopEmails.token;dbStopDigestEmails(tok).then(r=>{if(stopEmails.token!==tok)return;stopEmails.status=r&&r.data?'ok':'bad';if((location.hash||'').startsWith('#/stop-emails'))render(false);});}if(path==='forgot')bindForgot();if(path==='confirm-subscription'&&subConfirm.status==='start'){subConfirm.status='working';const tok=subConfirm.token;dbConfirmSubscription(tok).then(r=>{if(subConfirm.token!==tok)return;subConfirm.status=r&&r.data?'ok':'bad';if((location.hash||'').startsWith('#/confirm-subscription'))render(false);});}if(path==='notifications'&&state.unseenNotes&&typeof dbMarkNotificationsRead==='function')dbMarkNotificationsRead().then(()=>syncAccountLinks());if(path==='reset-password')bindReset();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='find'){$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();runSearch();});if(typeof dbRoutineMatches==='function'&&state.roomMatches===undefined){state.roomMatches=[];dbRoutineMatches().then(()=>{if(location.hash==='#/find')render(false);});}if(state.found===undefined||state.found===null)runSearch();}if(path==='profile'&&signedIn()&&!goalHistoryLoaded&&typeof dbLoadGoalHistory==='function'){goalHistoryLoaded=true;dbLoadGoalHistory().then(r=>{if(r===null)state.goalHistory=null;if(location.hash==='#/profile')render(false);});}if(path==='profile'&&signedIn())checkAdmin();if(path==='messages'){$('#msg-form')?.addEventListener('submit',e=>{e.preventDefault();sendMessage(e.target);});const b=$('#msg-body');if(b)b.scrollTop=b.scrollHeight;if(msgThread&&typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);}/* Fetch on arrival, not on every render — render() re-runs this block, so an
+function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':if(signedIn()){location.replace('#/feed');return;}html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'check-email':html=checkEmailPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'forgot':html=forgotPage();break;case 'notifications':html=notificationsPage();break;case 'confirm-subscription':html=confirmSubscriptionPage(id);break;case 'stop-emails':html=stopEmailsPage(id);break;case 'reset-password':html=resetPasswordPage();break;case 'profile':html=profilePage();break;case 'member':html=memberPage(id);if(typeof ensureMember==='function')ensureMember(id);break;case 'feed':html=feedPage();break;case 'post':html=postPage(id);break;case 'find':html=findPage();break;case 'messages':html=messagesPage();break;case 'settings':html=settingsPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=privacyPage();break;case 'terms':html=termsPage();break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you','check-email':'Check your email',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',forgot:'Forgot your password',notifications:'Notifications','confirm-subscription':'Confirm your subscription','stop-emails':'Stop the daily email','reset-password':'Choose a new password',profile:'Your circle',member:'A member',feed:'Feed',post:'Post',find:'Find your people',messages:'Messages',settings:'Settings',book:'Book this class',privacy:'Your privacy',terms:'Terms of service'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#auth-form'))bindAuth();if(path==='stop-emails'&&stopEmails.status==='start'){stopEmails.status='working';const tok=stopEmails.token;dbStopDigestEmails(tok).then(r=>{if(stopEmails.token!==tok)return;stopEmails.status=r&&r.data?'ok':'bad';if((location.hash||'').startsWith('#/stop-emails'))render(false);});}if(path==='forgot')bindForgot();if(path==='confirm-subscription'&&subConfirm.status==='start'){subConfirm.status='working';const tok=subConfirm.token;dbConfirmSubscription(tok).then(r=>{if(subConfirm.token!==tok)return;subConfirm.status=r&&r.data?'ok':'bad';if((location.hash||'').startsWith('#/confirm-subscription'))render(false);});}if(path==='notifications'&&state.unseenNotes&&typeof dbMarkNotificationsRead==='function')dbMarkNotificationsRead().then(()=>syncAccountLinks());if(path==='reset-password')bindReset();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='find'){$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();runSearch();});if(typeof dbRoutineMatches==='function'&&state.roomMatches===undefined){state.roomMatches=[];dbRoutineMatches().then(()=>{if(location.hash==='#/find')render(false);});}if(state.found===undefined||state.found===null)runSearch();}if(path==='profile'&&signedIn()&&!goalHistoryLoaded&&typeof dbLoadGoalHistory==='function'){goalHistoryLoaded=true;dbLoadGoalHistory().then(r=>{if(r===null)state.goalHistory=null;if(location.hash==='#/profile')render(false);});}if(path==='profile'&&signedIn())checkAdmin();if(path==='messages'){$('#msg-form')?.addEventListener('submit',e=>{e.preventDefault();sendMessage(e.target);});const b=$('#msg-body');if(b)b.scrollTop=b.scrollHeight;if(msgThread&&typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);}/* Fetch on arrival, not on every render — render() re-runs this block, so an
    unguarded fetch-then-render is an infinite loop. The flag clears when you
    leave, so coming back fetches again. */
 if(path!=='feed')feedFetched=false;
@@ -3436,7 +3509,7 @@ else if(!feedFetched&&typeof dbLoadFeed==='function'){feedFetched=true;dbLoadFee
    unless someone adds it here; tools/check.rb keeps every name below real. */
 const NEEDS_ACCOUNT=new Set(['add-routine','edit-routine','remove-routine','offer-pass','pass-ask','pass-withdraw','pass-answer','pass-remove',
   'save-studio','book-existing','book-new','book-plan','join-event','post-activity','post-new','edit-session','session-like','session-join','session-talk',
-  'comment-delete','attend-yes','attend-no','finish-next','attend-more','add-goal','edit-goal','remove-goal','goal-yes','goal-no','history-goal-delete',
+  'comment-delete','comment-like','comment-reply','attend-yes','attend-no','finish-next','attend-more','add-goal','edit-goal','remove-goal','goal-yes','goal-no','history-goal-delete',
   'edit-bio','edit-profile','add-gallery','remove-photo','edit-photo','show-friends','show-requests','accept-request','decline-request','withdraw-request',
   'remove-friend','msg-open','person-menu','report-person','block-person','block-confirm','unblock-person','toggle-show-age','toggle-digest','export-data',
   'delete-account','share-profile','open-note']);
@@ -3461,7 +3534,7 @@ case 'book-new':bookChoose(t.dataset.id,'new');break;
 case 'book-plan':bookChoose(t.dataset.id,'plan');break;
 case 'ex-zoom':exZoom(t.dataset.dir);break;
 case 'ex-reset':ex={...ex,cat:'All',members:false,query:'',venue:null};render(false);break;
-case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':{const nowOn=!state.saved.includes(id);state.saved=nowOn?[...state.saved,id]:state.saved.filter(x=>x!==id);if(typeof dbSetStudio==='function')dbPush(dbSetStudio(id,nowOn),'that studio');save();render(false);}toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':pendingPlans().length?attendModal():postActivity();break;case 'post-new':closeModal();postActivity();break;case 'edit-session':editSession(t.dataset.id);break;case 'open-note':openNote(t.dataset.id);break;case 'mod-dismiss':case 'mod-suspend':case 'mod-delete':case 'mod-unsuspend':case 'mod-reopen':modAct(t);break;case 'session-like':toggleLike(t.dataset.id);break;case 'attend-yes':logAttended(t.dataset.id);break;case 'attend-no':skipAttended(t.dataset.id);break;case 'finish-next':{const n=(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start)[0];if(n){n.start=Date.now()-(n.dur+5)*60000;save();render(false);toast('Moved into the past. The + now has something to ask you.');}break;}case 'attend-more':{const p=takePlan(t.dataset.id);closeModal();postActivity(p);break;}case 'show-friends':friendsModal();break;case 'show-requests':requestsModal();break;case 'edit-bio':bioModal();break;case 'add-gallery':addGalleryPhoto();break;case 'add-routine':routineModal(t.dataset.id);break;case 'add-goal':goalModal(t.dataset.id);break;case 'edit-goal':goalModal(null,t.dataset.id);break;case 'remove-goal':removeGoal(t.dataset.id);break;case 'goal-yes':answerGoal(t.dataset.id,t.dataset.day,true);break;case 'goal-no':answerGoal(t.dataset.id,t.dataset.day,false);break;case 'remove-routine':removeRoutine(t.dataset.id);break;case 'open-photo':{const who=(location.hash||'').startsWith('#/member/')?personById(location.hash.split('/')[2]):null;openLightbox(who?(who.gallery||[]):(state.gallery||[]),Number(t.dataset.index)||0);break;}case 'photo-prev':lightboxAt=(lightboxAt-1+lightboxOf.length)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'photo-next':lightboxAt=(lightboxAt+1)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'remove-photo':removeGalleryPhoto(t.dataset.id);break;case 'edit-photo':photoModal();break;case 'accept-request':exConnect(t.dataset.id);break;case 'decline-request':respondToRequest(t.dataset.id,'declined');break;case 'withdraw-request':respondToRequest(t.dataset.id,'withdrawn');break;case 'remove-friend':respondToRequest(t.dataset.id,'removed');break;case 'msg-open':msgThread=t.dataset.id;render(false);if(typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);break;case 'log-out':dbSignOut().then(()=>{$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Signed out.');location.hash='#/';render(false);});break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':joinSession(t.dataset.id);break;case 'session-talk':{const sid=t.dataset.id;if(!sid){toast('This is a sample session, so there is nobody to talk to yet.');break;}openThreads.has(sid)?openThreads.delete(sid):openThreads.add(sid);render(false);break;}case 'comment-delete':deleteComment(t.dataset.id,t.dataset.session);break;case 'edit-routine':{const r=(state.routines||[]).find(x=>x.id===t.dataset.id);if(r)routineModal(null,{editId:r.id,activity:r.activity,venueLabel:r.venue,venueId:r.venueId,days:[r.weekday],band:r.band});break;}case 'history-goal-delete':deleteHistoryGoal(t);break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':{const v=t.dataset.id;findActivities=findActivities.includes(v)?findActivities.filter(x=>x!==v):[...findActivities,v];runSearch();break;}case 'edit-profile':editProfileModal();break;case 'person-menu':personMenu(t.dataset.id,t.dataset.name);break;case 'report-person':closeModal();reportModal(t.dataset.id,t.dataset.name);break;case 'block-person':closeModal();blockConfirm(t.dataset.id,t.dataset.name);break;case 'block-confirm':doBlock(t.dataset.id,t.dataset.name);break;case 'unblock-person':doUnblock(t.dataset.id,t.dataset.name);break;case 'toggle-show-age':toggleShowAge(t.checked);break;case 'toggle-digest':toggleDigest(t.checked);break;case 'export-data':exportMyData(t);break;case 'delete-account':deleteAccountModal();break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
+case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':{const nowOn=!state.saved.includes(id);state.saved=nowOn?[...state.saved,id]:state.saved.filter(x=>x!==id);if(typeof dbSetStudio==='function')dbPush(dbSetStudio(id,nowOn),'that studio');save();render(false);}toast(state.saved.includes(id)?'Studio saved to your profile.':'Studio removed from your saved list.');break;case 'studio-explore':explore={...explore,category,kind:'classes'};break;case 'post-activity':pendingPlans().length?attendModal():postActivity();break;case 'post-new':closeModal();postActivity();break;case 'edit-session':editSession(t.dataset.id);break;case 'open-note':openNote(t.dataset.id);break;case 'mod-dismiss':case 'mod-suspend':case 'mod-delete':case 'mod-unsuspend':case 'mod-reopen':modAct(t);break;case 'session-like':toggleLike(t.dataset.id);break;case 'attend-yes':logAttended(t.dataset.id);break;case 'attend-no':skipAttended(t.dataset.id);break;case 'finish-next':{const n=(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start)[0];if(n){n.start=Date.now()-(n.dur+5)*60000;save();render(false);toast('Moved into the past. The + now has something to ask you.');}break;}case 'attend-more':{const p=takePlan(t.dataset.id);closeModal();postActivity(p);break;}case 'show-friends':friendsModal();break;case 'show-requests':requestsModal();break;case 'edit-bio':bioModal();break;case 'add-gallery':addGalleryPhoto();break;case 'add-routine':routineModal(t.dataset.id);break;case 'add-goal':goalModal(t.dataset.id);break;case 'edit-goal':goalModal(null,t.dataset.id);break;case 'remove-goal':removeGoal(t.dataset.id);break;case 'goal-yes':answerGoal(t.dataset.id,t.dataset.day,true);break;case 'goal-no':answerGoal(t.dataset.id,t.dataset.day,false);break;case 'remove-routine':removeRoutine(t.dataset.id);break;case 'open-photo':{const who=(location.hash||'').startsWith('#/member/')?personById(location.hash.split('/')[2]):null;openLightbox(who?(who.gallery||[]):(state.gallery||[]),Number(t.dataset.index)||0);break;}case 'photo-prev':lightboxAt=(lightboxAt-1+lightboxOf.length)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'photo-next':lightboxAt=(lightboxAt+1)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'remove-photo':removeGalleryPhoto(t.dataset.id);break;case 'edit-photo':photoModal();break;case 'accept-request':exConnect(t.dataset.id);break;case 'decline-request':respondToRequest(t.dataset.id,'declined');break;case 'withdraw-request':respondToRequest(t.dataset.id,'withdrawn');break;case 'remove-friend':respondToRequest(t.dataset.id,'removed');break;case 'msg-open':msgThread=t.dataset.id;render(false);if(typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);break;case 'log-out':dbSignOut().then(()=>{$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Signed out.');location.hash='#/';render(false);});break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':joinSession(t.dataset.id);break;case 'session-talk':{const sid=t.dataset.id;if(!sid){toast('This is a sample session, so there is nobody to talk to yet.');break;}openThreads.has(sid)?openThreads.delete(sid):openThreads.add(sid);render(false);break;}case 'comment-delete':deleteComment(t.dataset.id,t.dataset.session,t);break;case 'comment-like':toggleCommentLike(t.dataset.id);break;case 'comment-reply':startReply(t.dataset.id,t.dataset.session);break;case 'comment-reply-cancel':replyingTo=null;render(false);break;case 'post-back':if(history.length>1)history.back();else location.hash='#/feed';break;case 'edit-routine':{const r=(state.routines||[]).find(x=>x.id===t.dataset.id);if(r)routineModal(null,{editId:r.id,activity:r.activity,venueLabel:r.venue,venueId:r.venueId,days:[r.weekday],band:r.band});break;}case 'history-goal-delete':deleteHistoryGoal(t);break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':{const v=t.dataset.id;findActivities=findActivities.includes(v)?findActivities.filter(x=>x!==v):[...findActivities,v];runSearch();break;}case 'edit-profile':editProfileModal();break;case 'person-menu':personMenu(t.dataset.id,t.dataset.name);break;case 'report-person':closeModal();reportModal(t.dataset.id,t.dataset.name);break;case 'block-person':closeModal();blockConfirm(t.dataset.id,t.dataset.name);break;case 'block-confirm':doBlock(t.dataset.id,t.dataset.name);break;case 'unblock-person':doUnblock(t.dataset.id,t.dataset.name);break;case 'toggle-show-age':toggleShowAge(t.checked);break;case 'toggle-digest':toggleDigest(t.checked);break;case 'export-data':exportMyData(t);break;case 'delete-account':deleteAccountModal();break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
 $('#menu-button').addEventListener('click',()=>{const open=$('#menu-panel').hidden;$('#menu-panel').hidden=!open;$('#menu-button').setAttribute('aria-expanded',String(open));});
 bindAccountMenu();
 document.addEventListener('click',e=>{if(!e.target.closest('.site-header')){$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');}});
