@@ -1977,6 +1977,28 @@ summary.pf-section-head::-webkit-details-marker{display:none}
 @media (max-width:900px){.find-filters{grid-template-columns:1fr 1fr}.find-filters .find-name{grid-column:1/-1}.find-filters .button{grid-column:1/-1;width:100%}}
 @media (max-width:420px){.find-filters{gap:10px}.find-filters input,.find-filters select{font-size:14px;padding:11px 10px}.find-filters label{letter-spacing:.12em}}
 
+/* ---- one post on its own, replies and likes on comments ---- */
+.session-title a{color:inherit;text-decoration:none}
+.session-title a:hover{text-decoration:underline;text-underline-offset:5px;text-decoration-thickness:1px}
+.session-shot a{display:block;height:100%}
+.post-wrap{max-width:760px;padding-top:clamp(22px,4vw,46px);padding-bottom:90px}
+.post-back{display:inline-flex;align-items:center;gap:6px;margin-bottom:10px;font-size:13px}
+.post-back svg{width:15px;height:15px}
+.post-missing{margin:24px 0;color:var(--muted)}
+.session.is-full{border-top:0;padding-top:6px}
+.session.is-full .session-shot{height:auto;background:none}
+.session.is-full .session-shot img{height:auto;max-height:78vh;object-fit:contain}
+.post-liked{margin:12px 0 0;font-size:13px;color:var(--muted)}
+.comment.is-reply{margin-left:22px;padding-left:12px;border-left:1px solid var(--line)}
+.comment-acts{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin:5px 0 0;font-size:12px}
+.comment-acts .plain-link{font-size:12px}
+.comment-like{display:inline-flex;align-items:center;gap:4px;color:var(--muted)}
+.comment-like svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.6}
+.comment-like.is-on{color:var(--grave)}
+.comment-like.is-on svg{fill:currentColor}
+.comment-like.is-mine{cursor:default}
+.comment-form.is-reply{margin:4px 0 14px 22px;align-items:center}
+
 /* On the very smallest phones (320px) five 44px header icons are still ~10px too wide, so
    they narrow a little; the height, which is what a thumb needs, stays 44px. Last in the file
    on purpose: the 44px phone rule above it would otherwise win by coming later. */
