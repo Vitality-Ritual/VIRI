@@ -2013,6 +2013,23 @@ summary.pf-section-head::-webkit-details-marker{display:none}
 .ex-picked .rail-label{display:flex;justify-content:space-between;align-items:center;margin:10px 0 0}
 .ex-picked .cls-row{border-bottom:0}
 
+/* the layers that slide while the map is dragged */
+.map-world,.map-markers{will-change:transform}
+.map-frame{touch-action:none}
+
+/* A gym page has no photograph: the name, set large on the taupe, stands in */
+.studio-detail-ph{aspect-ratio:4/5;background:var(--taupe);color:var(--paper);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:14px;text-align:center;padding:28px}
+.studio-detail-ph span{font-family:var(--display);font-size:clamp(2rem,4.4vw,3.4rem);line-height:1.05}
+.studio-detail-ph small{font-size:10px;letter-spacing:.3em;text-transform:uppercase;opacity:.82}
+
+/* Each session on its own sheet, so the feed and the profile read as separate
+   posts rather than one list split by hairlines */
+.sessions{display:flex;flex-direction:column;gap:16px}
+.sessions>.session{background:var(--paper);border:1px solid var(--line);border-top:1px solid var(--line);
+  padding:clamp(18px,2.4vw,26px) clamp(18px,2.6vw,30px)}
+.sessions>.session .session-thread{margin-left:0;margin-right:0}
+
 /* On the very smallest phones (320px) five 44px header icons are still ~10px too wide, so
    they narrow a little; the height, which is what a thumb needs, stays 44px. Last in the file
    on purpose: the 44px phone rule above it would otherwise win by coming later. */
