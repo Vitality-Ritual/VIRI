@@ -2690,10 +2690,15 @@ function feedPage(){
     <aside class="feed-rail">
       <div class="rail-box">
         <p class="rail-label">Your week <span class="period-dates">${weekRangeLabel()}</span></p>
-        ${(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start).slice(0,3).map(c=>
-          `<p class="rail-line"><b>${prettyDate(c.start)} ${prettyTime(c.start)}</b><br>${escapeHTML(c.place||c.title)}</p>`).join('')
-          || '<p class="small">Nothing booked. Add a class from Explore and it shows up here.</p>'}
-        <a class="text-link" href="#/explore">Explore classes ${arrow}</a>
+        ${(()=>{
+          /* the same week as the box on your profile: your routines, not the
+             old booked-classes list, which nothing adds to any more */
+          const rs=[...(state.routines||[])].sort((a,b)=>a.weekday-b.weekday||(BAND_HOUR[a.band]??0)-(BAND_HOUR[b.band]??0));
+          if(!rs.length)return '<p class="small">Tell VIRI where you train and roughly when. That is how it finds the people who are there with you.</p><button class="button small outline" data-action="add-routine">Add to my week</button>';
+          return rs.slice(0,6).map(r=>`<p class="rail-line"><b>${escapeHTML(WEEKDAYS[r.weekday])}</b> &middot; ${escapeHTML(r.band)}<br>${escapeHTML(r.activity||'Training')}${r.venue?`<br><span class="small">${escapeHTML(r.venue)}</span>`:''}</p>`).join('')
+            +(rs.length>6?`<p class="small">and ${rs.length-6} more on <a href="#/profile">your profile</a></p>`:'');
+        })()}
+        <a class="text-link" href="#/explore">Find studios ${arrow}</a>
       </div>
       <div class="rail-box plain">
         <p class="rail-label">Your circle</p>
