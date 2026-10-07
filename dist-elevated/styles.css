@@ -2030,6 +2030,14 @@ summary.pf-section-head::-webkit-details-marker{display:none}
   padding:clamp(18px,2.4vw,26px) clamp(18px,2.6vw,30px)}
 .sessions>.session .session-thread{margin-left:0;margin-right:0}
 
+/* Explore: eighteen cities are a dropdown on phones, tabs on wider screens */
+.ex-city-pick{display:none}
+@media (max-width:760px){
+  .ex-cities{display:none}
+  .ex-city-pick{display:block;margin:22px 0 0}
+  .ex-city-pick select{width:100%;font-size:15px;padding:13px 14px}
+}
+
 /* On the very smallest phones (320px) five 44px header icons are still ~10px too wide, so
    they narrow a little; the height, which is what a thumb needs, stays 44px. Last in the file
    on purpose: the 44px phone rule above it would otherwise win by coming later. */

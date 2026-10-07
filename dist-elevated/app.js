@@ -200,7 +200,8 @@ function readPage(id){if(id){const a=allArticles().find(x=>x.id===id);if(!a)retu
 /* No day, no time of day, no class: Explore lists studios now, and when
    somebody trains is something they tell us, not something we invent. */
 let ex={city:'dc',cat:'All',members:false,query:'',venue:null};
-let exView='studios';   /* 'studios' or 'passes': the two tabs under the city row */
+let exView='studios';
+document.addEventListener('change',e=>{if(e.target&&e.target.id==='ex-city-select'){ex={...ex,city:e.target.value,venue:null};render(false);}});   /* 'studios' or 'passes': the two tabs under the city row */
 const exCity=()=>VIRI.cities.find(c=>c.id===ex.city)||VIRI.cities[0];
 const exVenue=id=>VIRI.venues.find(v=>v.id===id);
 const exPerson=id=>VIRI.people.find(p=>p.id===id);
@@ -473,7 +474,7 @@ function aboutPage(){return `<section class="about-hero about-hero--week">
   <h2 class="feat-title">Built around the way you already train.</h2>
   <ol class="feat-grid">
     <li><span class="feat-no">01</span><h3>Your week</h3><p>Tell VIRI where you train and roughly when. It shows you the women who are in the same room at the same time.</p></li>
-    <li><span class="feat-no">02</span><h3>Explore</h3><p>More than 500 studios and gyms across Washington, DC, New York, Los Angeles, Miami, Boston, Chicago, Philadelphia and Atlanta, on a map you can search.</p></li>
+    <li><span class="feat-no">02</span><h3>Explore</h3><p>More than ${Math.floor(VIRI.venues.length/100)*100} studios and gyms across ${VIRI.cities.length} US cities, from ${escapeHTML(VIRI.cities[0].name)} to ${escapeHTML(VIRI.cities[VIRI.cities.length-1].name)}, on a map you can search.</p></li>
     <li><span class="feat-no">03</span><h3>Guest passes</h3><p>Got a guest pass you won&rsquo;t use? Offer it. Want to try a studio or gym? Ask a member for one. VIRI doesn&rsquo;t hand out passes; you arrange it between you.</p></li>
     <li><span class="feat-no">04</span><h3>Sessions</h3><p>Log a run, a class or a long walk with the time, the distance, a photo and who you went with.</p></li>
     <li><span class="feat-no">05</span><h3>Goals</h3><p>Set a weekly or monthly goal, check in on the days you choose, and keep a record of every goal you finish.</p></li>
@@ -600,6 +601,7 @@ function exHead(){return `<section class="page-head"><div class="wrap"><div clas
 function exCityTabs(){return `<div class="ex-cities" role="tablist" aria-label="City">${VIRI.cities.map(c=>
       `<button role="tab" class="city-tab ${c.id===ex.city?'active':''}" data-action="ex-city" data-id="${c.id}"
         aria-selected="${c.id===ex.city}">${escapeHTML(c.name)}</button>`).join('')}</div>
+    <label class="ex-city-pick"><span class="visually-hidden">City</span><select id="ex-city-select">${VIRI.cities.map(c=>`<option value="${c.id}"${c.id===ex.city?' selected':''}>${escapeHTML(c.name)}</option>`).join('')}</select></label>
     <div class="ex-views" role="tablist" aria-label="What to look at">
       <button role="tab" class="view-tab ${exView==='studios'?'active':''}" data-action="ex-view" data-view="studios" aria-selected="${exView==='studios'}">Studios &amp; gyms</button>
       <button role="tab" class="view-tab ${exView==='passes'?'active':''}" data-action="ex-view" data-view="passes" aria-selected="${exView==='passes'}">Available guest passes</button>
@@ -2829,7 +2831,11 @@ let findName='', findCitySel='near', findAct='', findTime='', findScope='Others 
    match, for abbreviations that would otherwise match inside other names. */
 const CITY_TERMS={dc:['Washington','DC','D.C.'],nyc:['New York','NYC','Brooklyn','Manhattan','Queens','Bronx','Staten Island'],
   la:['Los Angeles','=LA','=L.A.','Santa Monica','Hollywood'],mia:['Miami'],bos:['Boston','Cambridge','Somerville'],
-  chi:['Chicago'],phl:['Philadelphia','Philly'],atl:['Atlanta','=ATL']};
+  chi:['Chicago'],phl:['Philadelphia','Philly'],atl:['Atlanta','=ATL'],
+  dal:['Dallas','Addison','Richardson'],hou:['Houston'],phx:['Phoenix','Scottsdale','Tempe','Paradise Valley'],
+  sf:['San Francisco','=SF'],det:['Detroit','Royal Oak','Ferndale','Dearborn'],sea:['Seattle'],
+  msp:['Minneapolis','St. Paul','Saint Paul','St Paul','Edina','St. Louis Park','Twin Cities','=MSP'],
+  tpa:['Tampa'],sd:['San Diego','La Jolla'],den:['Denver']};
 function cityIdFromText(t){
   const v=String(t||'').toLowerCase().trim(); if(!v)return '';
   for(const [id,terms] of Object.entries(CITY_TERMS))
