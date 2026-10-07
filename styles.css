@@ -1999,6 +1999,20 @@ summary.pf-section-head::-webkit-details-marker{display:none}
 .comment-like.is-mine{cursor:default}
 .comment-form.is-reply{margin:4px 0 14px 22px;align-items:center}
 
+.confirm-note{min-height:1.4em;margin:10px 0 0;color:var(--cocoa)}
+.thanks-actions .button+.button{margin-left:10px}
+
+/* The exercise list reads alphabetically down each column, then the next, with
+   Other and No preference last (JOIN_FORMS is already in that order). Columns
+   rather than grid rows, so it stays top-to-bottom at every width. */
+.check-grid.is-down{display:block;columns:3 160px;column-gap:9px}
+.check-grid.is-down .check-box{break-inside:avoid;margin:0 0 9px;width:100%;box-sizing:border-box}
+
+/* Explore: the studio picked on the map */
+.ex-picked{margin:8px 0 14px;padding:4px 14px 2px;background:var(--paper);border:1px solid var(--cocoa)}
+.ex-picked .rail-label{display:flex;justify-content:space-between;align-items:center;margin:10px 0 0}
+.ex-picked .cls-row{border-bottom:0}
+
 /* On the very smallest phones (320px) five 44px header icons are still ~10px too wide, so
    they narrow a little; the height, which is what a thumb needs, stays 44px. Last in the file
    on purpose: the 44px phone rule above it would otherwise win by coming later. */
