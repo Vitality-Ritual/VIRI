@@ -2949,6 +2949,8 @@ function noteText(n){
   if(n.kind==='like')return `${who} liked <i>${escapeHTML(d.title||'your session')}</i>`;
   if(n.kind==='reply')return `${who} replied to your comment on <i>${escapeHTML(d.title||'a session')}</i>${d.excerpt?`: “${escapeHTML(d.excerpt)}”`:''}`;
   if(n.kind==='join')return `${who} added your ${d.weekday!=null&&WEEKDAYS[d.weekday]?escapeHTML(WEEKDAYS[d.weekday])+' ':''}${escapeHTML(d.activity||'routine')}${d.place?` at ${escapeHTML(d.place)}`:''} to their week`;
+  if(n.kind==='friend_request')return `${who} sent you a friend request`;
+  if(n.kind==='friend_accept')return `${who} accepted your friend request`;
   if(n.kind==='pass_request')return `${who} asked for your guest pass${d.place?` at ${escapeHTML(d.place)}`:''}`;
   if(n.kind==='pass_accept')return `${who} said yes to your guest pass request${d.place?` at ${escapeHTML(d.place)}`:''}`;
   return who;
@@ -2962,7 +2964,7 @@ function notificationsPage(){
         <span class="av-sm">${avatarFor(personById(n.actorId)||{name:'VIRI'})}</span>
         <span class="note-text"><span>${noteText(n)}</span><span class="small">${escapeHTML(prettyDate(n.at))}</span></span>
       </button></li>`).join('')}</ul>`
-      :'<p class="small">Nothing yet. When a friend likes or comments on one of your sessions, replies to your comment, tags you in theirs, adds your routine to their week, or asks for a guest pass, it shows up here.</p>'}
+      :'<p class="small">Nothing yet. When someone sends you a friend request, or a friend likes or comments on one of your sessions, replies to your comment, tags you in theirs, adds your routine to their week, or asks for a guest pass, it shows up here.</p>'}
   </section></div>`;
 }
 /* a comment opens its thread on your profile; a tag or a join opens the friend */
@@ -2971,6 +2973,8 @@ function openNote(id){
   if(n.sessionId)openThreads.add(String(n.sessionId));
   if(n.kind==='pass_request'||n.kind==='pass_accept'){openPasses(n.passId);return;}
   if(n.sessionId){goTo('#/post/'+encodeURIComponent(String(n.sessionId)));return;}
+  /* a request opens the requests, ready to answer; one already answered opens her profile */
+  if(n.kind==='friend_request'&&(state.incoming||[]).includes(n.actorId)){requestsModal();return;}
   goTo(`#/member/${n.actorId}`);
 }
 
@@ -3331,7 +3335,7 @@ function privacyPage(){return `<article class="article-detail legal">
 
   <h2>Who sees your sessions</h2>
   <p>Your sessions are visible to you and to your friends, and to nobody else. Friends can like a session, comment on it, and like or reply to each other&rsquo;s comments. You can delete any comment on your own sessions, and anyone can delete their own comments. Likes and comments are deleted when the session or the account is.</p>
-  <p>When a friend likes or comments on one of your sessions, replies to your comment, says you went somewhere together, adds one of your routines to their week, or asks for a guest pass you have offered, you get a notification inside VIRI.</p>
+  <p>When someone sends you a friend request or accepts yours, or a friend likes or comments on one of your sessions, replies to your comment, says you went somewhere together, adds one of your routines to their week, or asks for a guest pass you have offered, you get a notification inside VIRI.</p>
 
   <h2>Guest passes</h2>
   <p>If you offer a guest pass, it is visible to every member who is signed in to VIRI: your name and neighbourhood, the studio, the date, a rough time and any note you add. It is not visible to anyone who is not signed in. A member can ask you for it, and you decide. We keep the request and your answer until the pass or either account is deleted, or the date has long gone. VIRI does not provide, check or sell guest passes.</p>
