@@ -1563,8 +1563,14 @@ async function dbRoutineMatches(){
     if ((state.blocked || []).includes(r.profile_id)) continue;
     const sameSlot = mine.some(m => m.weekday === r.weekday && m.band === r.time_band &&
       (m.venueId && r.venue_id ? m.venueId === r.venue_id : m.activity === r.activity));
+    const sameVenue = !!(r.venue_id && venues.includes(r.venue_id));
+    /* The same activity somewhere else at another time is not "in the room":
+       it listed someone at CycleBar to a member who only does indoor cycling,
+       worded as though she went there too. Search covers shared activities. */
+    if (!sameSlot && !sameVenue) continue;
     const entry = byPerson[r.profile_id] || (byPerson[r.profile_id] = { id: r.profile_id, slots: [], exact: 0 });
-    entry.slots.push({ venue: r.venue_label, weekday: r.weekday, band: r.time_band, exact: sameSlot });
+    entry.slots.push({ venue: r.venue_label, activity: r.activity || '', weekday: r.weekday, band: r.time_band,
+                       exact: sameSlot, sameVenue });
     if (sameSlot) entry.exact++;
   }
   await dbPeople(Object.keys(byPerson));
