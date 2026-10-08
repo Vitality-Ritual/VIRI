@@ -106,7 +106,7 @@ function home(){return `<div class="home-page">
 <section class="section edit-section"><div class="wrap"><div class="section-head" data-reveal><h2 class="section-title">The VIRI edit</h2><a class="text-link" href="#/read">All stories ${arrow}</a></div><div class="cards-three">${allArticles().slice(0,3).map((a,i)=>articleCard(a,i)).join('')}</div></div></section>
 <section class="home-facts" data-reveal><div class="wrap">
   <ul class="home-facts-grid">
-    <li><strong>${Math.floor(VIRI.venues.length/50)*50}+</strong><span>studios and gyms to explore</span></li>
+    <li><strong>${(Math.floor(VIRI.venues.length/50)*50).toLocaleString('en-US')}+</strong><span>studios and gyms to explore</span></li>
     <li><strong>${VIRI.cities.length}</strong><span>cities to find your people in</span></li>
     <li><strong>Free</strong><span>for women 18 and over</span></li>
   </ul>
@@ -474,7 +474,7 @@ function aboutPage(){return `<section class="about-hero about-hero--week">
   <h2 class="feat-title">Built around the way you already train.</h2>
   <ol class="feat-grid">
     <li><span class="feat-no">01</span><h3>Your week</h3><p>Tell VIRI where you train and roughly when. It shows you the women who are in the same room at the same time.</p></li>
-    <li><span class="feat-no">02</span><h3>Explore</h3><p>More than ${Math.floor(VIRI.venues.length/100)*100} studios and gyms across ${VIRI.cities.length} US cities, from ${escapeHTML(VIRI.cities[0].name)} to ${escapeHTML(VIRI.cities[VIRI.cities.length-1].name)}, on a map you can search.</p></li>
+    <li><span class="feat-no">02</span><h3>Explore</h3><p>More than ${(Math.floor(VIRI.venues.length/100)*100).toLocaleString('en-US')} studios and gyms across ${VIRI.cities.length} US cities, from ${escapeHTML(VIRI.cities[0].name)} to ${escapeHTML(VIRI.cities[VIRI.cities.length-1].name)}, on a map you can search.</p></li>
     <li><span class="feat-no">03</span><h3>Guest passes</h3><p>Got a guest pass you won&rsquo;t use? Offer it. Want to try a studio or gym? Ask a member for one. VIRI doesn&rsquo;t hand out passes; you arrange it between you.</p></li>
     <li><span class="feat-no">04</span><h3>Sessions</h3><p>Log a run, a class or a long walk with the time, the distance, a photo and who you went with.</p></li>
     <li><span class="feat-no">05</span><h3>Goals</h3><p>Set a weekly or monthly goal, check in on the days you choose, and keep a record of every goal you finish.</p></li>
@@ -2835,7 +2835,10 @@ const CITY_TERMS={dc:['Washington','DC','D.C.'],nyc:['New York','NYC','Brooklyn'
   dal:['Dallas','Addison','Richardson'],hou:['Houston'],phx:['Phoenix','Scottsdale','Tempe','Paradise Valley'],
   sf:['San Francisco','=SF'],det:['Detroit','Royal Oak','Ferndale','Dearborn'],sea:['Seattle'],
   msp:['Minneapolis','St. Paul','Saint Paul','St Paul','Edina','St. Louis Park','Twin Cities','=MSP'],
-  tpa:['Tampa'],sd:['San Diego','La Jolla'],den:['Denver']};
+  tpa:['Tampa'],sd:['San Diego','La Jolla'],den:['Denver'],
+  orl:['Orlando','Winter Park','Maitland'],clt:['Charlotte'],bal:['Baltimore','Towson'],
+  stl:['=St. Louis','=Saint Louis','=St Louis','=STL'],sat:['San Antonio','Alamo Heights'],aus:['Austin','=ATX'],
+  pdx:['=Portland','Portland, OR','Portland, Oregon','=PDX'],sac:['Sacramento'],pit:['Pittsburgh'],lv:['Las Vegas','Henderson','Summerlin','=Vegas']};
 function cityIdFromText(t){
   const v=String(t||'').toLowerCase().trim(); if(!v)return '';
   for(const [id,terms] of Object.entries(CITY_TERMS))
