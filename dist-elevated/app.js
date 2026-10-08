@@ -3634,7 +3634,7 @@ const NEEDS_ACCOUNT=new Set(['add-routine','edit-routine','remove-routine','offe
 let authSettled=typeof dbBoot!=='function';   /* false until the saved sign-in has been looked for, so a member's first click is never mistaken for a visitor's */
 function needAccount(){
   if($('#modal')&&$('#modal').open)closeModal();
-  toast('Create a free profile to do that.');
+  toast('Create a profile to complete this action.');
   location.hash='#/signup';
 }
 document.addEventListener('click',e=>{const t=e.target.closest('[data-action]');if(!t)return;const {action,id,index,category,view,kind,name,channel}=t.dataset;if(NEEDS_ACCOUNT.has(action)&&authSettled&&!signedIn()){e.preventDefault();needAccount();return;}switch(action){case 'video-toggle':{const v=$('#'+(t.dataset.video||'about-video'));if(v.paused)v.play().catch(()=>toast('Video playback is unavailable in this browser.'));else v.pause();break;}case 'close-modal':closeModal();break;case 'join-back':joinStep=Math.max(0,joinStep-1);render(false);break;case 'studio-prev':studioIndex=Math.max(0,studioIndex-1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'studio-next':studioIndex=Math.min(STUDIO_LAST(),studioIndex+1);$('#studio-grid').innerHTML=studioCards();syncStudioNav();break;case 'ex-view':setExView(t.dataset.view);break;case 'pass-ask':passAskModal(t.dataset.id);break;case 'pass-withdraw':withdrawPass(t.dataset.id);break;case 'pass-answer':answerPass(t.dataset.id,t.dataset.accept==='1');break;case 'pass-remove':removePass(t,t.dataset.id);break;case 'offer-pass':offerPassModal(t.dataset.id);break;case 'ex-city':ex={...ex,city:t.dataset.id,venue:null};render(false);break;
