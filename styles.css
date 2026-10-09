@@ -927,8 +927,8 @@ input::placeholder,textarea::placeholder{color:#a0968a}
 .article-prose h2{font-size:clamp(1.3rem,1.9vw,1.7rem);margin:34px 0 14px}
 .article-prose p{font-size:17px;margin:0 0 20px;color:var(--muted)}
 .article-prose p:first-child{margin-top:0}
-.article-prose a{color:var(--ink);border-bottom:1px solid var(--line-2);transition:border-color .3s}
-.article-prose a:hover{border-bottom-color:var(--cocoa)}
+.article-prose a:not(.button){color:var(--ink);border-bottom:1px solid var(--line-2);transition:border-color .3s}
+.article-prose a:not(.button):hover{border-bottom-color:var(--cocoa)}
 .article-prose em{font-style:italic}
 /* balance evens a two-line heading rather than filling the first line; section
    headings read better filled, so they opt out of the global rule */
@@ -979,6 +979,8 @@ input::placeholder,textarea::placeholder{color:#a0968a}
 }
 
 .article-foot{margin-top:clamp(34px,4vw,52px)}
+/* the prose link colour was reaching this button and turning its label dark on taupe */
+.article-foot .button,.article-foot .button:hover{color:var(--cream)}
 
 @media (max-width:900px){
   .article-head{grid-template-columns:1fr;gap:22px}
