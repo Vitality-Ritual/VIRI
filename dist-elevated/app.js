@@ -1527,7 +1527,7 @@ function numbersPanel(){
   const cities=Object.entries(folded).map(([city,n])=>({city,n})).sort((a,b)=>b.n-a.n), cmax=Math.max(1,...cities.map(c=>c.n));
   const wk=w=>new Date(w+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
   return `<div class="numbers">
-    <p class="small num-note">Totals only. Nothing here identifies anyone. <button class="plain-link" data-action="numbers-refresh">Refresh</button></p>
+    <p class="small num-note">Totals only. Nothing here identifies anyone.${d.excluded?` Your own account${d.excluded>1?' and the other admin accounts are':' is'} left out, so these are members only.`:''} <button class="plain-link" data-action="numbers-refresh">Refresh</button></p>
     <div class="num-grid">
       ${tile('Members',m,` <span class="num-pct">+${d.members_7d||0} this week</span>`)}
       ${tile('Added their week',d.with_week,pct(d.with_week))}
