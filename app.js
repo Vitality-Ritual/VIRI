@@ -1464,6 +1464,91 @@ function postPage(id){
     Promise.all([dbLoadComments([id]),dbLoadLikes([id])]).then(()=>{if(location.hash==='#/post/'+encodeURIComponent(id))render(false);});}
   return `<div class="wrap post-wrap">${back}${sessionCard(hit.s,hit.by,{full:true})}</div>`;
 }
+/* ===================== invites =====================
+   Your link brings a friend in already asking to be your friend; you accept with one
+   tap. The box appears where an empty screen would otherwise be a dead end. */
+let myInviteCode=null, inviteAsked=false;
+const inviteLink=()=>myInviteCode?`${location.origin}${location.pathname}#/i/${myInviteCode}`:'';
+function inviteBox(compact){
+  if(!signedIn())return '';
+  if(!myInviteCode&&!inviteAsked&&typeof dbMyInviteCode==='function'){inviteAsked=true;
+    dbMyInviteCode().then(c=>{if(c){myInviteCode=c;render(false);}});}
+  if(!myInviteCode)return '';
+  return `<div class="invite-box${compact?' is-compact':''}">
+    <p class="rail-label">Invite a friend</p>
+    <p class="invite-copy">Send her your link. When she joins through it, she sends you a friend request straight away.</p>
+    <div class="invite-row"><input class="invite-link" readonly value="${escapeHTML(inviteLink())}" aria-label="Your invite link" onclick="this.select()">
+      <button class="button small" data-action="invite-copy">Copy</button>${navigator.share?'<button class="button small outline" data-action="invite-share">Share</button>':''}</div>
+  </div>`;
+}
+async function inviteCopy(){
+  try{await navigator.clipboard.writeText(inviteLink());toast('Invite link copied.');}
+  catch(e){const i=$('.invite-link');if(i){i.select();toast('Press Cmd+C (or Ctrl+C) to copy the link.');}}
+}
+async function inviteShare(){
+  try{await navigator.share({title:'VIRI',text:'Join me on VIRI, so we can see who trains where we do.',url:inviteLink()});}catch(e){}
+}
+let invitePreview={code:null,name:undefined};
+function invitePage(code){
+  code=String(code||'').replace(/[^a-z0-9]/gi,'').slice(0,16);
+  if(!code)return notFound();
+  try{localStorage.setItem('viri-invite',code);}catch(e){}
+  if(invitePreview.code!==code){invitePreview={code,name:undefined};
+    dbInvitePreview(code).then(n=>{invitePreview.name=n||null;try{if(n)localStorage.setItem('viri-invite-name',n);}catch(e){}if(location.hash.startsWith('#/i/'))render(false);});}
+  const who=invitePreview.name;
+  if(signedIn()){
+    /* already a member: send the request now rather than after a sign-in that is not coming */
+    if(typeof dbClaimPendingInvite==='function')dbClaimPendingInvite().then(()=>{if(typeof dbLoadConnections==='function')dbLoadConnections();});
+    return `<div class="wrap handoff"><div class="handoff-card thanks-card"><p class="eyebrow">Invite</p>
+      <h1>${who?`You and ${escapeHTML(who)}`:'You and your friend'}.</h1>
+      <p>${who?escapeHTML(who):'She'} will see a friend request from you, and you will be connected as soon as she accepts.</p>
+      <div class="thanks-actions">${button('Go to your feed','#/feed','small')}</div></div></div>`;
+  }
+  return `<div class="wrap handoff"><div class="handoff-card thanks-card"><p class="eyebrow">You&rsquo;re invited</p>
+    <h1>${who?`${escapeHTML(who)} invited you to VIRI.`:who===null?'You&rsquo;re invited to VIRI.':'&nbsp;'}</h1>
+    <p>VIRI shows you the women who already train where and when you do, at your studio, your gym or your running route, so the people next to you stop being strangers.</p>
+    <p class="small" style="margin-top:14px">When you join, ${who?escapeHTML(who):'your friend'} gets a friend request from you, so the two of you are connected from the start.</p>
+    <div class="thanks-actions">${button('Join VIRI','#/signup','small')}${button('I already have an account','#/login','small outline')}</div></div></div>`;
+}
+
+/* ===================== numbers (admins) =====================
+   Counts only, worked out in the database (027's admin_stats): how many, never who. */
+let numbersData;
+function numbersPanel(){
+  if(numbersData===undefined){numbersData=null;dbAdminStats().then(d=>{numbersData=d||{error:'Nothing came back.'};if(location.hash==='#/profile')render(false);});}
+  if(!numbersData)return '<p class="small">Counting&hellip;</p>';
+  if(numbersData.error)return `<p class="small">${escapeHTML(numbersData.error)}</p>`;
+  const d=numbersData, m=d.members||0, pct=n=>m?` <span class="num-pct">${Math.round(n*100/m)}%</span>`:'';
+  const tile=(label,n,extra)=>`<div class="num-tile"><p class="num-label">${escapeHTML(label)}</p><p class="num-value">${Number(n||0).toLocaleString('en-US')}${extra||''}</p></div>`;
+  const weeks=d.signups_by_week||[], wmax=Math.max(1,...weeks.map(w=>w.n));
+  /* city is typed freely, so "Washington", "DC" and "Washington, DC" are folded into
+     VIRI's own city name using the same spellings member search knows */
+  const folded={}; (d.top_cities||[]).forEach(c=>{const id=cityIdFromText(c.city);const nm=id?((VIRI.cities.find(x=>x.id===id)||{}).name||c.city):c.city;folded[nm]=(folded[nm]||0)+c.n;});
+  const cities=Object.entries(folded).map(([city,n])=>({city,n})).sort((a,b)=>b.n-a.n), cmax=Math.max(1,...cities.map(c=>c.n));
+  const wk=w=>new Date(w+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  return `<div class="numbers">
+    <p class="small num-note">Totals only. Nothing here identifies anyone. <button class="plain-link" data-action="numbers-refresh">Refresh</button></p>
+    <div class="num-grid">
+      ${tile('Members',m,` <span class="num-pct">+${d.members_7d||0} this week</span>`)}
+      ${tile('Added their week',d.with_week,pct(d.with_week))}
+      ${tile('Have a friend',d.with_friend,pct(d.with_friend))}
+      ${tile('Ever logged a session',d.logged_ever,pct(d.logged_ever))}
+      ${tile('Active this week',d.active_7d,pct(d.active_7d))}
+      ${tile('Sessions this week',d.sessions_7d)}
+      ${tile('Messages this week',d.messages_7d)}
+      ${tile('New friendships this week',d.friendships_7d)}
+      ${tile('Joined through an invite',d.invites_total,` <span class="num-pct">+${d.invites_7d||0} this week</span>`)}
+      ${tile('Open guest passes',d.passes_open)}
+    </div>
+    <h3 class="num-h">New members, week by week</h3>
+    <div class="num-bars" role="img" aria-label="New members per week for the last eight weeks: ${weeks.map(w=>`${wk(w.week)} ${w.n}`).join(', ')}">
+      ${weeks.map((w,i)=>`<div class="num-bar-col" title="Week of ${wk(w.week)}: ${w.n}">${i===weeks.length-1?`<span class="num-bar-v">${w.n}</span>`:''}<span class="num-bar" style="height:${Math.max(2,Math.round(w.n/wmax*85))}%"></span><span class="num-bar-x">${i===weeks.length-1?'This week':wk(w.week)}</span></div>`).join('')}
+    </div>
+    <h3 class="num-h">Where members say they are</h3>
+    ${cities.length?`<ul class="num-cities">${cities.map(c=>`<li title="${escapeHTML(c.city)}: ${c.n}"><span class="num-city">${escapeHTML(c.city)}</span><span class="num-track"><span style="width:${Math.max(2,Math.round(c.n/cmax*100))}%"></span></span><span class="num-n">${c.n}</span></li>`).join('')}</ul>`:'<p class="small">No cities yet.</p>'}
+    <p class="small num-note">&ldquo;Active&rdquo; means logged a session, sent a message, commented, liked, or added to their week in the last seven days. Cities are what members typed, so spellings can split one city in two.</p>
+  </div>`;
+}
 /* Local state updates at once so the page stays quick; the server write
    follows. If it fails, say so rather than letting someone believe something
    was saved that was not. */
@@ -2611,7 +2696,7 @@ function profilePage(){
         <div class="pf-stats">
           <button class="stat-open" data-action="pf-tab" data-id="sessions"><b>${list.length}</b> session${list.length===1?'':'s'}</button>
           <button class="stat-open" data-action="show-friends"><b>${state.connections.length}</b> friend${state.connections.length===1?'':'s'}</button>
-          <button class="stat-open" data-action="pf-tab" data-id="studios"><b>${saved.length}</b> studio${saved.length===1?'':'s'}</button>
+          <button class="stat-open" data-action="pf-tab" data-id="studios"><b>${saved.length}</b> saved</button>
         </div>
         <div class="pf-bio">
           ${p.bio
@@ -2634,13 +2719,15 @@ function profilePage(){
     <section class="pf-section"><div class="pf-section-head"><h2>Photos</h2></div>${galleryStrip(state.gallery,{own:true})}</section>
     <section class="pf-section pf-activity"><div class="pf-section-head"><h2>Activity</h2></div>
     <nav class="pf-tabs" aria-label="Your profile">
-      ${[['sessions','Sessions'],['studios','Saved places'],...(amAdmin()?[['moderation','Moderation'+(modOpenCount()?` (${modOpenCount()})`:'')]]:[])].map(([k,label])=>
+      ${[['sessions','Sessions'],['studios','Saved places'],...(amAdmin()?[['moderation','Moderation'+(modOpenCount()?` (${modOpenCount()})`:'')],['numbers','Numbers']]:[])].map(([k,label])=>
         `<button class="pf-tab${tab===k?' is-on':''}" data-action="pf-tab" data-id="${k}"${tab===k?' aria-current="true"':''}>${label}</button>`).join('')}
     </nav>
     <div class="pf-main">
     <div class="pf-body">${
       tab==='moderation'
         ? moderationPanel()
+      : tab==='numbers'&&amAdmin()
+        ? numbersPanel()
       : tab==='studios'
         ? (saved.length
             ? `<div class="pf-rows">${saved.map(s=>s.kind==='brand'
@@ -2729,6 +2816,7 @@ function feedPage(){
          ? 'Nothing from your friends yet. When they log a session it appears here.'
          : 'Nobody else has joined your area yet. When they do, they will show up here.'}</p>
        <a class="button small" href="#/find">Find people ${arrow}</a>
+       ${inviteBox()}
      </div>`}
     </section>
     <aside class="feed-rail">
@@ -2749,6 +2837,7 @@ function feedPage(){
         <p class="rail-line"><b>${(state.connections||[]).length}</b> friend${(state.connections||[]).length===1?'':'s'}</p>
         <a class="text-link" href="#/find">Find more ${arrow}</a>
       </div>
+      ${inviteBox(true)}
     </aside>
   </div>`;}
 /* ---- find: people first, classes second ----
@@ -2814,7 +2903,10 @@ function findPage(){
             :st==='requested'?'<span class="tag">Requested</span>'
             :`<button class="button small" data-action="ex-connect" data-id="${escapeHTML(m.id)}">Connect</button>`}
           ${safetyButton(m.id,m.name)}
-        </div>`;}).join('')}</div>`:''}
+        </div>`;}).join('')}</div>`
+      :signedIn()?`<div class="find-empty-room"><p class="rail-label find-head">In the room with you</p>${(state.routines||[]).length
+        ? `<p class="small">Nobody else has added ${escapeHTML((state.routines[0].venue||state.routines[0].activity||'your routine').split(' — ')[0])} to their week yet, so you may be the first. Bring someone who goes with you.</p>${inviteBox(true)}`
+        : `<p class="small">Add the classes, runs or gym times you actually do, and this shows the women who are there at the same time.</p><button class="button small outline" data-action="add-routine">Add to my week</button>`}</div>`:''}
     ${results&&results.length?`<p class="rail-label find-head">${escapeHTML(findScope)}</p>`:''}
     <div class="find-results">
       ${results===null
@@ -3005,7 +3097,7 @@ function noteText(n){
   if(n.kind==='like')return `${who} liked <i>${escapeHTML(d.title||'your session')}</i>`;
   if(n.kind==='reply')return `${who} replied to your comment on <i>${escapeHTML(d.title||'a session')}</i>${d.excerpt?`: “${escapeHTML(d.excerpt)}”`:''}`;
   if(n.kind==='join')return `${who} added your ${d.weekday!=null&&WEEKDAYS[d.weekday]?escapeHTML(WEEKDAYS[d.weekday])+' ':''}${escapeHTML(d.activity||'routine')}${d.place?` at ${escapeHTML(d.place)}`:''} to their week`;
-  if(n.kind==='friend_request')return `${who} sent you a friend request`;
+  if(n.kind==='friend_request')return d.via==='invite'?`${who} joined VIRI from your invite and sent you a friend request`:`${who} sent you a friend request`;
   if(n.kind==='friend_accept')return `${who} accepted your friend request`;
   if(n.kind==='pass_request')return `${who} asked for your guest pass${d.place?` at ${escapeHTML(d.place)}`:''}`;
   if(n.kind==='pass_accept')return `${who} said yes to your guest pass request${d.place?` at ${escapeHTML(d.place)}`:''}`;
@@ -3393,6 +3485,10 @@ function privacyPage(){return `<article class="article-detail legal">
   <p>Your sessions are visible to you and to your friends, and to nobody else. Friends can like a session, comment on it, and like or reply to each other&rsquo;s comments. You can delete any comment on your own sessions, and anyone can delete their own comments. Likes and comments are deleted when the session or the account is.</p>
   <p>When someone sends you a friend request or accepts yours, or a friend likes or comments on one of your sessions, replies to your comment, says you went somewhere together, adds one of your routines to their week, or asks for a guest pass you have offered, you get a notification inside VIRI.</p>
 
+  <h2>Invites</h2>
+  <p>You have a personal invite link. If someone joins or signs in through it, VIRI sends you a friend request from her and records that she came through your link; you decide whether to accept. If you join through a friend&rsquo;s link, the same happens the other way round.</p>
+  <p>The people who run VIRI can see totals, such as how many members there are or how many sessions were logged this week. These are counts worked out by the database, not records about any one person.</p>
+
   <h2>Guest passes</h2>
   <p>If you offer a guest pass, it is visible to every member who is signed in to VIRI: your name and neighbourhood, the studio, the date, a rough time and any note you add. It is not visible to anyone who is not signed in. A member can ask you for it, and you decide. We keep the request and your answer until the pass or either account is deleted, or the date has long gone. VIRI does not provide, check or sell guest passes.</p>
 
@@ -3607,7 +3703,7 @@ function initPageMotion(){
   revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('is-revealed');revealObserver.unobserve(entry.target);}}),{threshold:.08,rootMargin:'0px 0px -30px 0px'});
   targets.forEach(el=>{el.classList.add('will-reveal');revealObserver.observe(el);});
 }
-function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':if(signedIn()){location.replace('#/feed');return;}html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'check-email':html=checkEmailPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'forgot':html=forgotPage();break;case 'notifications':html=notificationsPage();break;case 'confirm-subscription':html=confirmSubscriptionPage(id);break;case 'stop-emails':html=stopEmailsPage(id);break;case 'reset-password':html=resetPasswordPage();break;case 'profile':html=profilePage();break;case 'member':html=memberPage(id);if(typeof ensureMember==='function')ensureMember(id);break;case 'feed':html=feedPage();break;case 'post':html=postPage(id);break;case 'find':html=findPage();break;case 'messages':html=messagesPage();break;case 'settings':html=settingsPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=privacyPage();break;case 'terms':html=termsPage();break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios & gyms',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you','check-email':'Check your email',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',forgot:'Forgot your password',notifications:'Notifications','confirm-subscription':'Confirm your subscription','stop-emails':'Stop the daily email','reset-password':'Choose a new password',profile:'Your circle',member:'A member',feed:'Feed',post:'Post',find:'Find your people',messages:'Messages',settings:'Settings',book:'Book this class',privacy:'Your privacy',terms:'Terms of service'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#auth-form'))bindAuth();if(path==='stop-emails'&&stopEmails.status==='start'){stopEmails.status='working';const tok=stopEmails.token;dbStopDigestEmails(tok).then(r=>{if(stopEmails.token!==tok)return;stopEmails.status=r&&r.data?'ok':'bad';if((location.hash||'').startsWith('#/stop-emails'))render(false);});}if(path==='forgot')bindForgot();if(path==='confirm-subscription'&&subConfirm.status==='start'){subConfirm.status='working';const tok=subConfirm.token;dbConfirmSubscription(tok).then(r=>{if(subConfirm.token!==tok)return;subConfirm.status=r&&r.data?'ok':'bad';if((location.hash||'').startsWith('#/confirm-subscription'))render(false);});}if(path==='notifications'&&state.unseenNotes&&typeof dbMarkNotificationsRead==='function')dbMarkNotificationsRead().then(()=>syncAccountLinks());if(path==='reset-password')bindReset();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='check-email')startConfirmWatch();if(path==='find'){$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();runSearch();});if(typeof dbRoutineMatches==='function'&&state.roomMatches===undefined){state.roomMatches=[];dbRoutineMatches().then(()=>{if(location.hash==='#/find')render(false);});}if(state.found===undefined||state.found===null)runSearch();}if(path==='profile'&&signedIn()&&!goalHistoryLoaded&&typeof dbLoadGoalHistory==='function'){goalHistoryLoaded=true;dbLoadGoalHistory().then(r=>{if(r===null)state.goalHistory=null;if(location.hash==='#/profile')render(false);});}if(path==='profile'&&signedIn())checkAdmin();if(path==='messages'){$('#msg-form')?.addEventListener('submit',e=>{e.preventDefault();sendMessage(e.target);});const b=$('#msg-body');if(b)b.scrollTop=b.scrollHeight;if(msgThread&&typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);}/* Fetch on arrival, not on every render — render() re-runs this block, so an
+function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':if(signedIn()){location.replace('#/feed');return;}html=home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'about':html=aboutPage();break;case 'connect':html=contactPage();break;case 'thanks':html=thanksPage();break;case 'check-email':html=checkEmailPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'forgot':html=forgotPage();break;case 'notifications':html=notificationsPage();break;case 'confirm-subscription':html=confirmSubscriptionPage(id);break;case 'stop-emails':html=stopEmailsPage(id);break;case 'reset-password':html=resetPasswordPage();break;case 'profile':html=profilePage();break;case 'member':html=memberPage(id);if(typeof ensureMember==='function')ensureMember(id);break;case 'feed':html=feedPage();break;case 'i':html=invitePage(id);break;case 'post':html=postPage(id);break;case 'find':html=findPage();break;case 'messages':html=messagesPage();break;case 'settings':html=settingsPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=privacyPage();break;case 'terms':html=termsPage();break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',explore:'Explore',studios:'Studios & gyms',read:'The VIRI edit',about:'About us',connect:'Contact us',thanks:'Thank you','check-email':'Check your email',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',forgot:'Forgot your password',notifications:'Notifications','confirm-subscription':'Confirm your subscription','stop-emails':'Stop the daily email','reset-password':'Choose a new password',profile:'Your circle',member:'A member',feed:'Feed',post:'Post',i:'You’re invited',find:'Find your people',messages:'Messages',settings:'Settings',book:'Book this class',privacy:'Your privacy',terms:'Terms of service'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#auth-form'))bindAuth();if(path==='stop-emails'&&stopEmails.status==='start'){stopEmails.status='working';const tok=stopEmails.token;dbStopDigestEmails(tok).then(r=>{if(stopEmails.token!==tok)return;stopEmails.status=r&&r.data?'ok':'bad';if((location.hash||'').startsWith('#/stop-emails'))render(false);});}if(path==='forgot')bindForgot();if(path==='confirm-subscription'&&subConfirm.status==='start'){subConfirm.status='working';const tok=subConfirm.token;dbConfirmSubscription(tok).then(r=>{if(subConfirm.token!==tok)return;subConfirm.status=r&&r.data?'ok':'bad';if((location.hash||'').startsWith('#/confirm-subscription'))render(false);});}if(path==='notifications'&&state.unseenNotes&&typeof dbMarkNotificationsRead==='function')dbMarkNotificationsRead().then(()=>syncAccountLinks());if(path==='reset-password')bindReset();if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='check-email')startConfirmWatch();if(path==='find'){$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();runSearch();});if(typeof dbRoutineMatches==='function'&&state.roomMatches===undefined){state.roomMatches=[];dbRoutineMatches().then(()=>{if(location.hash==='#/find')render(false);});}if(state.found===undefined||state.found===null)runSearch();}if(path==='profile'&&signedIn()&&!goalHistoryLoaded&&typeof dbLoadGoalHistory==='function'){goalHistoryLoaded=true;dbLoadGoalHistory().then(r=>{if(r===null)state.goalHistory=null;if(location.hash==='#/profile')render(false);});}if(path==='profile'&&signedIn())checkAdmin();if(path==='messages'){$('#msg-form')?.addEventListener('submit',e=>{e.preventDefault();sendMessage(e.target);});const b=$('#msg-body');if(b)b.scrollTop=b.scrollHeight;if(msgThread&&typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);}/* Fetch on arrival, not on every render — render() re-runs this block, so an
    unguarded fetch-then-render is an infinite loop. The flag clears when you
    leave, so coming back fetches again. */
 if(path!=='feed')feedFetched=false;
@@ -3627,7 +3723,7 @@ else if(!feedFetched&&typeof dbLoadFeed==='function'){feedFetched=true;dbLoadFee
    unless someone adds it here; tools/check.rb keeps every name below real. */
 const NEEDS_ACCOUNT=new Set(['add-routine','edit-routine','remove-routine','offer-pass','pass-ask','pass-withdraw','pass-answer','pass-remove',
   'save-studio','book-existing','book-new','book-plan','join-event','post-activity','post-new','edit-session','session-like','session-join','session-talk',
-  'comment-delete','comment-like','comment-reply','attend-yes','attend-no','finish-next','attend-more','add-goal','edit-goal','remove-goal','goal-yes','goal-no','history-goal-delete',
+  'comment-delete','comment-like','comment-reply','invite-copy','invite-share','numbers-refresh','attend-yes','attend-no','finish-next','attend-more','add-goal','edit-goal','remove-goal','goal-yes','goal-no','history-goal-delete',
   'edit-bio','edit-profile','add-gallery','remove-photo','edit-photo','show-friends','show-requests','accept-request','decline-request','withdraw-request',
   'remove-friend','msg-open','person-menu','report-person','block-person','block-confirm','unblock-person','toggle-show-age','toggle-digest','export-data',
   'delete-account','share-profile','open-note']);
@@ -3652,7 +3748,7 @@ case 'book-new':bookChoose(t.dataset.id,'new');break;
 case 'book-plan':bookChoose(t.dataset.id,'plan');break;
 case 'ex-zoom':exZoom(t.dataset.dir);break;
 case 'ex-reset':ex={...ex,cat:'All',members:false,query:'',venue:null};render(false);break;
-case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':{const nowOn=!state.saved.includes(id);state.saved=nowOn?[...state.saved,id]:state.saved.filter(x=>x!==id);if(typeof dbSetStudio==='function')dbPush(dbSetStudio(id,nowOn),'that studio');save();render(false);}toast(state.saved.includes(id)?'Saved to your profile.':'Removed from your saved list.');break;case 'saved-venue':{const v=((window.VIRI&&VIRI.venues)||[]).find(x=>x.id===t.dataset.id);if(v){ex={...ex,city:v.city,venue:v.id,cat:'All',query:''};exView='studios';}break;}case 'studio-explore':ex={...ex,cat:(VIRI.categories||[]).includes(category)?category:'All',venue:null,query:''};exView='studios';break;case 'post-activity':pendingPlans().length?attendModal():postActivity();break;case 'post-new':closeModal();postActivity();break;case 'edit-session':editSession(t.dataset.id);break;case 'open-note':openNote(t.dataset.id);break;case 'mod-dismiss':case 'mod-suspend':case 'mod-delete':case 'mod-unsuspend':case 'mod-reopen':modAct(t);break;case 'session-like':toggleLike(t.dataset.id);break;case 'attend-yes':logAttended(t.dataset.id);break;case 'attend-no':skipAttended(t.dataset.id);break;case 'finish-next':{const n=(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start)[0];if(n){n.start=Date.now()-(n.dur+5)*60000;save();render(false);toast('Moved into the past. The + now has something to ask you.');}break;}case 'attend-more':{const p=takePlan(t.dataset.id);closeModal();postActivity(p);break;}case 'show-friends':friendsModal();break;case 'show-requests':requestsModal();break;case 'edit-bio':bioModal();break;case 'add-gallery':addGalleryPhoto();break;case 'add-routine':routineModal(t.dataset.id);break;case 'add-goal':goalModal(t.dataset.id);break;case 'edit-goal':goalModal(null,t.dataset.id);break;case 'remove-goal':removeGoal(t.dataset.id);break;case 'goal-yes':answerGoal(t.dataset.id,t.dataset.day,true);break;case 'goal-no':answerGoal(t.dataset.id,t.dataset.day,false);break;case 'remove-routine':removeRoutine(t.dataset.id);break;case 'open-photo':{const who=(location.hash||'').startsWith('#/member/')?personById(location.hash.split('/')[2]):null;openLightbox(who?(who.gallery||[]):(state.gallery||[]),Number(t.dataset.index)||0);break;}case 'photo-prev':lightboxAt=(lightboxAt-1+lightboxOf.length)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'photo-next':lightboxAt=(lightboxAt+1)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'remove-photo':removeGalleryPhoto(t.dataset.id);break;case 'edit-photo':photoModal();break;case 'accept-request':exConnect(t.dataset.id);break;case 'decline-request':respondToRequest(t.dataset.id,'declined');break;case 'withdraw-request':respondToRequest(t.dataset.id,'withdrawn');break;case 'remove-friend':respondToRequest(t.dataset.id,'removed');break;case 'msg-open':msgThread=t.dataset.id;render(false);if(typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);break;case 'log-out':dbSignOut().then(()=>{$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Signed out.');location.hash='#/';render(false);});break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':joinSession(t.dataset.id);break;case 'session-talk':{const sid=t.dataset.id;if(!sid){toast('This is a sample session, so there is nobody to talk to yet.');break;}openThreads.has(sid)?openThreads.delete(sid):openThreads.add(sid);render(false);break;}case 'comment-delete':deleteComment(t.dataset.id,t.dataset.session,t);break;case 'comment-like':toggleCommentLike(t.dataset.id);break;case 'comment-reply':startReply(t.dataset.id,t.dataset.session);break;case 'comment-reply-cancel':replyingTo=null;render(false);break;case 'confirm-check':confirmCheckNow();break;case 'post-back':if(history.length>1)history.back();else location.hash='#/feed';break;case 'edit-routine':{const r=(state.routines||[]).find(x=>x.id===t.dataset.id);if(r)routineModal(null,{editId:r.id,activity:r.activity,venueLabel:r.venue,venueId:r.venueId,days:[r.weekday],band:r.band});break;}case 'history-goal-delete':deleteHistoryGoal(t);break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':{const v=t.dataset.id;findActivities=findActivities.includes(v)?findActivities.filter(x=>x!==v):[...findActivities,v];runSearch();break;}case 'edit-profile':editProfileModal();break;case 'person-menu':personMenu(t.dataset.id,t.dataset.name);break;case 'report-person':closeModal();reportModal(t.dataset.id,t.dataset.name);break;case 'block-person':closeModal();blockConfirm(t.dataset.id,t.dataset.name);break;case 'block-confirm':doBlock(t.dataset.id,t.dataset.name);break;case 'unblock-person':doUnblock(t.dataset.id,t.dataset.name);break;case 'toggle-show-age':toggleShowAge(t.checked);break;case 'toggle-digest':toggleDigest(t.checked);break;case 'export-data':exportMyData(t);break;case 'delete-account':deleteAccountModal();break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
+case 'reset-filters':explore={...explore,query:'',category:'All',area:'All neighborhoods'};render(false);break;case 'event-details':eventDetails(id);break;case 'join-event':toggleJoin(id);break;case 'show-map':closeModal();const target=allEvents().find(x=>x.id===id);explore={...explore,selected:id,kind:target?.type==='club'?'clubs':'classes',view:'map',category:'All',area:'All neighborhoods',query:''};if(location.hash!=='#/explore')location.hash='#/explore';else render(false);break;case 'save-studio':{const nowOn=!state.saved.includes(id);state.saved=nowOn?[...state.saved,id]:state.saved.filter(x=>x!==id);if(typeof dbSetStudio==='function')dbPush(dbSetStudio(id,nowOn),'that studio');save();render(false);}toast(state.saved.includes(id)?'Saved to your profile.':'Removed from your saved list.');break;case 'saved-venue':{const v=((window.VIRI&&VIRI.venues)||[]).find(x=>x.id===t.dataset.id);if(v){ex={...ex,city:v.city,venue:v.id,cat:'All',query:''};exView='studios';}break;}case 'studio-explore':ex={...ex,cat:(VIRI.categories||[]).includes(category)?category:'All',venue:null,query:''};exView='studios';break;case 'post-activity':pendingPlans().length?attendModal():postActivity();break;case 'post-new':closeModal();postActivity();break;case 'edit-session':editSession(t.dataset.id);break;case 'open-note':openNote(t.dataset.id);break;case 'mod-dismiss':case 'mod-suspend':case 'mod-delete':case 'mod-unsuspend':case 'mod-reopen':modAct(t);break;case 'session-like':toggleLike(t.dataset.id);break;case 'attend-yes':logAttended(t.dataset.id);break;case 'attend-no':skipAttended(t.dataset.id);break;case 'finish-next':{const n=(state.plans||[]).filter(x=>x.start>Date.now()).sort((a,b)=>a.start-b.start)[0];if(n){n.start=Date.now()-(n.dur+5)*60000;save();render(false);toast('Moved into the past. The + now has something to ask you.');}break;}case 'attend-more':{const p=takePlan(t.dataset.id);closeModal();postActivity(p);break;}case 'show-friends':friendsModal();break;case 'show-requests':requestsModal();break;case 'edit-bio':bioModal();break;case 'add-gallery':addGalleryPhoto();break;case 'add-routine':routineModal(t.dataset.id);break;case 'add-goal':goalModal(t.dataset.id);break;case 'edit-goal':goalModal(null,t.dataset.id);break;case 'remove-goal':removeGoal(t.dataset.id);break;case 'goal-yes':answerGoal(t.dataset.id,t.dataset.day,true);break;case 'goal-no':answerGoal(t.dataset.id,t.dataset.day,false);break;case 'remove-routine':removeRoutine(t.dataset.id);break;case 'open-photo':{const who=(location.hash||'').startsWith('#/member/')?personById(location.hash.split('/')[2]):null;openLightbox(who?(who.gallery||[]):(state.gallery||[]),Number(t.dataset.index)||0);break;}case 'photo-prev':lightboxAt=(lightboxAt-1+lightboxOf.length)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'photo-next':lightboxAt=(lightboxAt+1)%lightboxOf.length;openLightbox(lightboxOf,lightboxAt);break;case 'remove-photo':removeGalleryPhoto(t.dataset.id);break;case 'edit-photo':photoModal();break;case 'accept-request':exConnect(t.dataset.id);break;case 'decline-request':respondToRequest(t.dataset.id,'declined');break;case 'withdraw-request':respondToRequest(t.dataset.id,'withdrawn');break;case 'remove-friend':respondToRequest(t.dataset.id,'removed');break;case 'msg-open':msgThread=t.dataset.id;render(false);if(typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);break;case 'log-out':dbSignOut().then(()=>{$('#account-panel').hidden=true;$('#account-button')?.setAttribute('aria-expanded','false');toast('Signed out.');location.hash='#/';render(false);});break;case 'pf-tab':profileTab=t.dataset.id;render(false);break;case 'session-join':joinSession(t.dataset.id);break;case 'session-talk':{const sid=t.dataset.id;if(!sid){toast('This is a sample session, so there is nobody to talk to yet.');break;}openThreads.has(sid)?openThreads.delete(sid):openThreads.add(sid);render(false);break;}case 'comment-delete':deleteComment(t.dataset.id,t.dataset.session,t);break;case 'comment-like':toggleCommentLike(t.dataset.id);break;case 'comment-reply':startReply(t.dataset.id,t.dataset.session);break;case 'comment-reply-cancel':replyingTo=null;render(false);break;case 'confirm-check':confirmCheckNow();break;case 'invite-copy':inviteCopy();break;case 'invite-share':inviteShare();break;case 'numbers-refresh':numbersData=undefined;render(false);break;case 'post-back':if(history.length>1)history.back();else location.hash='#/feed';break;case 'edit-routine':{const r=(state.routines||[]).find(x=>x.id===t.dataset.id);if(r)routineModal(null,{editId:r.id,activity:r.activity,venueLabel:r.venue,venueId:r.venueId,days:[r.weekday],band:r.band});break;}case 'history-goal-delete':deleteHistoryGoal(t);break;case 'share-profile':toast('Your profile link is copied in the live product. Nothing leaves this device in the preview.');break;case 'find-chip':{const v=t.dataset.id;findActivities=findActivities.includes(v)?findActivities.filter(x=>x!==v):[...findActivities,v];runSearch();break;}case 'edit-profile':editProfileModal();break;case 'person-menu':personMenu(t.dataset.id,t.dataset.name);break;case 'report-person':closeModal();reportModal(t.dataset.id,t.dataset.name);break;case 'block-person':closeModal();blockConfirm(t.dataset.id,t.dataset.name);break;case 'block-confirm':doBlock(t.dataset.id,t.dataset.name);break;case 'unblock-person':doUnblock(t.dataset.id,t.dataset.name);break;case 'toggle-show-age':toggleShowAge(t.checked);break;case 'toggle-digest':toggleDigest(t.checked);break;case 'export-data':exportMyData(t);break;case 'delete-account':deleteAccountModal();break;case 'credits':openModal('Photography',`<p class="dialog-copy">Images are shown for this design preview. Studio photography belongs to the respective brands and photographers.</p><p style="margin-top:18px">Running photograph: Tyler Nix / Unsplash, via Shape Republic. Pilates studio: Ohouse. Yoga class: Three Birds Yoga. Yoga mats: Mayo Clinic News Network. Brand imagery: CycleBar, [solidcore], Pure Barre, CorePower Yoga, SoulCycle, Orangetheory, Club Pilates, and Barry’s.</p><p class="small" style="margin-top:18px">Community photographs are AI-generated originals; the lifestyle photography was supplied for this preview.</p>`);break;}});
 $('#menu-button').addEventListener('click',()=>{const open=$('#menu-panel').hidden;$('#menu-panel').hidden=!open;$('#menu-button').setAttribute('aria-expanded',String(open));});
 bindAccountMenu();
 document.addEventListener('click',e=>{if(!e.target.closest('.site-header')){$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');}});

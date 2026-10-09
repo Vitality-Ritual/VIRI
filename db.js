@@ -183,6 +183,7 @@ async function dbLoadProfile(){
   await dbClaimPendingEligibility();
   await dbClaimPendingStudios();
   await dbClaimPendingPhoto();
+  await dbClaimPendingInvite();
   await dbLoadBlocks();
   await dbLoadGallery();
   await dbLoadRoutines();
@@ -209,6 +210,9 @@ const dbProfileFields = j => ({
   industry: j.industry || '',
   activities: (j.forms || []).filter(x => x !== JOIN_ANY.forms),
   times: j.times || [],
+  /* the code of the friend whose link brought her here, so the invite still counts
+     when the confirmation email is opened on another device */
+  invite: (() => { try { return localStorage.getItem('viri-invite') || ''; } catch (e) { return ''; } })(),
   show_age: !!j.showAge,
   /* Recorded only when somebody actually ticked the box. This used to be set on
      every sign-up regardless, which meant the database held a consent record for
@@ -576,6 +580,45 @@ async function dbAnswerPassRequest(requestId, accept){
   return { data: true };
 }
 
+/* ===================== invites (027) =====================
+   A member's link is #/i/<code>. Whoever joins (or signs in) through it sends her a
+   friend request, marked as coming from her invite: a request she accepts, not an
+   automatic friendship, because a link can travel anywhere and friends see sessions. */
+async function dbMyInviteCode(){
+  const c = db(); if (!c || !authUser) return null;
+  const { data, error } = await c.rpc('my_invite_code');
+  return error ? null : data;                      /* before 027 there is no code */
+}
+async function dbInvitePreview(code){
+  const c = db(); if (!c) return null;
+  const { data, error } = await c.rpc('invite_preview', { p_code: code });
+  return error ? null : (data || null);
+}
+async function dbRedeemInvite(code){
+  const c = db(); if (!c || !authUser) return { error: { message: 'Not signed in.' } };
+  const { data, error } = await c.rpc('redeem_invite', { p_code: code });
+  return error ? { error } : { data };
+}
+/* Tried once per device after sign-in; the database ignores a repeat. */
+async function dbClaimPendingInvite(){
+  let code = null, name = null;
+  try { code = localStorage.getItem('viri-invite'); name = localStorage.getItem('viri-invite-name'); } catch (e) {}
+  code = code || (authUser && authUser.user_metadata && authUser.user_metadata.invite) || null;
+  if (!code || !/^[a-z0-9]{6,16}$/i.test(code)) return;
+  try { if (localStorage.getItem('viri-invite-done-' + code)) { localStorage.removeItem('viri-invite'); return; } } catch (e) {}
+  const r = await dbRedeemInvite(code);
+  if (r.error) return;                             /* before 027: try again another time */
+  try { localStorage.setItem('viri-invite-done-' + code, '1'); localStorage.removeItem('viri-invite'); localStorage.removeItem('viri-invite-name'); } catch (e) {}
+  if (r.data === 'requested' && typeof toast === 'function')
+    setTimeout(() => toast(`We sent ${name || 'your friend'} a friend request from you.`), 1200);
+}
+/* Admins only: totals, never anything about a person (027's admin_stats). */
+async function dbAdminStats(){
+  const c = db(); if (!c || !authUser) return null;
+  const { data, error } = await c.rpc('admin_stats');
+  return error ? { error: /admin_stats|schema cache/.test(error.message || '') ? 'The numbers switch on once the latest database update (027) is run.' : error.message } : data;
+}
+
 /* ===================== moderation =====================
    Only for the admins listed in `admins` (022). Every function here is also
    refused by the database for anyone else, so hiding the tab is a courtesy, not
@@ -819,6 +862,8 @@ async function dbExportData(){
   out.guest_passes = passes.error ? [] : (passes.data || []);
   const asks = await c.from('guest_pass_requests').select('*').eq('requester_id', authUser.id);
   out.guest_pass_requests = asks.error ? [] : (asks.data || []);
+  const inv = await c.from('invite_redemptions').select('*').or(`invitee_id.eq.${authUser.id},inviter_id.eq.${authUser.id}`);
+  out.invite_redemptions = inv.error ? [] : (inv.data || []);
   const notes = await c.from('notifications').select('*').eq('recipient_id', authUser.id);
   out.notifications = notes.error ? [] : (notes.data || []);
 
