@@ -2038,6 +2038,38 @@ summary.pf-section-head::-webkit-details-marker{display:none}
   .ex-city-pick select{width:100%;font-size:15px;padding:13px 14px}
 }
 
+/* ---- invite a friend ---- */
+.invite-box{background:var(--paper);border:1px solid var(--line);padding:18px 18px 20px;margin-top:18px}
+.invite-box .rail-label{margin:0 0 8px}
+.invite-copy{margin:0 0 12px;font-size:13.5px;line-height:1.6;color:var(--muted)}
+.invite-row{display:flex;gap:8px;flex-wrap:wrap}
+.invite-link{flex:1 1 180px;min-width:0;font-size:13px;padding:10px 12px;color:var(--ink)}
+.find-empty-room{margin-bottom:clamp(26px,3vw,40px)}
+.find-empty-room .invite-box{max-width:560px}
+
+/* ---- numbers (admins): totals as tiles, two single-colour bar lists ---- */
+.numbers{display:flex;flex-direction:column;gap:6px}
+.num-note{margin:0 0 10px}
+.num-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:22px}
+.num-tile{background:var(--paper);border:1px solid var(--line);padding:14px 16px}
+.num-label{margin:0 0 6px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.num-value{margin:0;font-family:var(--display);font-size:1.9rem;line-height:1.1;color:var(--cocoa)}
+.num-pct{font-family:var(--body);font-size:12px;color:var(--muted);letter-spacing:.02em}
+.num-h{font-family:var(--display);font-weight:400;font-size:1.15rem;color:var(--cocoa);margin:10px 0 12px}
+.num-bars{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;align-items:end;height:170px;padding:12px 0 0;border-bottom:1px solid var(--line);margin-bottom:26px}
+.num-bar-col{position:relative;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
+.num-bar{display:block;width:min(22px,70%);background:var(--taupe);border-radius:4px 4px 0 0}
+.num-bar-col:hover .num-bar{background:var(--cocoa)}
+.num-bar-x{position:absolute;bottom:-22px;font-size:10.5px;color:var(--muted);white-space:nowrap}
+.num-bar-v{font-size:12px;color:var(--ink);margin-bottom:5px}
+.num-cities{list-style:none;margin:8px 0 14px;padding:0;display:flex;flex-direction:column;gap:9px}
+.num-cities li{display:grid;grid-template-columns:minmax(90px,170px) 1fr 40px;gap:12px;align-items:center;font-size:13.5px}
+.num-city{color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.num-track{height:10px;background:transparent}
+.num-track span{display:block;height:100%;background:var(--taupe);border-radius:0 4px 4px 0}
+.num-cities li:hover .num-track span{background:var(--cocoa)}
+.num-n{text-align:right;color:var(--muted)}
+
 /* On the very smallest phones (320px) five 44px header icons are still ~10px too wide, so
    they narrow a little; the height, which is what a thumb needs, stays 44px. Last in the file
    on purpose: the 44px phone rule above it would otherwise win by coming later. */
