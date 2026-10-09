@@ -576,8 +576,8 @@ dialog h2:empty{display:none}
   transition:background .5s cubic-bezier(.33,0,.2,1)}
 .tile-plate{position:relative;isolation:isolate;overflow:hidden}
 .tile-plate>*{position:relative;z-index:3}
-/* the studio photographs come from eight different shoots; grading them to one
-   warm monochrome is what lets them share a grid with the rest of the site */
+/* Studio cards are type-only since October 2026 (no licensed photographs). This rule
+   stays so a photograph VIRI owns can be added back through STUDIO_PHOTO in app.js. */
 .plate-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;
   filter:grayscale(1) brightness(.96) contrast(1.06);
   opacity:0;transform:scale(1.06);transition:opacity .6s ease,transform 1.6s cubic-bezier(.33,0,.2,1)}

@@ -12,7 +12,7 @@ const studios = [
   {id:'purebarre',name:'Pure Barre',category:'Barre',url:'https://www.purebarre.com/',intro:'Small movements. Shared motivation. A stronger everyday.',description:'Barre classes combine small, controlled movements with an emphasis on strength, balance, and flexibility. Find your place at the barre and connect with others who keep coming back.',focus:'Barre',bring:'Water and grip socks; check the studio’s requirements.'},
   {id:'corepower',name:'CorePower Yoga',category:'Yoga',url:'https://www.corepoweryoga.com/',intro:'Make space for your practice—and for new connections.',description:'Explore yoga and yoga-inspired fitness classes, including heated formats. Choose a class style that fits your experience and make your practice part of a shared routine.',focus:'Yoga & yoga sculpt',bring:'A mat, towel, and water; confirm the class temperature.'},
   {id:'soulcycle',name:'SoulCycle',category:'Cycling',url:'https://www.soul-cycle.com/',intro:'A room, a rhythm, and a reason to come back.',description:'Music-led indoor cycling brings a group together for a shared ride. Find an instructor, playlist, and studio atmosphere that make movement something to look forward to.',focus:'Indoor cycling',bring:'Water and workout clothes; check cycling shoe options.'},
-  {id:'orangetheory',name:'Orangetheory Fitness',category:'Strength',img:'brand-orangetheory.webp',focal:'center 40%',url:'https://www.orangetheory.com/',intro:'A little encouragement goes a long way. Find yours here.',description:'Group fitness classes combine treadmill, rowing, and strength work with heart-rate tracking. Explore the format and check the studio’s current class options.',focus:'Cardio & strength',bring:'Water, a towel, and supportive training shoes.'},
+  {id:'orangetheory',name:'Orangetheory Fitness',category:'Strength',url:'https://www.orangetheory.com/',intro:'A little encouragement goes a long way. Find yours here.',description:'Group fitness classes combine treadmill, rowing, and strength work with heart-rate tracking. Explore the format and check the studio’s current class options.',focus:'Cardio & strength',bring:'Water, a towel, and supportive training shoes.'},
   {id:'clubpilates',name:'Club Pilates',category:'Pilates',url:'https://www.clubpilates.com/',intro:'Find your flow with a Pilates practice that grows with you.',description:'Reformer Pilates classes offer a place to build strength and explore controlled movement. Look through the studio’s class levels to find the right starting point for you.',focus:'Reformer Pilates',bring:'Water and grip socks; ask about an introductory class.'},
   {id:'barrys',name:'Barry’s',category:'Strength',url:'https://www.barrys.com/',intro:'Meet in the Red Room. Leave with something in common.',description:'A group workout combining strength training and cardio in Barry’s signature Red Room. Check the local studio’s formats and book your workout directly with the studio.',focus:'Cardio & strength',bring:'Water and supportive training shoes.'},
   {id:'barre3',name:'Barre3',category:'Barre',url:'https://barre3.com/',intro:'Balance, strength, and a room that moves together.',description:'A full-body class that moves between strength, cardio and mindful work at the barre, with every posture meant to be modified to the day you are having. Find a studio nearby and a class you can keep coming back to.',focus:'Barre & balance',bring:'Water and grip socks; check the studio’s requirements.'},
@@ -122,10 +122,12 @@ function syncStudioNav(){
   if(p)p.disabled=studioIndex<=0;
   if(n)n.disabled=studioIndex>=STUDIO_LAST();
 }
-/* the photograph has to show the thing the studio actually does */
-const STUDIO_PHOTO={cyclebar:'hero-cycling-studio.webp',solidcore:'hero-pilates.jpg',purebarre:'studio-arches.jpg',
-  corepower:'hero-mats.jpg',soulcycle:'brand-soulcycle.jpg',orangetheory:'brand-orangetheory.webp',
-  clubpilates:'pin-matclass.jpg',barrys:'brand-barrys.jpg',barre3:'barre-white.jpg'};
+/* No studio photographs (9 October 2026). They were other people's pictures with no
+   licence, two of them not even of the studio named (see image-rights-audit.md), so
+   every studio and gym is a type-only card and a name panel. The files are still in
+   assets/ until they are removed on purpose. To bring a photograph back, add
+   id:'file' here, and only for a picture VIRI has the right to use. */
+const STUDIO_PHOTO={};
 const studioPhoto=s=>STUDIO_PHOTO[s.id]||null;
 function studioCard(s){return `<article class="tile tile-studio" data-reveal><a href="#/studios/${s.id}"><div class="tile-plate">${studioPhoto(s)?`<img class="plate-photo" src="${A+studioPhoto(s)}" alt="" aria-hidden="true" loading="lazy">`:''}<h3 class="plate-name">${s.name}</h3><span class="plate-cat">${s.category}</span></div></a></article>`;}
 function allStudiosCard(){return `<article class="tile tile-studio tile-all" data-reveal><a href="#/studios"><div class="tile-plate tile-plate-all"><h3 class="plate-name">All studios &amp; gyms</h3><span class="plate-cat">See every one ${arrow}</span></div><p class="tile-meta"><span class="tile-index">${studios.length} brands</span></p></a></article>`;}
