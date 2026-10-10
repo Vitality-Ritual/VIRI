@@ -1644,7 +1644,11 @@ function scoreGoal(g){
   g.pct  = Math.min(100, Math.round((g.done / g.target) * 100));
   return g;
 }
-const asDate = d => d.toISOString().slice(0,10);
+/* A calendar date in the member's own timezone. This used toISOString(), which is UTC:
+   anywhere ahead of UTC (Europe, for one) local midnight on 1 October is still
+   30 September in UTC, so "this month" came out as 2026-09-30, a goal saved as
+   2026-10-01 no longer matched, and it moved to Past goals while the month was on. */
+const asDate = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 /* The week turns on Sunday, the month on the 1st. */
 function periodStart(period, when){
@@ -1655,10 +1659,20 @@ function periodStart(period, when){
   return asDate(d);
 }
 
+/* The current period's start and the day either side. Goals saved from a device ahead
+   of UTC before the fix above carry a start one day early, and a goal saved on one
+   device should still count as current on another, so a day's slack either way is
+   allowed. A week or a month apart can never fall inside it. */
+function currentStarts(period){
+  const base = new Date(periodStart(period) + 'T12:00:00');
+  return [-1, 0, 1].map(n => { const d = new Date(base); d.setDate(d.getDate() + n); return asDate(d); });
+}
+const isCurrentGoal = g => currentStarts(g.period).includes(g.period_start);
+
 async function dbLoadGoals(profileId){
   const c = db(); if (!c || !authUser) return [];
   const who = profileId || authUser.id;
-  const starts = [periodStart('week'), periodStart('month')];
+  const starts = [...currentStarts('week'), ...currentStarts('month')];
   const { data: goals } = await c.from('goals').select('*')
     .eq('profile_id', who).in('period_start', starts);
   const rows = goals || [];
@@ -1668,7 +1682,7 @@ async function dbLoadGoals(profileId){
     checks = data || [];
   }
   const out = rows
-    .filter(g => g.period_start === periodStart(g.period))   /* this week's, this month's */
+    .filter(isCurrentGoal)   /* this week's, this month's */
     .map(g => {
       const mine = checks.filter(k => k.goal_id === g.id);
       return scoreGoal({
@@ -1690,7 +1704,7 @@ async function dbLoadGoalHistory(){
   const { data: goals, error } = await c.from('goals').select('*')
     .eq('profile_id', authUser.id).order('period_start', { ascending: false }).limit(300);
   if (error) return null;
-  const past = (goals || []).filter(g => g.period_start !== periodStart(g.period));
+  const past = (goals || []).filter(g => !isCurrentGoal(g));
   let checks = [];
   if (past.length) {
     const { data } = await c.from('goal_checkins').select('goal_id,on_date,done').in('goal_id', past.map(g => g.id));
