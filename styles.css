@@ -979,6 +979,21 @@ input::placeholder,textarea::placeholder{color:#a0968a}
 }
 
 .article-foot{margin-top:clamp(34px,4vw,52px)}
+/* the headline's row used to share the picture's extra height, which left a gap of
+   several inches between the title and the standfirst; the slack now goes below */
+.article-head.is-split{grid-template-rows:auto auto 1fr}
+/* the opening paragraph, larger, with a drop cap so the piece reads as an edit */
+.article-prose > p:first-child{font-size:clamp(18px,1.5vw,20px);line-height:1.7;color:var(--ink)}
+.article-prose > p:first-child::first-letter{font-family:var(--display);float:left;
+  font-size:4.15em;line-height:.8;margin:.07em .1em 0 0;color:var(--cocoa)}
+/* the pull quote: one line from the piece, set large between two rules */
+.article-prose .pull-quote{margin:clamp(34px,4vw,50px) 0;padding:clamp(22px,2.6vw,32px) 0;
+  border-top:1px solid var(--taupe-light);border-bottom:1px solid var(--taupe-light);text-align:center}
+.article-prose .pull-quote p{font-family:var(--display);font-style:italic;font-weight:400;
+  font-size:clamp(1.4rem,2.3vw,1.95rem);line-height:1.32;color:var(--cocoa);margin:0 auto;max-width:28ch;text-wrap:balance}
+/* the reading line sits on the header's bottom edge */
+.read-progress{position:fixed;left:0;right:0;top:var(--header);height:2px;z-index:41;pointer-events:none}
+.read-progress span{display:block;height:100%;background:var(--taupe);transform:scaleX(0);transform-origin:left}
 /* the prose link colour was reaching this button and turning its label dark on taupe */
 .article-foot .button,.article-foot .button:hover{color:var(--cream)}
 
