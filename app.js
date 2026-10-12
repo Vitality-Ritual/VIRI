@@ -55,8 +55,22 @@ const button=(text,href,cls='')=>`<a class="button ${cls}" href="${href}">${text
 const note=text=>`<div class="preview-note"><strong>Preview</strong> ${text}</div>`;
 const info=text=>`<div class="preview-note is-plain">${text}</div>`;
 function toast(text){clearTimeout(toastTimer);$('#toast').textContent=text;$('#toast').classList.add('visible');toastTimer=setTimeout(()=>$('#toast').classList.remove('visible'),4500);}
-function openModal(title,content,after){$('#modal').innerHTML=`<div class="dialog-top"><p>VIRI · Vitality Ritual</p><button class="icon-button" data-action="close-modal" aria-label="Close dialog">×</button></div><h2>${title}</h2>${content}`;$('#modal').showModal();after?.();}
-function closeModal(){$('#modal').close();}
+function openModal(title,content,after){modalSeq++;$('#modal').innerHTML=`<div class="dialog-top"><p>VIRI · Vitality Ritual</p><button class="icon-button" data-action="close-modal" aria-label="Close dialog">×</button></div><h2>${title}</h2>${content}`;$('#modal').showModal();after?.();}
+function closeModal(){const was=$('#modal').open;$('#modal').close();if(was)modalClosed();}
+/* Whatever is waiting for the box to close (the goal question, the new-week
+   prompt) is told here, by closeModal itself. The dialog's own "close" event is
+   also listened for, for Escape, but not relied on: browsers hold it back in a
+   background tab, and anything waiting on it waited for ever. */
+let modalSeq=0, modalClosedSeq=-1;
+const modalWaiters=[];
+function whenModalCloses(fn){modalWaiters.push(fn);}
+function modalClosed(){
+  if(modalClosedSeq===modalSeq)return;
+  modalClosedSeq=modalSeq;
+  if(typeof weekPromptClosed==='function')weekPromptClosed();
+  modalWaiters.splice(0).forEach(fn=>setTimeout(fn,0));
+}
+$('#modal').addEventListener('close',modalClosed);
 $('#modal').addEventListener('click',e=>{if(e.target===$('#modal')){const b=e.target.getBoundingClientRect();if(e.clientX<b.left||e.clientX>b.right||e.clientY<b.top||e.clientY>b.bottom)closeModal();}});
 /* The seal is the brand kit's viri-01, letterforms already outlined so it needs
    no font. The hand-rolled one it replaces ran VITALITY RITUAL EST. 2026 as a
@@ -2135,21 +2149,40 @@ function weekList(routines,{own=false}={}){
 /* At the start of each week, once: plan it. Your week empties every Sunday (029)
    and weekly goals start again, so the first visit of a week asks for both.
    Remembered per device; a member who joined this week is not asked, since
-   she has just done all of it. */
-let promptedWeek=null;
+   she has just done all of it.
+   It only counts as seen once she has done something with it: pressed one of
+   its buttons, closed it, or pressed Escape. The first version marked it seen
+   the moment it opened, and the "How did yesterday go?" question, which opens
+   a second after the page loads, replaced it before anyone could use it, so
+   it was gone for the week. If anything else takes its place now, it comes
+   back when that closes. */
+let weekPromptOpenedAt=0, lastUserInput=0;
+['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev,()=>{lastUserInput=Date.now();},true));
+const weekPromptKey=()=>'viri-week-prompt:'+(authUser&&authUser.id);
+function weekPromptSeen(){
+  const wk=periodStart('week');
+  try{return localStorage.getItem(weekPromptKey())===wk||weekPromptDone===wk;}catch(e){return weekPromptDone===wk;}
+}
+let weekPromptDone=null;
+function markWeekPromptDone(){
+  const wk=periodStart('week'); weekPromptDone=wk;
+  try{localStorage.setItem(weekPromptKey(),wk);}catch(e){}
+}
 function maybeWeekPrompt(path){
   if(!signedIn()||!state.profile||!state.weekLoaded||typeof authUser==='undefined'||!authUser)return;
   if(!['feed','profile','explore','find','studios','read'].includes(path))return;
-  if($('#modal').open)return;
-  const wk=periodStart('week'), key='viri-week-prompt:'+authUser.id;
-  if(promptedWeek===wk)return;
-  let seen=null;try{seen=localStorage.getItem(key);}catch(e){}
-  promptedWeek=wk;
-  if(seen===wk)return;
-  try{localStorage.setItem(key,wk);}catch(e){}
+  if($('#modal').open||weekPromptSeen())return;
+  const wk=periodStart('week');
   const joined=authUser.created_at?new Date(authUser.created_at).getTime():0;
-  if(joined>=new Date(wk+'T00:00:00').getTime())return;
+  if(joined>=new Date(wk+'T00:00:00').getTime()){markWeekPromptDone();return;}
   weekPrompt();
+}
+/* a press inside the prompt, or closing it by hand, is her answer */
+$('#modal').addEventListener('click',e=>{if($('#modal [data-week-prompt]')&&e.target.closest('[data-action]'))markWeekPromptDone();},true);
+function weekPromptClosed(){
+  if($('#modal [data-week-prompt]')&&lastUserInput>weekPromptOpenedAt)markWeekPromptDone();
+  /* closed by something else, or something else is finishing: offer it again */
+  setTimeout(()=>{if(!weekPromptSeen())maybeWeekPrompt((location.hash.replace(/^#\/?/,'')||'').split('/')[0]);},300);
 }
 function weekPrompt(){
   const now=state.routines||[], last=state.lastWeekRoutines||[];
@@ -2161,7 +2194,8 @@ function weekPrompt(){
   const goal=goals.length
     ? `<p class="dialog-copy">${plural(goals.length,'goal')} set for this week.</p>`
     : `<p class="dialog-copy">Pick something to work on this week. You can set up to three.</p><div class="dialog-actions week-plan-actions"><button class="button small${now.length?'':' outline'}" data-action="add-goal" data-id="week">Set a weekly goal</button></div>`;
-  openModal('A new week',`<p class="modal-meta">${weekRangeLabel()}</p>
+  weekPromptOpenedAt=Date.now();
+  openModal('A new week',`<p class="modal-meta" data-week-prompt>${weekRangeLabel()}</p>
     <p class="modal-sub">Your workouts</p>${week}
     <p class="modal-sub">Your weekly goal</p>${goal}
     <div class="dialog-actions week-prompt-foot"><button class="plain-link" data-action="close-modal">Not now</button></div>`);
@@ -2666,8 +2700,12 @@ let askedThisVisit=false;
    load, because the only memory of having asked was this variable, and a
    refresh wipes it. Answering one day moves straight on to the next. */
 const goalsAskKey='viri-goals-asked';
+let askWaiting=false;
 function askAboutYesterday(continuing){
   if(askedThisVisit||!signedIn())return;
+  /* never on top of another box (the new-week prompt, a form half filled in):
+     wait until it closes, then ask */
+  if(continuing!==true&&$('#modal').open){if(!askWaiting){askWaiting=true;whenModalCloses(()=>{askWaiting=false;setTimeout(askAboutYesterday,450);});}return;}
   const today=new Date().toDateString();
   if(continuing!==true){
     try{if(localStorage.getItem(goalsAskKey)===today)return;}catch(e){}
