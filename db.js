@@ -188,6 +188,7 @@ async function dbLoadProfile(){
   await dbLoadGallery();
   await dbLoadRoutines();
   await dbLoadGoals();
+  state.weekLoaded = true;   /* the start-of-week prompt waits for both */
   await dbLoadConnections();
   await dbLoadMessages();
   await dbLoadFeed();
@@ -1339,8 +1340,8 @@ async function dbLoadSuggestions(){
      so the card can say when she usually trains, and when that is when you do. */
   const byPerson = {};
   if (candidates.length) {
-    const { data } = await c.from('routines').select('profile_id,activity,weekday,time_band')
-      .in('profile_id', candidates.map(p => p.id));
+    const { data } = await thisWeekOnly(c.from('routines').select('profile_id,activity,weekday,time_band')
+      .in('profile_id', candidates.map(p => p.id)));
     for (const r of data || []) (byPerson[r.profile_id] = byPerson[r.profile_id] || [])
       .push({ activity: r.activity || '', weekday: r.weekday, band: r.time_band });
   }
@@ -1496,17 +1497,34 @@ const EDITABLE = {
 
 const WEEKDAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
+/* Your week is for one week (029). Each routine carries the Sunday it was planned
+   for, and only this week's are shown, matched on or counted; on Sunday the week
+   starts empty. Last week's are kept to hand for "Same as last week" and so a
+   Saturday class can still be asked about on Sunday. Before 029 is run there is
+   no week_start column, and everything falls back to the old repeating week. */
+let ROUTINES_WEEKLY = true;
+const thisWeekStart = () => periodStart('week');
+const lastWeekStart = () => { const d = new Date(thisWeekStart() + 'T12:00:00'); d.setDate(d.getDate() - 7); return asDate(d); };
+const thisWeekOnly = q => ROUTINES_WEEKLY ? q.in('week_start', startsNear(thisWeekStart())) : q;
+const noWeekColumn = e => !!(e && /week_start/.test(e.message || ''));
+
 async function dbLoadRoutines(profileId){
   const c = db(); if (!c || !authUser) return [];
   const who = profileId || authUser.id;
-  const { data } = await c.from('routines').select('*')
-    .eq('profile_id', who).order('weekday').order('time_band');
-  const out = (data || []).map(r => ({
+  const mine = who === authUser.id;
+  const base = () => c.from('routines').select('*').eq('profile_id', who).order('weekday').order('time_band');
+  const weeks = mine ? [...startsNear(lastWeekStart()), ...startsNear(thisWeekStart())] : startsNear(thisWeekStart());
+  let res = ROUTINES_WEEKLY ? await base().in('week_start', weeks) : await base();
+  if (noWeekColumn(res.error)) { ROUTINES_WEEKLY = false; res = await base(); }
+  const all = (res.data || []).map(r => ({
     id: r.id, venueId: r.venue_id, venue: r.venue_label,
     activity: r.activity || '', weekday: r.weekday, band: r.time_band,
-    createdAt: r.created_at
+    createdAt: r.created_at, week: r.week_start || null
   }));
-  if (who === authUser.id) state.routines = out;
+  const now = startsNear(thisWeekStart());
+  const out = ROUTINES_WEEKLY ? all.filter(r => now.includes(r.week)) : all;
+  if (mine) state.lastWeekRoutines = ROUTINES_WEEKLY ? all.filter(r => !now.includes(r.week)) : [];
+  if (mine) state.routines = out;
   else if (state.people && state.people[who]) state.people[who].routines = out;
   return out;
 }
@@ -1522,7 +1540,12 @@ async function dbAddRoutine({ venueId, venueLabel, activity, weekday, band, join
   };
   /* added with "Join them next time": 019's trigger tells the friend */
   if (joinedFrom) row.joined_from = joinedFrom;
+  if (ROUTINES_WEEKLY) row.week_start = thisWeekStart();
   let { data, error } = await c.from('routines').insert(row).select().maybeSingle();
+  if (noWeekColumn(error)) {   /* before 029 */
+    ROUTINES_WEEKLY = false; delete row.week_start;
+    ({ data, error } = await c.from('routines').insert(row).select().maybeSingle());
+  }
   if (error && joinedFrom && /joined_from/.test(error.message || '')) {   /* before 019 */
     delete row.joined_from;
     ({ data, error } = await c.from('routines').insert(row).select().maybeSingle());
@@ -1534,9 +1557,22 @@ async function dbAddRoutine({ venueId, venueLabel, activity, weekday, band, join
   state.routines = [...(state.routines || []), {
     id: data.id, venueId: venueId || '', venue: (venueLabel || '').trim(),
     activity, weekday: Number(weekday), band,
-    createdAt: data.created_at || new Date().toISOString()
+    createdAt: data.created_at || new Date().toISOString(), week: data.week_start || null
   }].sort((a,b) => a.weekday - b.weekday);
   return { data: true };
+}
+
+/* "Same as last week": last week's routines, added again for this one. */
+async function dbCopyLastWeek(){
+  const last = state.lastWeekRoutines || [];
+  if (!last.length) return { error: { message: 'There is nothing from last week to copy.' } };
+  let added = 0, failure = null;
+  for (const r of last) {
+    const x = await dbAddRoutine({ venueId: r.venueId, venueLabel: r.venue, activity: r.activity, weekday: r.weekday, band: r.band });
+    if (x.error && !x.duplicate) failure = failure || x.error; else if (!x.error) added++;
+  }
+  if (!added && failure) return { error: failure };
+  return { data: { added } };
 }
 
 /* One routine per day, inserted one at a time on purpose: the unique slot index
@@ -1601,8 +1637,8 @@ async function dbRoutineMatches(){
   if (venues.length) ors.push(`venue_id.in.(${venues.join(',')})`);
   if (acts.length)   ors.push(`activity.in.(${acts.map(x => `"${x}"`).join(',')})`);
   if (!ors.length) { state.roomMatches = []; return []; }
-  const { data } = await c.from('routines').select('*')
-    .or(ors.join(',')).neq('profile_id', authUser.id);
+  const { data } = await thisWeekOnly(c.from('routines').select('*')
+    .or(ors.join(',')).neq('profile_id', authUser.id));
   const byPerson = {};
   for (const r of data || []) {
     if ((state.blocked || []).includes(r.profile_id)) continue;
@@ -1663,10 +1699,11 @@ function periodStart(period, when){
    of UTC before the fix above carry a start one day early, and a goal saved on one
    device should still count as current on another, so a day's slack either way is
    allowed. A week or a month apart can never fall inside it. */
-function currentStarts(period){
-  const base = new Date(periodStart(period) + 'T12:00:00');
+function startsNear(start){
+  const base = new Date(start + 'T12:00:00');
   return [-1, 0, 1].map(n => { const d = new Date(base); d.setDate(d.getDate() + n); return asDate(d); });
 }
+const currentStarts = period => startsNear(periodStart(period));
 const isCurrentGoal = g => currentStarts(g.period).includes(g.period_start);
 
 async function dbLoadGoals(profileId){
@@ -1814,9 +1851,14 @@ function goalsAwaitingAnswer(){
 /* How many members train at each studio. A count, never names: it is the
    signal that makes a directory worth browsing, and it says nothing about
    who is in the room on a Tuesday. */
+/* Counted over the last four weeks rather than this one, so the numbers do not
+   drop to nothing every Sunday morning before anyone has planned her week. */
 async function dbVenueCounts(){
   const c = db(); if (!c || !authUser) { state.venueCounts = {}; return {}; }
-  const { data } = await c.from('routines').select('venue_id,profile_id');
+  const since = new Date(thisWeekStart() + 'T12:00:00'); since.setDate(since.getDate() - 22);
+  let q = c.from('routines').select('venue_id,profile_id');
+  if (ROUTINES_WEEKLY) q = q.gte('week_start', asDate(since));
+  const { data } = await q;
   const seen = {}, counts = {};
   for (const r of data || []) {
     const key = r.venue_id + '|' + r.profile_id;
