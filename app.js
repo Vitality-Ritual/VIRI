@@ -2158,7 +2158,8 @@ function weekList(routines,{own=false}={}){
    back when that closes. */
 let weekPromptOpenedAt=0, lastUserInput=0;
 ['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev,()=>{lastUserInput=Date.now();},true));
-const weekPromptKey=()=>'viri-week-prompt:'+(authUser&&authUser.id);
+/* v2: the first version marked itself seen when it opened, so it is asked again */
+const weekPromptKey=()=>'viri-week-prompt-v2:'+(authUser&&authUser.id);
 function weekPromptSeen(){
   const wk=periodStart('week');
   try{return localStorage.getItem(weekPromptKey())===wk||weekPromptDone===wk;}catch(e){return weekPromptDone===wk;}
