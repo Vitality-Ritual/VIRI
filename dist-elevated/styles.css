@@ -1406,6 +1406,20 @@ body:after{
 .cls-going{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
 .cls-n{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
 .cls-none{opacity:.6}
+/* A studio row in Explore: what and where on the left, the two buttons on the
+   right. It had borrowed the old class-schedule grid, whose first column is a
+   74px time slot, so the name and "In your week" were squeezed into that and
+   clipped. Stacked below 1040px. */
+.cls-row.ex-venue{grid-template-columns:minmax(0,1fr) auto;gap:18px;cursor:default}
+.ex-venue h3{margin:0}
+.ex-venue .cls-going{display:block;font-size:13px;color:var(--muted);margin:2px 0 0}
+.ex-venue .cls-actions{margin:0;gap:10px;flex-wrap:nowrap}
+.week-plan-actions{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:10px;margin:4px 0 6px}
+.week-prompt-foot{margin-top:22px;justify-content:flex-end}
+@media (max-width:1040px){
+  .cls-row.ex-venue{grid-template-columns:minmax(0,1fr);gap:12px}
+  .ex-venue .cls-actions{flex-wrap:wrap}
+}
 
 /* ---- avatars ---- */
 .av-stack{display:flex}
