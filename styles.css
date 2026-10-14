@@ -2104,4 +2104,20 @@ summary.pf-section-head::-webkit-details-marker{display:none}
 /* On the very smallest phones (320px) five 44px header icons are still ~10px too wide, so
    they narrow a little; the height, which is what a thumb needs, stays 44px. Last in the file
    on purpose: the 44px phone rule above it would otherwise win by coming later. */
+/* The edit's index: a centred masthead with the one-line sign-up under it */
+.edit-head .wrap{display:flex;flex-direction:column;align-items:center;text-align:center}
+.edit-head .eyebrow{justify-content:center}
+.edit-head .eyebrow:after{content:'';width:clamp(16px,2vw,26px);height:1px;background:currentColor;opacity:.55;flex:none}
+.edit-head h1{max-width:none;margin-inline:auto}
+.edit-head .wrap > p{margin-inline:auto}
+.edit-sub{margin-top:clamp(28px,3.4vw,44px);width:100%;max-width:560px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.edit-sub-kicker{font-size:9.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--taupe-deep);margin:0}
+.page-head .edit-sub p{margin-top:0}
+.edit-sub-row{display:flex;width:100%;gap:10px}
+.edit-sub-row input{flex:1;min-width:0;font-family:var(--body);font-size:15px;padding:13px 16px;border:1px solid var(--line-2);
+  background:var(--paper);color:var(--ink);border-radius:999px}
+.edit-sub-row input:focus-visible{outline:2px solid var(--cocoa);outline-offset:1px}
+.edit-sub-row .button{flex:none}
+.edit-sub-note{font-size:12px;line-height:1.6;color:var(--muted);max-width:52ch}
+@media (max-width:860px){.edit-sub-row{flex-direction:column}}
 @media (max-width:360px){.icon-button{width:34px}.header-tools{gap:0}.account-button{gap:2px}}
