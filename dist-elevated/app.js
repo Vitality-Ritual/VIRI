@@ -213,7 +213,7 @@ function readNext(current){
 }
 const subscribeBox=()=>`<form class="subscribe" id="subscribe-form">
   <p class="rail-label">The VIRI edit</p>
-  <p class="subscribe-copy">Every Sunday: first looks at new articles and the best of DC this week.</p>
+  <p class="subscribe-copy">Every Sunday: first looks at new articles and one thing worth trying.</p>
   <label class="sr-only" for="sub-email">Email address</label>
   <input id="sub-email" name="email" type="email" placeholder="you@example.com" required>
   <button class="button small" type="submit">Subscribe</button>
@@ -229,7 +229,7 @@ const editSignup=()=>`<form class="edit-sub" id="subscribe-form">
     <input id="sub-email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required>
     <button class="button" type="submit">Subscribe</button>
   </div>
-  <p class="edit-sub-note">First looks at new articles, a few things worth doing in DC, and one thing worth trying. One email a week; unsubscribe whenever you like.</p>
+  <p class="edit-sub-note">First looks at new articles and one thing worth trying. One email a week; unsubscribe whenever you like.</p>
 </form>`;
 /* when someone arrived through /#/subscribe; the page draws more than once while it loads */
 let focusSubscribe=0;
