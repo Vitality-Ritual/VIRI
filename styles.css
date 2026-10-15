@@ -2095,4 +2095,10 @@ summary.pf-section-head::-webkit-details-marker{display:none}
 .edit-sub-row .button{flex:none}
 .edit-sub-note{font-size:12px;line-height:1.6;color:var(--muted);max-width:52ch}
 @media (max-width:860px){.edit-sub-row{flex-direction:column}}
+/* a quoted line in an article (what she said to her boss), and a photo inside the text */
+.article-prose .prose-quote{margin:26px 0 28px;padding:4px 0 4px 22px;border-left:2px solid var(--taupe-light)}
+.article-prose .prose-quote p{font-family:var(--mark);font-size:clamp(19px,1.6vw,22px);line-height:1.55;color:var(--ink);margin:0}
+.article-prose .prose-figure{margin:28px 0 34px}
+.article-prose .prose-figure img{display:block;width:100%;max-width:520px;height:auto;margin:0 auto;border:1px solid var(--line)}
+.article-prose .prose-figure figcaption{margin-top:12px;text-align:center;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
 @media (max-width:360px){.icon-button{width:34px}.header-tools{gap:0}.account-button{gap:2px}}
