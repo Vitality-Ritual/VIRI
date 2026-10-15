@@ -2101,4 +2101,24 @@ summary.pf-section-head::-webkit-details-marker{display:none}
 .article-prose .prose-figure{margin:28px 0 34px}
 .article-prose .prose-figure img{display:block;width:100%;max-width:520px;height:auto;margin:0 auto;border:1px solid var(--line)}
 .article-prose .prose-figure figcaption{margin-top:12px;text-align:center;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+/* topic filters on the edit's index: a thin bar over the grid, words not buttons, like the top menu */
+.edit-topics{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;
+  border-top:1px solid var(--line);padding-top:14px;margin:clamp(8px,1.6vw,20px) 0 clamp(26px,3vw,40px)}
+.edit-topics-label{font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--taupe-deep)}
+.edit-topics-list{display:flex;flex-wrap:wrap;gap:clamp(18px,2.6vw,34px)}
+.edit-topic{appearance:none;border:0;background:none;padding:10px 0;font-family:var(--body);font-size:9.5px;
+  letter-spacing:.22em;text-transform:uppercase;color:var(--muted);position:relative;cursor:pointer;transition:color .25s}
+.edit-topic:after{content:'';position:absolute;left:0;right:0;bottom:4px;height:1px;background:var(--taupe);
+  transform:scaleX(0);transform-origin:left;transition:transform .3s ease}
+.edit-topic:hover,.edit-topic[aria-pressed=true]{color:var(--ink)}
+.edit-topic:hover:after,.edit-topic[aria-pressed=true]:after{transform:scaleX(1)}
+.edit-topic:focus-visible{outline:2px solid var(--cocoa);outline-offset:2px}
+/* on a phone the topics are one row you can swipe, faded at the edge so it reads as more */
+@media (max-width:640px){
+  .edit-topics-label{display:none}
+  .edit-topics-list{flex-wrap:nowrap;overflow-x:auto;width:100%;gap:24px;scrollbar-width:none;padding-right:28px;
+    -webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent)}
+  .edit-topics-list::-webkit-scrollbar{display:none}
+  .edit-topic{flex:none}
+}
 @media (max-width:360px){.icon-button{width:34px}.header-tools{gap:0}.account-button{gap:2px}}
