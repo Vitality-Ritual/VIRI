@@ -2,7 +2,7 @@
 # and the same files, plus tools/ and any named migrations, to main.
 #
 #   ruby tools/check.rb --stamp          # must say PASS first
-#   ruby tools/deploy.rb "Commit message" [supabase/030-....sql dist-elevated/assets/new.webp ...]
+#   ruby tools/deploy.rb "Commit message" [supabase/030-....sql website/assets/new.webp ...]
 #
 # No git on this Mac, so this talks to the GitHub Git Data API directly
 # (blobs -> tree -> commit -> move the branch). The token is read from
@@ -56,12 +56,12 @@ message = ARGV[0] or abort 'usage: ruby tools/deploy.rb "message" [extra project
 extras = ARGV[1..] || []
 extras.each { |f| abort "missing #{f}" unless File.file?(File.join(ROOT, f)) }
 
-site = SITE.to_h { |f| [f, File.join(ROOT, 'dist-elevated', f)] }
-# a new image or other site file named as dist-elevated/... also goes to gh-pages, at its path under the site
-extras.select { |f| f.start_with?('dist-elevated/') }.each { |f| site[f.sub('dist-elevated/', '')] = File.join(ROOT, f) }
+site = SITE.to_h { |f| [f, File.join(ROOT, 'website', f)] }
+# a new image or other site file named as website/... also goes to gh-pages, at its path under the site
+extras.select { |f| f.start_with?('website/') }.each { |f| site[f.sub('website/', '')] = File.join(ROOT, f) }
 pages_sha = push('gh-pages', site, message)
 
-main = SITE.to_h { |f| ["dist-elevated/#{f}", File.join(ROOT, 'dist-elevated', f)] }
+main = SITE.to_h { |f| ["website/#{f}", File.join(ROOT, 'website', f)] }
 Dir[File.join(ROOT, 'tools', '*')].select { |f| File.file?(f) }.each { |f| main["tools/#{File.basename(f)}"] = f }
 extras.each { |f| main[f] = File.join(ROOT, f) }
 push('main', main, message)

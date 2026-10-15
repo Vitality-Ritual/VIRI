@@ -32,7 +32,7 @@ Prefer an editor. If it has to be a script, use `swap.rb`, which replaces exact
 text only and refuses unless the count matches:
 
 ```
-ruby tools/swap.rb dist-elevated/app.js old.txt new.txt
+ruby tools/swap.rb website/app.js old.txt new.txt
 ```
 
 ## The rule behind `written()`

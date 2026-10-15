@@ -38,7 +38,7 @@ Encoding.default_external = Encoding::UTF_8
 Encoding.default_internal = Encoding::UTF_8
 
 ROOT   = ENV['VIRI_ROOT'] || File.expand_path('..', __dir__)   # VIRI_ROOT: point at a copy, for testing the checks
-SITE   = File.join(ROOT, 'dist-elevated')
+SITE   = File.join(ROOT, 'website')
 JSC    = '/System/Library/Frameworks/JavaScriptCore.framework/Versions/A/Helpers/jsc'
 JS     = %w[app.js db.js explore-data.js]
 CACHED = %w[app.js db.js explore-data.js styles.css]
