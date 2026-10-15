@@ -230,7 +230,7 @@ const editSignup=()=>`<form class="edit-sub" id="subscribe-form">
     <input id="sub-email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required>
     <button class="button" type="submit">Subscribe</button>
   </div>
-  <p class="edit-sub-note">First looks at new articles and one thing worth trying. One email a week; unsubscribe whenever you like.</p>
+  <p class="edit-sub-note">First looks at new articles and one thing worth trying. One email a week.</p>
 </form>`;
 /* when someone arrived through /#/subscribe; the page draws more than once while it loads */
 let focusSubscribe=0;
