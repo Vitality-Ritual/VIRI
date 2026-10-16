@@ -602,16 +602,20 @@ function thanksPage(){return `<div class="wrap handoff"><div class="handoff-card
 </div></div>`;}
 /* Replies to The VIRI Edit. Each issue's "reply" button links to #/reply/<issue>,
    where the reader answers that week's question; it goes to the VIRI inbox the
-   same way the contact form does. Add each new issue's question here. */
+   same way the contact form does. Add each new issue's question, and the line
+   under it, here. */
 const EDIT_QUESTIONS={
-  '1':'What are you training for right now?'
+  '1':'What’s one habit you’re trying to build right now?'
+};
+const EDIT_QUESTION_NOTES={
+  '1':'Morning runs, less scrolling, an actual budget, anything goes.'
 };
 let replySent=null;
 function replyPage(issue){
   const n=EDIT_QUESTIONS[issue]?issue:Object.keys(EDIT_QUESTIONS).pop();
   const q=EDIT_QUESTIONS[n];
   if(replySent===n)return `<section class="page-head edit-head reply-head"><div class="wrap"><p class="eyebrow">The VIRI Edit &middot; Issue ${escapeHTML(n)}</p><h1>Thank you.</h1><p>Your answer is in. I read every one, and some may show up, first name only, in a future issue if you said that was okay.</p><div class="thanks-actions">${button('Read the VIRI Edit','#/read','small')}</div></div></section>`;
-  return `<section class="page-head edit-head reply-head"><div class="wrap"><p class="eyebrow">The VIRI Edit &middot; Issue ${escapeHTML(n)}</p><h1>${escapeHTML(q)}</h1><p>A race, a habit, or just getting through the week all count. I read every answer.</p></div></section>
+  return `<section class="page-head edit-head reply-head"><div class="wrap"><p class="eyebrow">The VIRI Edit &middot; Issue ${escapeHTML(n)}</p><h1>${escapeHTML(q)}</h1><p>${escapeHTML(EDIT_QUESTION_NOTES[n]||'Tell me as much or as little as you like.')} I read every answer.</p></div></section>
 <div class="wrap contact-wrap reply-wrap">
   <form id="reply-form" class="contact-form" novalidate data-issue="${escapeHTML(n)}">
     <div class="field"><label class="visually-hidden" for="rp-answer">Your answer</label>
