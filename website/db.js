@@ -1412,12 +1412,11 @@ async function dbSubscribe(email, source){
   const c = db(); if (!c) return { error: { message: 'Subscribing is unavailable right now.' } };
   const addr = String(email || '').trim().toLowerCase();
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(addr)) return { error: { message: 'Please enter a valid email address.' } };
-  /* subscribe() (021) records the address and has the database email a
-     confirmation link; only confirmed addresses get the newsletter. It answers
-     the same way for a new, waiting or confirmed address, so the form cannot
-     be used to find out who is on the list. */
+  /* subscribe() (032) adds the address straight to the list, with no
+     confirmation email. It answers the same way whether or not the address
+     was already there, so the form cannot be used to find out who is on it. */
   const { error } = await c.rpc('subscribe', { p_email: addr, p_source: source || 'site' });
-  if (!error) return { data: 'check-email' };
+  if (!error) return { data: 'added' };
   if (/subscribe|PGRST202|schema cache/.test((error.code || '') + ' ' + (error.message || ''))) {
     /* before 021: the old direct insert */
     const old = await c.from('subscribers').insert({ email: addr, source: source || 'site' });
