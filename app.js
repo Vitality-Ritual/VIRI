@@ -3696,7 +3696,7 @@ function privacyPage(){return `<article class="article-detail legal">
   <p><b>What you do on VIRI:</b> sessions you log (activity, place, how long, how far, any note or photograph, the date, who you were with), classes you add to your plan, studios you save, people you connect with, and messages you send.</p>
   <p><b>Safety records:</b> if you report someone, we keep what you told us. If you block someone, we keep that too.</p>
   <p>Reports are read by the people who run VIRI. We can suspend an account, which hides the member and stops her signing in, or delete it. We record who took the action, when, and any note we made. A report about someone is kept after she leaves, because it is the record of what happened.</p>
-  <p><b>If you subscribe to the VIRI edit</b> we keep your email address, and the date you confirmed it, and nothing else, so we can send it to you. You do not need an account to subscribe, and subscribing does not make one. Every issue has an unsubscribe link, and you can ask us to remove you at any time.</p>
+  <p><b>If you subscribe to the VIRI edit</b> we keep your email address, and the date you signed up, and nothing else, so we can send it to you. You do not need an account to subscribe, and subscribing does not make one. Every issue has an unsubscribe link, and you can ask us to remove you at any time.</p>
   <p>We do <b>not</b> collect analytics. There is no tracking pixel, no advertising network, and no third-party script on this site other than the one that connects you to our database. Nobody is following you around the internet on our behalf.</p>
 
   <h2>Who sees your sessions</h2>
@@ -3934,7 +3934,7 @@ else if(!feedFetched&&typeof dbLoadFeed==='function'){feedFetched=true;dbLoadFee
     if(btn)btn.disabled=false;
     if(r.error){toast(r.error.message);return;}
     form.reset();
-    toast(r.data==='check-email'?'Nearly there. Check your inbox and click the link to confirm.':r.data==='already'?'You are already on the list.':'You are on the list. Look out for the next one.');});if(path==='explore'&&$('#ex-search')){$('#ex-search').addEventListener('input',e=>{ex.query=e.target.value;exRefresh();});exBindMap();}}
+    toast(r.data==='already'?'You are already on the list.':'You’re on the list. The VIRI Edit arrives on Sundays.');});if(path==='explore'&&$('#ex-search')){$('#ex-search').addEventListener('input',e=>{ex.query=e.target.value;exRefresh();});exBindMap();}}
 /* Everything a visitor without an account cannot really do. Clicking any of these
    while signed out goes to the sign-up page instead of opening a form that would
    fail at the end. Listed rather than inferred, so a new public button is public
