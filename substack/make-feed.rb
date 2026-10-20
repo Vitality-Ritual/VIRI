@@ -2,11 +2,16 @@
 # Writes website/substack-feed.xml: an RSS feed of the VIRI Edit articles, full
 # text and cover photo, for Substack's "Import posts". Annabel Green's article is
 # left out. Re-run after adding an article:  ruby substack/make-feed.rb
+#
+# Substack makes each post's address from the item's <link> path and skips an item
+# whose address already exists, so every link needs its own path (/read/<id>, not
+# /#/read/<id>, which all collapse to "/"). To leave out posts already imported:
+#   ALSO_SKIP=september-reset,corporate-burnout ruby substack/make-feed.rb
 require 'cgi'
 require 'time'
 ROOT = File.expand_path('..', __dir__)
 SITE = 'https://vitalityritual.org/'
-SKIP = %w[office-dressing]
+SKIP = %w[office-dressing] + ENV.fetch('ALSO_SKIP', '').split(',')
 src = File.read(File.join(ROOT, 'website/app.js'), encoding: 'utf-8')
 list = src[/const articles=\[(.*?)\n\];/m, 1] or abort 'articles not found'
 arts = list.split(/\n\s*(?=\{id:')/).map { |c|
@@ -25,7 +30,7 @@ items = arts.map { |a|
   <<~ITEM
     <item>
       <title>#{x.(a[:title])}</title>
-      <link>#{SITE}#/read/#{a[:id]}</link>
+      <link>#{SITE}read/#{a[:id]}</link>
       <guid isPermaLink="false">viri-#{a[:id]}</guid>
       <pubDate>#{t.rfc2822}</pubDate>
       <dc:creator>#{x.(a[:author])}</dc:creator>
