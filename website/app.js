@@ -113,7 +113,7 @@ function viriAboutPage(){return `<section class="page-head edit-head about-viri"
   </div></section>
   <section class="av-founder"><div class="wrap" data-reveal>
     <p class="av-kicker">A note from the founder</p>
-    <p class="av-note">I started VIRI in 2026, while training for my first marathon and finding my feet in my first full-time job. Work took over fast, and the things I cared about outside it kept getting pushed to whenever I had energy left. VIRI is where I write about taking that part back. If something here helps, or there&rsquo;s a topic you&rsquo;d like my take on, I&rsquo;d love to hear from you.</p>
+    <p class="av-note">I started VIRI while trying to balance training for my first marathon and finding my feet in my first full-time job. Work took over fast, and the things I cared about outside it kept getting pushed to whenever I had energy left. VIRI is where I write about taking that part back. If something here helps, or there&rsquo;s a topic you&rsquo;d like my take on, I&rsquo;d love to hear from you.</p>
     <p class="av-sign">Margaret</p>
     <p class="av-sign-role">Margaret Cole, founder</p>
     <div class="ed-actions">${button('Get in touch','#/connect','small outline')}</div>
