@@ -2189,4 +2189,23 @@ summary.pf-section-head::-webkit-details-marker{display:none}
 .ed-community{margin-inline:auto}
 @media (max-width:760px){.ed-lead-link{grid-template-columns:1fr}.ed-lead-text{text-align:center}.av-edit-grid{grid-template-columns:1fr}.av-edit-covers{gap:8px}}
 
+/* Gift guide formatting (23 Oct 2026): an index box, numbered gift cards, a closing quick list */
+.article-prose .gift-index,.article-prose .gift-recap{background:var(--cream-2);border:1px solid var(--line);padding:22px 26px;margin:30px 0 34px}
+.article-prose .gift-index-label{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--taupe);margin:0 0 12px}
+.article-prose .gift-index ol{list-style:none;margin:0;padding:0}
+.article-prose .gift-index li{display:flex;justify-content:space-between;gap:16px;padding:9px 0;border-top:1px solid var(--line);font-family:var(--display);font-size:18px;color:var(--cocoa)}
+.article-prose .gift-index li em{font-family:var(--body);font-style:normal;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--taupe);align-self:center;white-space:nowrap}
+.article-prose .gift-dek{font-family:var(--mark);font-style:italic;font-size:19px;color:var(--ink);margin-top:-4px}
+.article-prose .gift-list{margin:6px 0 30px}
+.article-prose .gift-item{display:grid;grid-template-columns:52px 1fr;gap:6px;padding:22px 0;border-top:1px solid var(--line)}
+.article-prose .gift-item:last-child{border-bottom:1px solid var(--line)}
+.article-prose .gift-no{font-family:var(--display);font-size:26px;line-height:1.1;color:var(--taupe-light)}
+.article-prose .gift-name{font-family:var(--display);font-size:21px;line-height:1.25;color:var(--cocoa);margin:0 0 8px}
+.article-prose .gift-item p:last-child{margin-bottom:0}
+.article-prose .gift-recap-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.article-prose .gift-recap-head{font-family:var(--display);font-size:17px;color:var(--cocoa);margin:0 0 8px}
+.article-prose .gift-recap ul{margin:0;padding-left:1.05em}
+.article-prose .gift-recap li{font-size:15px;margin-bottom:5px}
+@media (max-width:640px){.article-prose .gift-recap-cols{grid-template-columns:1fr;gap:14px}.article-prose .gift-item{grid-template-columns:40px 1fr}}
+
 @media (max-width:360px){.icon-button{width:34px}.header-tools{gap:0}.account-button{gap:2px}}
