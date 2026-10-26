@@ -309,7 +309,7 @@ function readPage(id){if(id&&id.startsWith('topic-')){const t=TOPIC_ORDER.find(x
       </div>
     </div>
   </article>`;}
-  return `<section class="page-head edit-head"><div class="wrap"><p class="eyebrow">The VIRI edit</p><h1>A little inspiration<br>for your everyday.</h1><p>Movement, community, and the rituals that bring us together.</p>${editSignup()}</div></section><section class="wrap" style="padding-bottom:80px">${editTopics()}<div class="cards-three">${allArticles().filter(a=>editTopic==='All'||a.category===editTopic).map(a=>articleCard(a)).join('')}</div></section>`;}
+  return `<section class="page-head edit-head"><div class="wrap"><p class="eyebrow">The VIRI edit</p><h1>A little inspiration<br>for your everyday.</h1><p>Movement, community, and the rituals that bring us together.</p>${editSignup()}<a class="edit-also" href="https://theviriedit.substack.com" target="_blank" rel="noopener">Also on Substack <span aria-hidden="true">&rarr;</span></a></div></section><section class="wrap" style="padding-bottom:80px">${editTopics()}<div class="cards-three">${allArticles().filter(a=>editTopic==='All'||a.category===editTopic).map(a=>articleCard(a)).join('')}</div></section>`;}
 /* ===================== Explore: map, classes, rosters ===================== */
 /* No day, no time of day, no class: Explore lists studios now, and when
    somebody trains is something they tell us, not something we invent. */
