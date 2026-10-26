@@ -2208,4 +2208,6 @@ summary.pf-section-head::-webkit-details-marker{display:none}
 .article-prose .gift-recap li{font-size:15px;margin-bottom:5px}
 @media (max-width:640px){.article-prose .gift-recap-cols{grid-template-columns:1fr;gap:14px}.article-prose .gift-item{grid-template-columns:40px 1fr}}
 
+.edit-head .edit-also{margin-top:18px;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--taupe-deep);text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:3px;opacity:.85;transition:opacity .2s}
+.edit-head .edit-also:hover{opacity:1}
 @media (max-width:360px){.icon-button{width:34px}.header-tools{gap:0}.account-button{gap:2px}}
