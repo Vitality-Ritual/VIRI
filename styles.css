@@ -949,7 +949,10 @@ input::placeholder,textarea::placeholder{color:#a0968a}
   text-transform:uppercase;color:var(--muted);line-height:1.8}
 /* the author's rule-off before the long-distance extras */
 .article-prose .prose-break{margin-top:34px;padding-top:28px;border-top:1px solid var(--line)}
-.article-prose ul{margin:0 0 20px;padding-left:1.15em}
+.article-prose ul,.article-prose ol{margin:0 0 20px;padding-left:1.15em}
+.article-prose ol{padding-left:1.4em}
+.article-prose h3{font-size:clamp(1.02rem,1.3vw,1.15rem);margin:26px 0 8px;color:var(--cocoa)}
+.article-prose h3+p,.article-prose h3+ul{margin-top:0}
 .article-prose li{font-size:17px;color:var(--muted);margin-bottom:8px;padding-left:.2em}
 
 
