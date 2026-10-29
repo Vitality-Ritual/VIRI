@@ -648,10 +648,12 @@ function thanksPage(){return `<div class="wrap handoff"><div class="handoff-card
    same way the contact form does. Add each new issue's question, and the line
    under it, here. */
 const EDIT_QUESTIONS={
-  '1':'What’s one habit you’re trying to build right now?'
+  '1':'What’s one habit you’re trying to build right now?',
+  '2':'What’s something you’ve always said you’d do “someday”?'
 };
 const EDIT_QUESTION_NOTES={
-  '1':'Morning runs, less scrolling, an actual budget, anything goes.'
+  '1':'Morning runs, less scrolling, an actual budget, anything goes.',
+  '2':'A race, a solo trip, a book. Tell me yours.'
 };
 let replySent=null;
 function replyPage(issue){
