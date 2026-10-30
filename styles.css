@@ -2104,6 +2104,11 @@ summary.pf-section-head::-webkit-details-marker{display:none}
 .article-prose .prose-figure{margin:28px 0 34px}
 .article-prose .prose-figure img{display:block;width:100%;max-width:520px;height:auto;margin:0 auto;border:1px solid var(--line)}
 .article-prose .prose-figure figcaption{margin-top:12px;text-align:center;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.article-prose .prose-figure.is-portrait img{max-width:400px}
+.article-prose .prose-figure.is-wide img{max-width:640px}
+.article-prose .prose-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:560px;margin:28px auto 34px}
+.article-prose .prose-pair .prose-figure{margin:0}
+.article-prose .prose-figure figcaption{line-height:1.7}
 /* topic filters on the edit's index: a thin bar over the grid, words not buttons, like the top menu */
 .edit-topics{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;
   border-top:1px solid var(--line);padding-top:14px;margin:clamp(8px,1.6vw,20px) 0 clamp(26px,3vw,40px)}
