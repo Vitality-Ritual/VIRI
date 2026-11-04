@@ -651,11 +651,13 @@ function thanksPage(){return `<div class="wrap handoff"><div class="handoff-card
    under it, here. */
 const EDIT_QUESTIONS={
   '1':'What’s one habit you’re trying to build right now?',
-  '2':'What’s something you’ve always said you’d do “someday”?'
+  '2':'What’s something you’ve always said you’d do “someday”?',
+  '3':'What’s one lesson you had to learn the hard way?'
 };
 const EDIT_QUESTION_NOTES={
   '1':'Morning runs, less scrolling, an actual budget, anything goes.',
-  '2':'A race, a solo trip, a book. Tell me yours.'
+  '2':'A race, a solo trip, a book. Tell me yours.',
+  '3':'At work, in a friendship, with money. Tell me yours.'
 };
 let replySent=null;
 function replyPage(issue){
