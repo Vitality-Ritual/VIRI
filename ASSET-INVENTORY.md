@@ -1,4 +1,4 @@
-# Asset inventory — project/dist-elevated/assets
+# Asset inventory — project/website/assets
 
 Generated 20 September 2026 from the files actually on disk, cross-referenced against the
 original `ASSET_SOURCES.json` (which only covers the first build).
@@ -129,3 +129,11 @@ These are unreferenced. They are kept because they may be wanted again; delete t
 - `pin-rug.jpg`
 - `studio-still.jpg`
 - `typing.jpg`
+
+## Added 5 Nov 2026: Books That Changed How I Think
+- `book-decade.jpg`, `book-outliers.jpg`, `book-habit.jpg`, `book-focus.jpg`, `book-env.jpg`: publisher cover art, taken from each book's Apple Books listing (iTunes Search API). Used only beside the discussion of that book. Not licensed; relies on the usual editorial use of covers.
+- `books-library-cover.jpg`: supplied by Margaret in chat, used uncropped; source not recorded (736px wide, which is typical of Pinterest saves). Confirm the source or replace it. Replaced `books-shelf-cover.jpg` the same day.
+
+## Added 7 Nov 2026: How to Start a Side Project While Working Full-Time
+- `side-project-cover.jpg`: supplied by Margaret in chat, source not recorded (540x720, a typical Pinterest/social save size). Confirm the source or replace it.
+- `winter-arc-planner-cover.jpg`: cover of the Winter Arc planner article, supplied by Margaret in chat 10 Nov 2026 (1122x1402, from a .webp), source not recorded. A styled flat-lay (planner, pen, glasses, exhibition ticket); confirm the source or replace it.

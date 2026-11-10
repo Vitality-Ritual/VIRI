@@ -1428,6 +1428,18 @@ async function dbSubscribe(email, source){
   return { error: { message: 'That did not save. Please try again in a moment.' } };
 }
 
+/* Email someone the Winter Arc they just built. Only the picked goal ids go up;
+   the wording is filled in by send_winter_arc() (supabase/033). data is true
+   only when an email was actually queued; false when it was skipped (rate
+   limit, not on the list). Before 033 is run, this returns an error and the
+   planner simply says nothing about email. */
+async function dbSendWinterArc(email, plan){
+  const c = db(); if (!c) return { error: { message: 'Not connected to the server.' } };
+  const { data, error } = await c.rpc('send_winter_arc', { p_email: email, p_plan: plan });
+  if (error) return { error };
+  return { data: data === true };
+}
+
 /* The link in the confirmation email. True when it matched a sign-up. */
 async function dbConfirmSubscription(token){
   const c = db(); if (!c) return { error: { message: 'Not connected to the server.' } };
