@@ -2220,3 +2220,110 @@ summary.pf-section-head::-webkit-details-marker{display:none}
 .edit-head .edit-also{margin-top:18px;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--taupe-deep);text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:3px;opacity:.85;transition:opacity .2s}
 .edit-head .edit-also:hover{opacity:1}
 @media (max-width:360px){.icon-button{width:34px}.header-tools{gap:0}.account-button{gap:2px}}
+
+/* ===================== The VIRI Winter Arc planner =====================
+   Lives inside an article (#/read/winter-arc-planner), so every rule is scoped
+   under .arc and resets the prose styles it would otherwise inherit. */
+.article-prose .arc{margin:30px 0 36px;color:var(--ink);scroll-margin-top:106px}
+.article-prose .arc p,.article-prose .arc li{font-size:inherit;color:inherit;margin:0;padding:0}
+.article-prose .arc h2,.article-prose .arc h3,.article-prose .arc h4{margin:0;color:var(--cocoa)}
+.article-prose .arc ul,.article-prose .arc ol{margin:0}
+.article-prose .arc a{border-bottom:0}
+.arc button{font-family:inherit;line-height:1.4;cursor:pointer}
+.article-prose .arc p.arc-label{font-size:10px;line-height:1.6}
+.arc-label{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);font-weight:400}
+.arc-card{background:var(--paper);border:1px solid var(--line);padding:clamp(20px,3.4vw,34px);display:grid;gap:22px}
+.arc-progress{display:grid;gap:8px}
+.arc-track{height:2px;background:var(--line)}
+.arc-fill{height:2px;background:var(--cocoa);transition:width .35s ease}
+.article-prose .arc-q h2{font-size:clamp(1.3rem,2.2vw,1.65rem)}
+.article-prose .arc-q p.arc-hint{color:var(--muted);margin-top:6px;font-size:15.5px}
+.article-prose .arc-q p.arc-label{margin-bottom:8px}
+.arc-chips{display:flex;flex-wrap:wrap;gap:9px}
+.arc-chip{background:var(--cream-2);border:1px solid var(--line);padding:9px 16px;border-radius:999px;font-size:14px;font-weight:400;color:var(--ink);transition:background .2s,color .2s,border-color .2s}
+.arc-chip:hover:not(:disabled){border-color:var(--line-2)}
+.arc-chip[aria-pressed="true"]{background:var(--cocoa);color:var(--paper);border-color:var(--cocoa)}
+.arc-chip.is-other{border-style:dashed}
+.arc-chip:disabled,.arc-btn:disabled{opacity:.45;cursor:default}
+.arc-group{display:grid;gap:10px}
+.arc-group+.arc-group{padding-top:18px;border-top:1px solid var(--line)}
+.arc-choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.arc-choices.is-areas{grid-template-columns:repeat(auto-fit,minmax(138px,1fr))}
+.arc-choice{text-align:left;background:var(--cream-2);border:1px solid var(--line);padding:14px 16px;display:grid;gap:3px;color:var(--ink)}
+.arc-choice b{font-family:var(--display);font-weight:400;font-size:1.08rem;color:var(--cocoa)}
+.arc-choice span{color:var(--muted);font-size:13.5px;line-height:1.45}
+.arc-choice:hover{border-color:var(--line-2)}
+.arc-choice[aria-pressed="true"]{border-color:var(--cocoa);box-shadow:inset 0 0 0 1px var(--cocoa);background:var(--paper)}
+.arc-input{width:100%;max-width:420px;background:var(--cream-2);border:1px solid var(--line-2);padding:11px 14px;font:inherit;font-size:15px;color:var(--ink)}
+.arc-field{display:flex;gap:10px;flex-wrap:wrap}
+.arc-field .arc-input{flex:1 1 220px;min-width:0}
+.article-prose .arc p.arc-error{color:var(--grave);font-size:14px;min-height:1px}
+.arc-nav{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.arc-btn{background:var(--taupe);color:var(--paper);border:0;padding:14px 26px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;font-weight:400}
+.arc-btn:hover:not(:disabled){background:var(--taupe-deep)}
+.arc-link{background:none;border:0;padding:6px 0;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);text-decoration:underline;text-underline-offset:4px}
+.arc-link:hover{color:var(--ink)}
+
+.arc-sheet{background:var(--paper);border:1px solid var(--line);padding:clamp(20px,4vw,44px);display:grid;gap:34px}
+.arc-sheet-head{text-align:center;display:grid;gap:12px;padding-bottom:26px;border-bottom:1px solid var(--line)}
+.arc-script{font-family:var(--script);font-size:clamp(2.6rem,6vw,3.3rem);line-height:.8;color:var(--taupe)}
+.article-prose .arc h2.arc-line{font-size:clamp(1.45rem,3vw,2rem);font-style:italic;max-width:24ch;margin:0 auto;text-wrap:balance}
+.arc-tags{display:flex;flex-wrap:wrap;justify-content:center;gap:7px}
+.arc-tags span{font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;border:1px solid var(--line-2);padding:4px 10px;border-radius:999px;color:var(--muted)}
+.arc-sec{display:grid;gap:14px;min-width:0}
+.article-prose .arc-sec h3,.article-prose .arc-ritual h3{font-size:1.3rem}
+.arc-sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.arc-daily{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;background:var(--cream-2);border:1px solid var(--line);padding:11px 14px;font-size:14px}
+.arc-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid var(--line)}
+.arc-day{padding:11px 8px 14px;display:grid;align-content:start;gap:8px;min-width:0}
+.arc-day+.arc-day{border-left:1px solid var(--line)}
+.arc-day-name{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.arc-items{display:grid;gap:9px}
+.arc-item{display:grid;gap:1px;font-size:12.5px;line-height:1.35;overflow-wrap:anywhere}
+.arc-item b{font-weight:500;color:var(--ink)}
+.arc-item i{font-style:normal;color:var(--muted);font-size:11.5px}
+.arc-item.is-move b{color:var(--cocoa)}
+.arc-item.is-rest b{font-weight:400;color:var(--muted)}
+.arc-time{font-variant-numeric:tabular-nums}
+.arc-two{display:grid;grid-template-columns:1fr 1fr;gap:32px}
+.arc-habits{list-style:none;padding:0!important;display:grid;gap:13px}
+.arc-habits li{display:grid;grid-template-columns:16px 1fr;gap:12px;align-items:start;font-size:15px}
+.arc-box{width:14px;height:14px;border:1px solid var(--line-2);margin-top:5px}
+.arc-habits b{display:block;font-weight:500}
+.arc-habits div span{display:block;color:var(--muted);font-size:14px;line-height:1.5;margin-top:2px}
+.arc-habits b{line-height:1.4}
+.arc-months{display:grid;gap:14px}
+.arc-month{display:grid;gap:5px;padding-left:13px;border-left:1px solid var(--line-2)}
+.article-prose .arc-month h4{font-family:var(--display);font-weight:400;font-size:1.05rem}
+.article-prose .arc-month ul{padding-left:17px;display:grid;gap:3px}
+.article-prose .arc-month li{font-size:14px;color:var(--ink)}
+.arc-ritual{background:var(--taupe);color:var(--on-dark);padding:clamp(20px,3.4vw,30px);display:grid;gap:11px}
+.article-prose .arc-ritual h3{color:var(--on-dark)}
+.arc-ritual .arc-label{color:var(--on-dark-dim)}
+.article-prose .arc-ritual ol{padding-left:20px;display:grid;gap:5px}
+.article-prose .arc-ritual p,.article-prose .arc-ritual li{color:var(--on-dark);font-size:15.5px}
+.arc-reads{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.article-prose .arc a.arc-read{display:grid;gap:4px;border:1px solid var(--line);padding:13px 15px;background:var(--cream-2)}
+.article-prose .arc a.arc-read:hover{border-color:var(--line-2)}
+.arc-read b{font-family:var(--display);font-weight:400;font-size:1rem;color:var(--cocoa);line-height:1.3}
+.arc-sheet-foot{padding-top:18px;border-top:1px solid var(--line);text-align:center}
+.article-prose .arc p.arc-fine{font-size:12.5px;color:var(--muted);margin-top:-8px}
+.article-prose .arc p.arc-mailed{margin-top:16px;font-size:14px;color:var(--muted)}
+.arc-actions{display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin-top:18px}
+@media (max-width:720px){
+  .arc-week{grid-template-columns:1fr}
+  .arc-day{grid-template-columns:46px 1fr;gap:4px 12px;padding:11px 13px}
+  .arc-day+.arc-day{border-left:0;border-top:1px solid var(--line)}
+  .arc-day-name{padding-top:2px}
+  .arc-item{font-size:13.5px}
+  .arc-two{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){.arc-fill,.arc-chip{transition:none}}
+/* "Save as PDF" prints the plan sheet alone */
+@media print{
+  html.arc-print body *{visibility:hidden}
+  html.arc-print .arc-sheet,html.arc-print .arc-sheet *{visibility:visible}
+  html.arc-print .arc-sheet{position:absolute;left:0;top:0;width:100%;border:0;padding:0}
+  html.arc-print .arc-reads-sec{display:none}
+  html.arc-print .arc-ritual{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
