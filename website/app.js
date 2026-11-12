@@ -89,10 +89,11 @@ return `<div class="ed-home">
   <h1>Life outside the inbox.</h1>
   <p class="ed-mast-sub">Fitness, wellness, career, money and lifestyle, for the hours around your work. New stories every week.</p>
 </div></section>
-${lead?`<section class="wrap ed-lead" data-reveal><a class="ed-lead-link" href="#/read/${lead.id}"><figure class="ed-lead-media"><img src="${A+lead.img}" alt="${escapeHTML(lead.desc)}"></figure><div class="ed-lead-text"><p class="ed-kicker">${escapeHTML(lead.category)} &middot; The latest</p><h2>${escapeHTML(lead.title)}</h2><p>${escapeHTML(lead.desc)}</p><span class="ed-more">Read the story ${arrow}</span></div></a></section>`:''}
+${lead?`<section class="wrap ed-lead" data-reveal><a class="ed-lead-link" href="#/read/${lead.id}"><div class="ed-lead-col"><figure class="ed-lead-media"><img src="${A+lead.img}" alt="${escapeHTML(lead.desc)}"></figure>${PIN_CREDIT.has(lead.id)?'<p class="figure-credit">Image courtesy of Pinterest</p>':''}</div><div class="ed-lead-text"><p class="ed-kicker">${escapeHTML(lead.category)} &middot; The latest</p><h2>${escapeHTML(lead.title)}</h2><p>${escapeHTML(lead.desc)}</p><span class="ed-more">Read the story ${arrow}</span></div></a></section>`:''}
+<section class="wrap home-arc" data-reveal>${arcPromo()}</section>
 <section class="wrap ed-latest"><div class="ed-row-head"><p class="eyebrow">Latest stories</p><a class="ed-all" href="#/read">All stories ${arrow}</a></div><div class="cards-three">${next.map((a,i)=>articleCard(a,i+1)).join('')}</div></section>
 <section class="wrap ed-topics" data-reveal><p class="eyebrow">Read by topic</p><div class="ed-topic-list">${TOPIC_ORDER.map(t=>`<a class="ed-topic" href="#/read/topic-${t.toLowerCase()}">${t}</a>`).join('')}</div></section>
-<section class="ed-sub-band"><div class="wrap">${editSignup()}</div></section>
+<section class="ed-sub-band"><div class="wrap">${editSignup('home','sub-email-home')}</div></section>
 <section class="wrap ed-community" data-reveal><p class="eyebrow">The VIRI community</p><h2>Find people who move like you do.</h2><p>VIRI started as a way to meet the people already in your classes and on your running routes. Explore studios and activities near you, and build a circle of your own.</p><div class="ed-actions">${button('Explore the community','#/community','small')}${button('About the community','#/community/about','small outline')}</div></section>
 </div>`;}
 function viriAboutPage(){return `<section class="page-head edit-head about-viri"><div class="wrap">
@@ -192,6 +193,8 @@ const reviews=[{title:'A familiar face at class',text:'“I came for a workout a
 function artDate(s){if(!s)return null;const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);}
 const fmtLong=s=>{const d=artDate(s);return d?d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'';};
 const fmtShort=s=>{const d=artDate(s);return d?d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';};
+// Cover photos saved from Pinterest: their article page shows a small credit under the cover.
+const PIN_CREDIT=new Set(['loving-november','winter-arc-planner','side-project-full-time','books-changed-how-i-think','done-romanticizing','winter-arc','first-marathon-recap','holiday-gift-guide','turning-23','first-marathon-guide','first-six-months-corporate','fall-things-to-do','busy-personality-trait','saving-money','run-essentials','corporate-burnout','september-reset']);
 const articles=[
   {id:'loving-november',category:'Lifestyle',title:'The Things I’m Loving This November',titleLines:['The Things I’m Loving','This November'],img:'loving-november-cover.jpg',author:'Margaret Cole',date:'2026-11-11',desc:'Six things making my November.',body:`<p>It’s somehow already almost mid-November. My <a href="#/read/winter-arc">winter arc</a> is officially underway, Thanksgiving is around the corner, and I’m trying to restrain myself from buying all of Target’s holiday decor. As we look towards the rest of the month, here are the things I’ve been loving so far this November:</p><div class="faves"><section class="fave"><p class="fave-kicker"><span class="fave-num">01</span>A Workout/Class</p><h2>CycleBar’s 45-minute classic ride</h2><p>I usually do the 6am class and I leave dripping sweat every time! This class is an amazing blend of cardio and strength training and has become a regular part of my week.</p></section><section class="fave"><p class="fave-kicker"><span class="fave-num">02</span>A Product</p><h2>Hatch Alarm Clock</h2><p>If you know me, you know I have a Hatch because I talk about it all the time. This alarm clock is especially useful in the colder months when the sun rises later and later.</p></section><section class="fave"><p class="fave-kicker"><span class="fave-num">03</span>Something I Read</p><h2 class="fave-pair"><span>Yesteryear <em>by Caro Claire Burke</em></span><span>Lead Like You Were Meant To <em>by Rob McKinnon</em></span></h2><p>Full disclosure, I have not finished either of these books yet, but so far they are both great. Yesteryear is popular right now, and for good reason. Lead Like You Were Meant To is a self help book about unlocking your full leadership potential and thus far, the insights have been unlike any other self help book I’ve read. This book leaves you with a lot to reflect on when it comes to your own actions and the way you influence those around you.</p></section><section class="fave"><p class="fave-kicker"><span class="fave-num">04</span>A Food/Drink</p><h2>Bagel with peanut butter and Himalayan sea salt on top</h2><p>This has been my go-to breakfast for the last several weeks and it still hits every morning, especially after a hard workout. The sea salt on top is absolutely essential.</p></section><section class="fave"><p class="fave-kicker"><span class="fave-num">05</span>A DC Spot</p><h2>Perry’s</h2><p>This is hands down my favorite restaurant in DC. Perry’s is a Japanese fusion restaurant with all your traditional sushi rolls plus incredible appetizers like their Amazake Focaccia and their Karaage Fried Chicken. The next time you and your friends are deciding where to go for dinner, this should be at the top of your list.</p></section><section class="fave"><p class="fave-kicker"><span class="fave-num">06</span>One Small Habit</p><h2>Putting on my workout gear first thing after I wake up</h2><p>One thing I’ve noticed is that the later I wait to put on my workout gear in the morning, the more time I have to convince myself to skip the workout altogether (this has happened a number of times). However, if the first thing I do after I get out of bed is change into a cute set, then I never skip my workout. I didn’t fully commit to this habit until maybe a few weeks ago, but ever since I have, I’ve found that my motivation rarely falters.</p></section></div><p class="prose-break">I’d love to hear what some of your favorites have been so far this month and who knows, maybe they’ll show up in December’s edition.</p><div class="fave-reply" id="fave-reply" data-month="November"><p class="fave-kicker">Your turn</p><h2>What are you loving this month?</h2><form id="fave-form" novalidate><p class="fave-hint">Fill in as many or as few as you like.</p><div class="fave-fields"><div class="field"><label for="fv-workout">A Workout/Class</label><input id="fv-workout" name="workout" data-label="A Workout/Class" placeholder="A class, a routine, a run" maxlength="300"></div><div class="field"><label for="fv-product">A Product</label><input id="fv-product" name="product" data-label="A Product" placeholder="Something you use every day" maxlength="300"></div><div class="field"><label for="fv-read">Something You Read</label><input id="fv-read" name="read" data-label="Something You Read" placeholder="A book, an article, a newsletter" maxlength="300"></div><div class="field"><label for="fv-food">A Food/Drink</label><input id="fv-food" name="food" data-label="A Food/Drink" placeholder="Your go-to order or recipe" maxlength="300"></div><div class="field"><label for="fv-spot">A Local Spot</label><input id="fv-spot" name="spot" data-label="A Local Spot" placeholder="A restaurant, café or shop near you" maxlength="300"></div><div class="field"><label for="fv-habit">One Small Habit</label><input id="fv-habit" name="habit" data-label="One Small Habit" placeholder="Something that’s working for you" maxlength="300"></div></div><div class="field-pair"><div class="field"><label class="visually-hidden" for="fv-first">First name (optional)</label><input id="fv-first" name="first" placeholder="First name (optional)" autocomplete="given-name" maxlength="40"></div><div class="field"><label class="visually-hidden" for="fv-email">Email (optional)</label><input id="fv-email" name="email" type="email" placeholder="Email (optional)" autocomplete="email" maxlength="120"></div></div><label class="reply-quote"><input type="checkbox" name="quote" value="yes"> It’s okay to feature my pick (first name only) in a future edition</label><p id="fv-error" class="field-error" role="alert"></p><button class="button contact-send" type="submit">Send my favorites</button></form></div>`},
   {id:'winter-arc-planner',category:'Wellness',title:'Build Your Own VIRI Winter Arc',titleLines:['Build Your Own','VIRI Winter Arc'],img:'winter-arc-planner-cover.jpg',author:'Margaret Cole',date:'2026-11-10',desc:'A one-minute quiz for your own winter plan.',body:`<p>After sharing <a href="#/read/winter-arc">how I’m starting my winter arc</a>, I wanted to make it easier for you to build your own. So I made a planner for it.</p><p>Answer a few quick questions about what you want this winter to be about, and you’ll get a one-page plan: a weekly rhythm, three anchor habits, a goal for each month, and a closing ritual for the last day. Save it, print it, and come back to it whenever a week gets away from you.</p><div class="arc" id="arc-tool"><p class="arc-label">Loading the planner…</p></div><p>There will be weeks that don’t go to plan, and that’s okay. The goal is progress and consistency, not perfection.</p>`},
@@ -262,28 +265,91 @@ function readNext(current){
     </a>`).join('')}
   </nav>`;
 }
-const subscribeBox=()=>`<form class="subscribe" id="subscribe-form">
+const subscribeBox=()=>`<form class="subscribe js-sub" data-place="article-rail">
   <p class="rail-label">The VIRI edit</p>
   <p class="subscribe-copy">Every Sunday: first looks at new articles and one thing worth trying.</p>
-  <label class="sr-only" for="sub-email">Email address</label>
-  <input id="sub-email" name="email" type="email" placeholder="you@example.com" required>
+  <label class="sr-only" for="sub-email-rail">Email address</label>
+  <input id="sub-email-rail" name="email" type="email" placeholder="you@example.com" autocomplete="email" required>
   <button class="button small" type="submit">Subscribe</button>
   <p class="subscribe-note">One email a week. Unsubscribe whenever you like.</p>
 </form>`;
 /* The VIRI Edit's sign-up, at the top of the edit's index: one line, no box, so
    it reads as part of the masthead. This page is also where vitalityritual.org/#/subscribe
    lands (the link for bios, texts and QR codes), so there is one place to subscribe. */
-const editSignup=()=>`<form class="edit-sub" id="subscribe-form">
+const editSignup=(place='read-page',idn='sub-email')=>`<form class="edit-sub js-sub" data-place="${place}">
   <p class="edit-sub-kicker">New stories in your inbox, every Sunday</p>
   <div class="edit-sub-row">
-    <label class="sr-only" for="sub-email">Email address</label>
-    <input id="sub-email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required>
+    <label class="sr-only" for="${idn}">Email address</label>
+    <input id="${idn}" name="email" type="email" placeholder="you@example.com" autocomplete="email" required>
     <button class="button" type="submit">Subscribe</button>
   </div>
   <p class="edit-sub-note">First looks at new articles and one thing worth trying. One email a week.</p>
 </form>`;
-/* when someone arrived through /#/subscribe; the page draws more than once while it loads */
-let focusSubscribe=0;
+/* The box at the end of every article (Phase 1, 12 Nov 2026). On a phone the
+   rail's box would sit right under it, so styles.css hides that one there. */
+const articleEndSub=()=>`<section class="end-sub" aria-label="Subscribe to the VIRI Edit">
+  <p class="end-sub-kicker">The VIRI Edit</p>
+  <h2>Liked this one? The next story arrives on Sunday.</h2>
+  ${editSignup('article-end','sub-email-end')}
+</section>`;
+/* The Winter Arc planner as the headline offer: a text band, so no photo credit needed. */
+const arcPromo=()=>`<section class="arc-promo"><div class="arc-promo-inner">
+  <p class="arc-promo-kicker">Free &middot; The Winter Arc Planner</p>
+  <h2>Build your winter plan, free.</h2>
+  <p>Answer five quick questions and get a one-page plan for the months ahead: a weekly rhythm, three anchor habits and a goal for each month.</p>
+  ${button('Build my plan','#/read/winter-arc-planner','small light')}
+</div></section>`;
+/* vitalityritual.org/#/subscribe (and /subscribe/, which forwards here): the one
+   sign-up link for bios, pins and Substack. */
+function subscribePage(){return `<section class="page-head edit-head sub-page"><div class="wrap">
+  <p class="eyebrow">The VIRI Edit</p>
+  <h1>Life outside the inbox,<br>every Sunday.</h1>
+  <p>One email a week: the newest stories on fitness, wellness, career, money and lifestyle, plus one thing worth trying that week.</p>
+  ${editSignup('subscribe-page')}
+</div></section>
+<section class="wrap sub-page-more">${arcPromo()}
+  <div class="ed-row-head"><p class="eyebrow">Recent stories</p><a class="ed-all" href="#/read">All stories ${arrow}</a></div>
+  <div class="cards-three">${allArticles().slice(0,3).map(a=>articleCard(a)).join('')}</div>
+</section>`;}
+/* Where a reader came from, saved with their sign-up as "<place>:<from>" in
+   subscribers.source (40 characters). A link can say it with ?from=instagram;
+   otherwise the referring site is used, and a visit with neither is "direct".
+   It is worked out once per visit, so later pages keep it. */
+function fromHost(h){h=String(h||'').toLowerCase().replace(/^www\./,'');if(!h)return '';
+  if(/(^|\.)pinterest\.|(^|\.)pin\.it$/.test(h))return 'pinterest';
+  if(/(^|\.)instagram\.com$/.test(h))return 'instagram';
+  if(/(^|\.)substack\.com$|substackcdn/.test(h))return 'substack';
+  if(/(^|\.)google\./.test(h))return 'google';
+  if(/(^|\.)(facebook|fb)\.com$/.test(h))return 'facebook';
+  if(/(^|\.)tiktok\.com$/.test(h))return 'tiktok';
+  if(/(^|\.)(bing|duckduckgo)\.com$/.test(h))return 'search';
+  return h.slice(0,24);}
+const VISIT_FROM=(()=>{let saved='';try{saved=sessionStorage.getItem('viri-from')||'';}catch(e){}
+  let q;try{q=new URLSearchParams(location.search);}catch(e){q=new URLSearchParams();}
+  const tag=(q.get('from')||'').toLowerCase().replace(/[^a-z0-9-]/g,'').slice(0,24);
+  let ref='';try{const r=new URL(document.referrer);if(r.hostname!==location.hostname)ref=fromHost(r.hostname);}catch(e){}
+  if(!ref&&q.get('ref'))ref=fromHost(q.get('ref'));   /* /subscribe/ passes its referrer on */
+  const f=(saved&&saved!=='direct'?saved:'')||tag||ref||saved||'direct';   /* a tagged link beats an earlier untagged page */
+  try{sessionStorage.setItem('viri-from',f);}catch(e){}
+  /* take the tag out of the address bar, so a link copied from here is not counted as Instagram again */
+  if(q.has('from')||q.has('ref')){q.delete('from');q.delete('ref');const rest=q.toString();try{history.replaceState(null,'',location.pathname+(rest?'?'+rest:'')+location.hash);}catch(e){}}
+  return f;})();
+const subSource=place=>`${place}:${VISIT_FROM}`.slice(0,40);
+/* Visitor counts with GoatCounter (no cookies, nothing personal kept). Off until
+   GC_SITE holds the site code Margaret picks at goatcounter.com. Every article
+   lives behind a #, so each page is counted by hand with its # path. */
+const GC_SITE='';
+let gcLast='';
+function countView(){if(!GC_SITE)return;
+  const path='/'+(location.hash.replace(/^#\/?/,'')||'');
+  if(path===gcLast)return;
+  const send=()=>{const first=!gcLast;const prev=gcLast;gcLast=path;
+    try{window.goatcounter.count({path,title:document.title,referrer:first?(document.referrer||(VISIT_FROM!=='direct'?VISIT_FROM:'')):location.origin+prev});}catch(e){}};
+  if(window.goatcounter&&window.goatcounter.count){send();return;}
+  if(!document.getElementById('gc-script')){window.goatcounter={no_onload:true};const sc=document.createElement('script');sc.id='gc-script';sc.async=true;
+    sc.dataset.goatcounter=`https://${GC_SITE}.goatcounter.com/count`;sc.src='https://gc.zgo.at/count.js';
+    sc.addEventListener('load',()=>countView());document.head.appendChild(sc);}
+}
 /* Topic filters on the edit's index (15 Oct 2026): a thin "Stories" bar over the grid,
    words rather than buttons, like the top menu. Only topics that have articles show,
    in this order; a new topic on an article appears at the end. */
@@ -306,18 +372,19 @@ function readPage(id){if(id&&id.startsWith('topic-')){const t=TOPIC_ORDER.find(x
           <p class="standfirst">${escapeHTML(a.desc)}</p>
           <p class="byline">${a.date?`<time datetime="${a.date}">${fmtLong(a.date)}</time><span class="byline-dot" aria-hidden="true">&middot;</span>`:''}<span>${readMinutes(a)} min read</span>${a.author?`<span class="byline-dot" aria-hidden="true">&middot;</span><span>By ${escapeHTML(a.author)}</span>`:''}</p>
         </div>
-        <figure class="article-figure">${a.img?`<img src="${A+a.img}" alt="${escapeHTML(a.desc)}">`:`<span class="card-ph" role="img" aria-label="Photograph to come"><span class="ph-mark">${phMark()}</span><span class="ph-cap">Photo<br>to come</span></span>`}</figure>
+        ${a.img&&PIN_CREDIT.has(a.id)?`<figure class="article-figure has-credit"><div class="figure-frame"><img src="${A+a.img}" alt="${escapeHTML(a.desc)}"></div><figcaption class="figure-credit">Image courtesy of Pinterest</figcaption></figure>`:`<figure class="article-figure">${a.img?`<img src="${A+a.img}" alt="${escapeHTML(a.desc)}">`:`<span class="card-ph" role="img" aria-label="Photograph to come"><span class="ph-mark">${phMark()}</span><span class="ph-cap">Photo<br>to come</span></span>`}</figure>`}
       </header>
       <div class="article-body">
         <aside class="article-rail">${subscribeBox()}${readNext(a.id)}</aside>
         <div class="article-prose">
           ${withPull(a)}
+          ${a.id==='winter-arc-planner'?'':articleEndSub()}
           <div class="article-foot">${button('Find your next ritual','#/explore')}</div>
         </div>
       </div>
     </div>
   </article>`;}
-  return `<section class="page-head edit-head"><div class="wrap"><p class="eyebrow">The VIRI edit</p><h1>A little inspiration<br>for your everyday.</h1><p>Movement, community, and the rituals that bring us together.</p>${editSignup()}<a class="edit-also" href="https://theviriedit.substack.com" target="_blank" rel="noopener">Also on Substack <span aria-hidden="true">&rarr;</span></a></div></section><section class="wrap" style="padding-bottom:80px">${editTopics()}<div class="cards-three">${allArticles().filter(a=>editTopic==='All'||a.category===editTopic).map(a=>articleCard(a)).join('')}</div></section>`;}
+  return `<section class="page-head edit-head"><div class="wrap"><p class="eyebrow">The VIRI edit</p><h1>A little inspiration<br>for your everyday.</h1><p>Movement, community, and the rituals that bring us together.</p>${editSignup()}<a class="edit-also" href="https://theviriedit.substack.com" target="_blank" rel="noopener">Also on Substack <span aria-hidden="true">&rarr;</span></a></div></section><section class="wrap read-arc">${arcPromo()}</section><section class="wrap" style="padding-bottom:80px">${editTopics()}<div class="cards-three">${allArticles().filter(a=>editTopic==='All'||a.category===editTopic).map(a=>articleCard(a)).join('')}</div></section><section class="ed-sub-band"><div class="wrap">${editSignup('read-bottom','sub-email-bottom')}</div></section>`;}
 /* ===================== Explore: map, classes, rosters ===================== */
 /* No day, no time of day, no class: Explore lists studios now, and when
    somebody trains is something they tell us, not something we invent. */
@@ -4420,7 +4487,7 @@ async function onSubmit(e){
   const typed=root.querySelector('#arc-email').value;
   if(typeof dbSubscribe!=='function'){gateError='Signing up is unavailable right now. Please try again in a moment.';return draw(false);}
   busy=true; gateError=''; draw(false);
-  const r=await dbSubscribe(typed,'winter-arc');
+  const r=await dbSubscribe(typed,subSource('winter-arc'));
   busy=false;
   if(r.error){gateError=r.error.message; draw(false); const i=root.querySelector('#arc-email'); if(i){i.value=typed; i.focus();} return;}
   email=String(typed).trim().toLowerCase(); unlocked=true; build();
@@ -4432,20 +4499,20 @@ function mount(el){
 }
 return {mount};
 })();
-function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':if(signedIn()){location.replace('#/feed');return;}html=editorialHome();break;case 'community':html=id==='about'?aboutPage():home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'subscribe':focusSubscribe=Date.now();location.replace('#/read');return;case 'about':html=viriAboutPage();break;case 'connect':html=contactPage();break;case 'reply':html=replyPage(id);break;case 'thanks':html=thanksPage();break;case 'check-email':html=checkEmailPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'forgot':html=forgotPage();break;case 'notifications':html=notificationsPage();break;case 'confirm-subscription':html=confirmSubscriptionPage(id);break;case 'stop-emails':html=stopEmailsPage(id);break;case 'reset-password':html=resetPasswordPage();break;case 'profile':html=profilePage();break;case 'member':html=memberPage(id);if(typeof ensureMember==='function')ensureMember(id);break;case 'feed':html=feedPage();break;case 'i':html=invitePage(id);break;case 'post':html=postPage(id);break;case 'find':html=findPage();break;case 'messages':html=messagesPage();break;case 'settings':html=settingsPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=privacyPage();break;case 'terms':html=termsPage();break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',community:'Community',explore:'Explore',studios:'Studios & gyms',read:'The VIRI edit',about:'About VIRI',connect:'Contact us',reply:'Reply to The VIRI Edit',thanks:'Thank you','check-email':'Check your email',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',forgot:'Forgot your password',notifications:'Notifications','confirm-subscription':'Confirm your subscription','stop-emails':'Stop the daily email','reset-password':'Choose a new password',profile:'Your circle',member:'A member',feed:'Feed',post:'Post',i:'You’re invited',find:'Find your people',messages:'Messages',settings:'Settings',book:'Book this class',privacy:'Your privacy',terms:'Terms of service'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#arc-tool'))ARC.mount($('#arc-tool'));if($('#fave-form'))bindFaves();if($('#auth-form'))bindAuth();if(path==='stop-emails'&&stopEmails.status==='start'){stopEmails.status='working';const tok=stopEmails.token;dbStopDigestEmails(tok).then(r=>{if(stopEmails.token!==tok)return;stopEmails.status=r&&r.data?'ok':'bad';if((location.hash||'').startsWith('#/stop-emails'))render(false);});}if(path==='forgot')bindForgot();if(path==='confirm-subscription'&&subConfirm.status==='start'){subConfirm.status='working';const tok=subConfirm.token;dbConfirmSubscription(tok).then(r=>{if(subConfirm.token!==tok)return;subConfirm.status=r&&r.data?'ok':'bad';if((location.hash||'').startsWith('#/confirm-subscription'))render(false);});}if(path==='notifications'&&state.unseenNotes&&typeof dbMarkNotificationsRead==='function')dbMarkNotificationsRead().then(()=>syncAccountLinks());if(path==='reset-password')bindReset();if(path==='read'&&id)updateReadProgress();if(path==='read'&&!id&&Date.now()-focusSubscribe<4000&&matchMedia('(pointer:fine)').matches)$('#sub-email')?.focus({preventScroll:true});/* the cursor waits in the field on a computer; on a phone it would pop the keyboard over the page */checkNewWeek();maybeWeekPrompt(path);if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='reply')bindReply();if(path==='check-email')startConfirmWatch();if(path==='find'){$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();runSearch();});if(typeof dbRoutineMatches==='function'&&state.roomMatches===undefined){state.roomMatches=[];dbRoutineMatches().then(()=>{if(location.hash==='#/find')render(false);});}if(state.found===undefined||state.found===null)runSearch();}if(path==='profile'&&signedIn()&&!goalHistoryLoaded&&typeof dbLoadGoalHistory==='function'){goalHistoryLoaded=true;dbLoadGoalHistory().then(r=>{if(r===null)state.goalHistory=null;if(location.hash==='#/profile')render(false);});}if(path==='profile'&&signedIn())checkAdmin();if(path==='messages'){$('#msg-form')?.addEventListener('submit',e=>{e.preventDefault();sendMessage(e.target);});const b=$('#msg-body');if(b)b.scrollTop=b.scrollHeight;if(msgThread&&typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);}/* Fetch on arrival, not on every render — render() re-runs this block, so an
+function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':if(signedIn()){location.replace('#/feed');return;}html=editorialHome();break;case 'community':html=id==='about'?aboutPage():home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'subscribe':html=subscribePage();break;case 'about':html=viriAboutPage();break;case 'connect':html=contactPage();break;case 'reply':html=replyPage(id);break;case 'thanks':html=thanksPage();break;case 'check-email':html=checkEmailPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'forgot':html=forgotPage();break;case 'notifications':html=notificationsPage();break;case 'confirm-subscription':html=confirmSubscriptionPage(id);break;case 'stop-emails':html=stopEmailsPage(id);break;case 'reset-password':html=resetPasswordPage();break;case 'profile':html=profilePage();break;case 'member':html=memberPage(id);if(typeof ensureMember==='function')ensureMember(id);break;case 'feed':html=feedPage();break;case 'i':html=invitePage(id);break;case 'post':html=postPage(id);break;case 'find':html=findPage();break;case 'messages':html=messagesPage();break;case 'settings':html=settingsPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=privacyPage();break;case 'terms':html=termsPage();break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',community:'Community',explore:'Explore',studios:'Studios & gyms',read:'The VIRI edit',subscribe:'Subscribe to the VIRI Edit',about:'About VIRI',connect:'Contact us',reply:'Reply to The VIRI Edit',thanks:'Thank you','check-email':'Check your email',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',forgot:'Forgot your password',notifications:'Notifications','confirm-subscription':'Confirm your subscription','stop-emails':'Stop the daily email','reset-password':'Choose a new password',profile:'Your circle',member:'A member',feed:'Feed',post:'Post',i:'You’re invited',find:'Find your people',messages:'Messages',settings:'Settings',book:'Book this class',privacy:'Your privacy',terms:'Terms of service'};document.title=`VIRI — ${names[path]||'Find your way'}`;$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#arc-tool'))ARC.mount($('#arc-tool'));if($('#fave-form'))bindFaves();if($('#auth-form'))bindAuth();if(path==='stop-emails'&&stopEmails.status==='start'){stopEmails.status='working';const tok=stopEmails.token;dbStopDigestEmails(tok).then(r=>{if(stopEmails.token!==tok)return;stopEmails.status=r&&r.data?'ok':'bad';if((location.hash||'').startsWith('#/stop-emails'))render(false);});}if(path==='forgot')bindForgot();if(path==='confirm-subscription'&&subConfirm.status==='start'){subConfirm.status='working';const tok=subConfirm.token;dbConfirmSubscription(tok).then(r=>{if(subConfirm.token!==tok)return;subConfirm.status=r&&r.data?'ok':'bad';if((location.hash||'').startsWith('#/confirm-subscription'))render(false);});}if(path==='notifications'&&state.unseenNotes&&typeof dbMarkNotificationsRead==='function')dbMarkNotificationsRead().then(()=>syncAccountLinks());if(path==='reset-password')bindReset();if(path==='read'&&id)updateReadProgress();if(path==='subscribe'&&matchMedia('(pointer:fine)').matches)$('#sub-email')?.focus({preventScroll:true});countView();/* the cursor waits in the field on a computer; on a phone it would pop the keyboard over the page */checkNewWeek();maybeWeekPrompt(path);if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='reply')bindReply();if(path==='check-email')startConfirmWatch();if(path==='find'){$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();runSearch();});if(typeof dbRoutineMatches==='function'&&state.roomMatches===undefined){state.roomMatches=[];dbRoutineMatches().then(()=>{if(location.hash==='#/find')render(false);});}if(state.found===undefined||state.found===null)runSearch();}if(path==='profile'&&signedIn()&&!goalHistoryLoaded&&typeof dbLoadGoalHistory==='function'){goalHistoryLoaded=true;dbLoadGoalHistory().then(r=>{if(r===null)state.goalHistory=null;if(location.hash==='#/profile')render(false);});}if(path==='profile'&&signedIn())checkAdmin();if(path==='messages'){$('#msg-form')?.addEventListener('submit',e=>{e.preventDefault();sendMessage(e.target);});const b=$('#msg-body');if(b)b.scrollTop=b.scrollHeight;if(msgThread&&typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);}/* Fetch on arrival, not on every render — render() re-runs this block, so an
    unguarded fetch-then-render is an infinite loop. The flag clears when you
    leave, so coming back fetches again. */
 if(path!=='feed')feedFetched=false;
 else if(!feedFetched&&typeof dbLoadFeed==='function'){feedFetched=true;dbLoadFeed().then(()=>{if(location.hash==='#/feed')render(false);});}if(path==='join')bindJoin();
-  $('#subscribe-form')?.addEventListener('submit',async e=>{e.preventDefault();
-    const form=e.target, input=form.querySelector('#sub-email');
+  $$('form.js-sub').forEach(f=>f.addEventListener('submit',async e=>{e.preventDefault();
+    const form=e.currentTarget, input=form.querySelector('input[type=email]');
     const btn=form.querySelector('button[type=submit]');
     if(btn)btn.disabled=true;
-    const r=await dbSubscribe(input.value,'viri-edit');
+    const r=await dbSubscribe(input.value,subSource(form.dataset.place||'site'));
     if(btn)btn.disabled=false;
     if(r.error){toast(r.error.message);return;}
     form.reset();
-    toast(r.data==='already'?'You are already on the list.':'You’re on the list. The VIRI Edit arrives on Sundays.');});if(path==='explore'&&$('#ex-search')){$('#ex-search').addEventListener('input',e=>{ex.query=e.target.value;exRefresh();});exBindMap();}}
+    toast(r.data==='already'?'You are already on the list.':'You’re on the list. The VIRI Edit arrives on Sundays.');}));if(path==='explore'&&$('#ex-search')){$('#ex-search').addEventListener('input',e=>{ex.query=e.target.value;exRefresh();});exBindMap();}}
 /* Everything a visitor without an account cannot really do. Clicking any of these
    while signed out goes to the sign-up page instead of opening a form that would
    fail at the end. Listed rather than inferred, so a new public button is public

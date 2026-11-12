@@ -6,8 +6,11 @@
 <link rel="icon" href="/assets/favicon.svg">
 <!-- Instagram and some apps turn "#" into "%23", which breaks vitalityritual.org/#/subscribe.
      This page lives at a #-free address and forwards to it. -->
-<meta http-equiv="refresh" content="0; url=/#/subscribe">
-<script>location.replace('/#/subscribe');</script>
+<meta http-equiv="refresh" content="1; url=/#/subscribe">
+<script>(function(){var q=new URLSearchParams(location.search),f=q.get('from'),r='';
+try{r=new URL(document.referrer).hostname;}catch(e){}
+var out=f?'?from='+encodeURIComponent(f):(r&&r!==location.hostname?'?ref='+encodeURIComponent(r):'');
+location.replace('/'+out+'#/subscribe');})();</script>
 </head><body style="font-family:Georgia,serif;background:#fbf9f5;color:#3b322a;text-align:center;padding:60px 20px">
 <p><a href="/#/subscribe" style="color:#5a4433">Continue to the VIRI Edit sign-up</a></p>
 </body></html>
