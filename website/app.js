@@ -338,7 +338,7 @@ const subSource=place=>`${place}:${VISIT_FROM}`.slice(0,40);
 /* Visitor counts with GoatCounter (no cookies, nothing personal kept). Off until
    GC_SITE holds the site code Margaret picks at goatcounter.com. Every article
    lives behind a #, so each page is counted by hand with its # path. */
-const GC_SITE='';
+const GC_SITE='vitalityritual';
 let gcLast='';
 function countView(){if(!GC_SITE)return;
   const path='/'+(location.hash.replace(/^#\/?/,'')||'');
@@ -3835,7 +3835,7 @@ function postActivity(pre,edit){
 function privacyPage(){return `<article class="article-detail legal">
   <p class="eyebrow">VIRI</p>
   <h1>Your privacy</h1>
-  <p class="legal-date">Last updated 5 October 2026</p>
+  <p class="legal-date">Last updated 12 November 2026</p>
 
   <h2>Who we are</h2>
   <p>VIRI (Vitality Ritual) is a service for finding people to work out with. It is run by Margaret Cole, in Washington, DC. You can reach us about anything on this page at <a href="mailto:info@vitalityritual.org">info@vitalityritual.org</a>, and we will give you a postal address if you ask for one.</p>
@@ -3848,7 +3848,7 @@ function privacyPage(){return `<article class="article-detail legal">
   <p><b>Safety records:</b> if you report someone, we keep what you told us. If you block someone, we keep that too.</p>
   <p>Reports are read by the people who run VIRI. We can suspend an account, which hides the member and stops her signing in, or delete it. We record who took the action, when, and any note we made. A report about someone is kept after she leaves, because it is the record of what happened.</p>
   <p><b>If you subscribe to the VIRI edit</b> we keep your email address, and the date you signed up, and nothing else, so we can send it to you. You do not need an account to subscribe, and subscribing does not make one. Every issue has an unsubscribe link, and you can ask us to remove you at any time.</p>
-  <p>We do <b>not</b> collect analytics. There is no tracking pixel, no advertising network, and no third-party script on this site other than the one that connects you to our database. Nobody is following you around the internet on our behalf.</p>
+  <p>We count visits with <b>GoatCounter</b>, a privacy-friendly analytics service. It uses no cookies and does not identify you: it records which pages are read, which site sent the visitor, and general details such as browser, screen size and country. It does not store your IP address. There is no tracking pixel and no advertising network on this site. Nobody is following you around the internet on our behalf.</p>
 
   <h2>Who sees your sessions</h2>
   <p>Your sessions are visible to you and to your friends, and to nobody else. Friends can like a session, comment on it, and like or reply to each other&rsquo;s comments. You can delete any comment on your own sessions, and anyone can delete their own comments. Likes and comments are deleted when the session or the account is.</p>
@@ -3866,12 +3866,13 @@ function privacyPage(){return `<article class="article-detail legal">
   <p>So every one of those fields is optional, and you can remove any of them at any time. Think about what you are comfortable with other members seeing before you fill them in.</p>
 
   <h2>Who else touches your data</h2>
-  <p>We use four other companies to run VIRI. They handle data on our behalf and are not allowed to use it for anything else.</p>
+  <p>We use five other companies to run VIRI. They handle data on our behalf and are not allowed to use it for anything else.</p>
   <ul>
     <li><b>Supabase</b> &mdash; the database, your login, and your photographs</li>
     <li><b>Resend</b> &mdash; sends your confirmation, password-reset and notification emails</li>
     <li><b>FormSubmit</b> &mdash; relays the contact form and report notifications to our inbox</li>
     <li><b>GitHub Pages</b> &mdash; serves this website</li>
+    <li><b>GoatCounter</b> &mdash; counts page visits, without cookies</li>
   </ul>
   <p>The Explore map loads its tiles from OpenStreetMap. Links to studios, gyms and articles take you to other companies&rsquo; websites, which have their own policies.</p>
   <p><b>We do not sell your data, and we do not share it for advertising.</b> We would disclose information if the law required it, or to protect someone from harm.</p>
