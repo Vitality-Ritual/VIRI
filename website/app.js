@@ -295,7 +295,7 @@ const articleEndSub=()=>`<section class="end-sub" aria-label="Subscribe to the V
 /* The Winter Arc planner as the headline offer: a text band, so no photo credit needed. */
 const arcPromo=()=>`<section class="arc-promo"><div class="arc-promo-inner">
   <p class="arc-promo-kicker">Free &middot; The Winter Arc Planner</p>
-  <h2>Build your winter plan, free.</h2>
+  <h2>Build your winter arc, free.</h2>
   <p>Answer five quick questions and get a one-page plan for the months ahead: a weekly rhythm, three anchor habits and a goal for each month.</p>
   ${button('Build my plan','#/read/winter-arc-planner','small light')}
 </div></section>`;
