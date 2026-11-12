@@ -26,7 +26,9 @@ x = ->(s) { CGI.escapeHTML(s) }
 items = arts.map { |a|
   t = Time.new(*a[:date].split('-').map(&:to_i), 9, 0, 0, '-04:00')
   img = SITE + 'assets/' + a[:img]
-  html = %(<p><img src="#{img}" alt="#{x.(a[:title])}"></p>) + a[:body] +
+  # forms can't run on Substack: swap the reader-favorites box for a link back to the site
+  body = a[:body].sub(%r{<div class="fave-reply".*\z}m) { %(<p><strong>What are you loving this month?</strong> Tell me on <a href="#{SITE}#/read/#{a[:id]}">vitalityritual.org</a>, where there’s a box for each category.</p>) }
+  html = %(<p><img src="#{img}" alt="#{x.(a[:title])}"></p>) + body +
          %(<p><em>This story first appeared on <a href="#{SITE}#/read/#{a[:id]}">vitalityritual.org</a>.</em></p>)
   <<~ITEM
     <item>
