@@ -8,7 +8,9 @@
      /read/turning-23 or /signup is forwarded to the same page with the "#" put back. -->
 <script>
   var path = location.pathname.replace(/^\/+|\/+$/g, '');
-  location.replace('/#/' + path + location.search);
+  /* ?from=... goes in front of the "#", where the app reads it; after it, it would
+     become part of the page name and show "not found" */
+  location.replace('/' + location.search + '#/' + path);
 </script>
 </head><body style="font-family:Georgia,serif;background:#fbf9f5;color:#3b322a;text-align:center;padding:60px 20px">
 <p><a href="/" style="color:#5a4433">Go to vitalityritual.org</a></p>
