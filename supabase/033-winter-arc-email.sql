@@ -89,6 +89,7 @@ declare
   area_ids text[] := '{}';
   area_lbl text[] := '{}';
   wdays    int[];
+  v_fit    boolean;
   items    text[] := array['','','','','','',''];
   txt_items text[] := array['','','','','','',''];
   moved    boolean[] := array[false,false,false,false,false,false,false];
@@ -121,7 +122,7 @@ begin
   if (select count(*) from public.arc_emails where sent_at > now() - interval '1 hour') >= 100 then return false; end if;
 
   -- the answers
-  if v_days not between 2 and 6 or v_time not in ('morning','evening') or v_style not in ('gentle','ambitious')
+  if v_time not in ('morning','evening') or v_style not in ('gentle','ambitious')
      or v_end not in ('dec','jan') then return false; end if;
   begin start_d := (p_plan->>'start')::date; exception when others then return false; end;
   if start_d is null or start_d < current_date - 2 or start_d > current_date + 9 then return false; end if;
@@ -167,6 +168,9 @@ begin
   end loop;
   allg := prim || sec;
   if coalesce(array_length(allg, 1), 0) = 0 then return false; end if;
+  -- workouts only when Fitness is one of the picked categories
+  v_fit := 'fitness' = any(area_ids);
+  if v_fit and v_days not between 2 and 6 then return false; end if;
 
   -- the one-line summary: first three categories
   for i in 1 .. least(3, array_length(prim, 1)) - 1 loop
@@ -182,7 +186,7 @@ begin
   wdays := case v_days when 2 then array[1,5] when 3 then array[0,2,5] when 4 then array[0,1,3,5]
                         when 5 then array[0,1,3,4,5] else array[0,1,2,3,4,5] end;
   foreach g in array allg loop if g.workout is not null then fit := fit || g; end if; end loop;
-  for i in 1 .. array_length(wdays, 1) loop
+  for i in 1 .. case when v_fit then array_length(wdays, 1) else 0 end loop
     di := wdays[i] + 1;
     if coalesce(array_length(fit, 1), 0) > 0 then
       lbl := (fit[((i - 1) % array_length(fit, 1)) + 1]).workout; sub := wt || ' · ' || case when amb then '45 min' else '30 min' end;
@@ -206,9 +210,12 @@ begin
   items[7] := items[7] || '<b>Plan the week</b> <span style="' || muted || '">15 min with your calendar</span><br>';
   txt_items[7] := txt_items[7] || 'Plan the week (15 min with your calendar); ';
   for di in 1 .. 7 loop
-    if not moved[di] then
+    if v_fit and not moved[di] then
       items[di] := '<b style="font-weight:normal;' || muted || '">Rest</b> <span style="' || muted || '">stretch + walk</span><br>' || items[di];
       txt_items[di] := 'Rest (stretch + walk); ' || txt_items[di];
+    elsif not v_fit and items[di] = '' then
+      items[di] := '<b style="font-weight:normal;' || muted || '">Free</b> <span style="' || muted || '">nothing planned</span><br>';
+      txt_items[di] := 'Free (nothing planned); ';
     end if;
     week_h := week_h || '<tr><td style="padding:9px 14px 9px 0;vertical-align:top;font-size:11px;letter-spacing:2px;text-transform:uppercase;' || muted
               || 'border-top:1px solid #d6cec2;width:44px">' || dnames[di] || '</td><td style="padding:9px 0;border-top:1px solid #d6cec2;font-size:14px;line-height:1.55">'
@@ -253,7 +260,7 @@ begin
     || '<p style="margin:0 0 6px;text-align:center;font-size:10px;letter-spacing:3px;text-transform:uppercase;' || muted || '">' || range_t || ' · ' || weeks || ' weeks</p>'
     || '<p style="margin:0 0 10px;text-align:center;' || serif || 'font-size:30px;font-style:italic;color:#7d6d60">Your Winter Arc</p>'
     || '<p style="margin:0 0 8px;text-align:center;' || serif || 'font-size:22px;font-style:italic;line-height:1.35;color:#5a4433">' || line || '</p>'
-    || '<p style="margin:0 0 26px;text-align:center;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;' || muted || '">' || array_to_string(area_lbl, ' · ') || ' · ' || initcap(v_style) || ' · ' || v_days || ' workouts a week</p>'
+    || '<p style="margin:0 0 26px;text-align:center;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;' || muted || '">' || array_to_string(area_lbl, ' · ') || ' · ' || initcap(v_style) || case when v_fit then ' · ' || v_days || ' workouts a week' else '' end || '</p>'
     || '<p style="margin:0 0 8px;' || serif || 'font-size:19px;color:#5a4433">Your weekly rhythm</p>'
     || case when daily_h = '' then '' else '<p style="margin:0 0 10px;padding:9px 12px;background:#f1ede6;font-size:14px"><span style="font-size:10px;letter-spacing:2px;text-transform:uppercase;' || muted || '">Every day</span>&nbsp; ' || daily_h || '</p>' end
     || '<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin:0 0 26px">' || week_h || '</table>'

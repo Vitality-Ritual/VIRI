@@ -137,3 +137,4 @@ These are unreferenced. They are kept because they may be wanted again; delete t
 ## Added 7 Nov 2026: How to Start a Side Project While Working Full-Time
 - `side-project-cover.jpg`: supplied by Margaret in chat, source not recorded (540x720, a typical Pinterest/social save size). Confirm the source or replace it.
 - `winter-arc-planner-cover.jpg`: cover of the Winter Arc planner article, supplied by Margaret in chat 10 Nov 2026 (1122x1402, from a .webp), source not recorded. A styled flat-lay (planner, pen, glasses, exhibition ticket); confirm the source or replace it.
+- `loving-november-cover.jpg`: cover of The Things I’m Loving This November, supplied by Margaret in chat 12 Nov 2026 (1178x1569, from a .webp), source not recorded. A woman from behind with an iced coffee at a white door between red-brick pillars; confirm the source or replace it.
