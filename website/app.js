@@ -271,7 +271,7 @@ const subscribeBox=()=>`<form class="subscribe js-sub" data-place="article-rail"
   <label class="sr-only" for="sub-email-rail">Email address</label>
   <input id="sub-email-rail" name="email" type="email" placeholder="you@example.com" autocomplete="email" required>
   <button class="button small" type="submit">Subscribe</button>
-  <p class="subscribe-note">One email a week. Unsubscribe whenever you like.</p>
+  <p class="subscribe-note">One email a week, plus the free Winter Arc printable when you join.</p>
 </form>`;
 /* The VIRI Edit's sign-up, at the top of the edit's index: one line, no box, so
    it reads as part of the masthead. This page is also where vitalityritual.org/#/subscribe
@@ -283,7 +283,7 @@ const editSignup=(place='read-page',idn='sub-email')=>`<form class="edit-sub js-
     <input id="${idn}" name="email" type="email" placeholder="you@example.com" autocomplete="email" required>
     <button class="button" type="submit">Subscribe</button>
   </div>
-  <p class="edit-sub-note">First looks at new articles and one thing worth trying. One email a week.</p>
+  <p class="edit-sub-note">First looks at new articles and one thing worth trying. One email a week, plus the free Winter Arc printable when you join.</p>
 </form>`;
 /* The box at the end of every article (Phase 1, 12 Nov 2026). On a phone the
    rail's box would sit right under it, so styles.css hides that one there. */
@@ -342,6 +342,13 @@ function printablePage(){return `<section class="page-head edit-head sub-page pr
 <section class="wrap print-more"><img class="print-preview" src="assets/printable-preview.jpg" alt="The three pages of the VIRI Winter Arc printable: a habit tracker, thirty days of small habits, and the season ahead" width="1600" height="680">
   ${arcPromo(false)}
 </section>`;}
+/* Every other sign-up box (13 Nov 2026): the printable is the thank-you, shown in the box's place. */
+function printableThanks(form){const d=document.createElement('div');d.className='sub-thanks';
+  d.innerHTML=`<p class="sub-thanks-head">You’re on the list. The VIRI Edit arrives on Sundays.</p>
+    <a class="button small" href="${PRINTABLE_PDF}" download="VIRI-Winter-Arc-Printable.pdf">Download your free printable</a>
+    <p class="sub-thanks-note">A 30-day habit tracker, thirty days of small habits and a plan for the season ahead.</p>`;
+  form.replaceWith(d);
+  try{window.goatcounter&&window.goatcounter.count&&window.goatcounter.count({path:'printable-thanks',title:'Printable after sign-up',event:true});}catch(e){}}
 function unlockPrintable(){const box=$('#print-get');if(!box)return;
   box.innerHTML=`<div class="print-done"><p class="edit-sub-kicker">You’re on the list</p>
     <a class="button" href="${PRINTABLE_PDF}" download="VIRI-Winter-Arc-Printable.pdf">Download the printable</a>
@@ -4603,6 +4610,7 @@ else if(!feedFetched&&typeof dbLoadFeed==='function'){feedFetched=true;dbLoadFee
     if(r.error){toast(r.error.message);return;}
     form.reset();
     if(form.dataset.place==='printable'){unlockPrintable();return;}
+    printableThanks(form);
     toast(r.data==='already'?'You are already on the list.':'You’re on the list. The VIRI Edit arrives on Sundays.');}));if(path==='explore'&&$('#ex-search')){$('#ex-search').addEventListener('input',e=>{ex.query=e.target.value;exRefresh();});exBindMap();}}
 /* Everything a visitor without an account cannot really do. Clicking any of these
    while signed out goes to the sign-up page instead of opening a form that would

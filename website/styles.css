@@ -2408,3 +2408,7 @@ section.arc-promo .arc-promo-inner > p:not(.arc-promo-kicker){font-size:16px;lin
 @media (max-width:760px){.tools-grid{grid-template-columns:1fr}}
 .arc-print-cta{text-align:center;font-size:14px;line-height:1.7;color:var(--muted);margin:22px auto 0;max-width:52ch}
 .arc-print-cta a{color:var(--cocoa);text-decoration:underline;text-underline-offset:3px}
+.sub-thanks{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;margin-top:clamp(20px,3vw,32px)}
+.sub-thanks-head{font-size:15px;line-height:1.6;margin:0;color:inherit}
+.sub-thanks-note{font-size:12px;line-height:1.6;color:var(--muted);margin:0;max-width:44ch}
+.subscribe .sub-thanks,.rail .sub-thanks{align-items:flex-start;text-align:left}
