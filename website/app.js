@@ -724,13 +724,13 @@ const EDIT_QUESTIONS={
   '1':'What’s one habit you’re trying to build right now?',
   '2':'What’s something you’ve always said you’d do “someday”?',
   '3':'What’s one lesson you had to learn the hard way?',
-  '4':'What’s your winter arc about?'
+  '4':'What’s your current go-to breakfast?'
 };
 const EDIT_QUESTION_NOTES={
   '1':'Morning runs, less scrolling, an actual budget, anything goes.',
   '2':'A race, a solo trip, a book. Tell me yours.',
   '3':'At work, in a friendship, with money. Tell me yours.',
-  '4':'One goal, one habit, or one word. Tell me yours.'
+  '4':'Sweet, savory, or just coffee. Tell me yours.'
 };
 let replySent=null;
 function replyPage(issue){
