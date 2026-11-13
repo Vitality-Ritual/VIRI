@@ -314,6 +314,9 @@ function subscribePage(){return `<section class="page-head edit-head sub-page"><
 </section>`;}
 /* #/tools (13 Nov 2026): every free, interactive VIRI tool in one place. Add new ones to TOOLS. */
 const TOOLS=[
+  {href:'#/quiz',kicker:'Quiz · 1 minute',title:'Which Winter Arc Are You?',
+   text:'Six quick questions to find out what this winter is really about for you, with three habits to start and a result to share to your story.',
+   cta:'Take the quiz',tile:'<span class="tool-tile-big tool-tile-q">?</span><span class="tool-tile-cap">six questions &middot; four arcs</span>'},
   {href:'#/read/winter-arc-planner',kicker:'Interactive · 1 minute',title:'The Winter Arc Planner',
    text:'Answer five quick questions and get a one-page plan for the months ahead: a weekly rhythm, three anchor habits and a goal for each month. Save it as a PDF or share it to your story.',
    cta:'Build my plan',tile:'<span class="tool-tile-big">5</span><span class="tool-tile-cap">questions &middot; one plan</span>'},
@@ -330,6 +333,99 @@ function toolsPage(){return `<section class="page-head edit-head"><div class="wr
   <div class="tool-tile">${t.img?`<img src="${t.img}" alt="" loading="lazy">`:t.tile}</div>
   <div class="tool-body"><p class="tool-kicker">${t.kicker}</p><h2>${t.title}</h2><p>${t.text}</p><span class="tool-cta">${t.cta} ${arrow}</span></div>
 </a>`).join('')}</section>`;}
+/* #/quiz and vitalityritual.org/quiz (13 Nov 2026): "Which winter arc are you?"
+   Six questions, four results, a story image to share, and the sign-up box
+   (which hands over the printable). Each answer points at one result. */
+const QUIZ_Q=[
+  ['It’s Sunday night. You’re…',['In bed by nine with a book','Laying out tomorrow’s workout clothes','Planning the week in your notes app','Clean sheets, face mask, everything in its place']],
+  ['Pick a winter morning.',['No alarm, slow coffee, phone in the other room','A 6 a.m. run in the cold','An hour on your own project before work','The same routine as always: bed made, matcha, out the door']],
+  ['What’s been missing lately?',['Rest','Energy','Momentum','Structure']],
+  ['Your ideal Saturday?',['A bookstore and a long walk','A long run or a class you’ve never tried','A coffee shop and your laptop','Farmers market, meal prep, reset the apartment']],
+  ['Pick a winter outfit.',['An oversized knit and wool socks','A matching set and a puffer','A long coat and loafers','Ivory, head to toe']],
+  ['By March, you want to…',['Feel rested and like yourself again','Be stronger than you were in the fall','Have finally started the thing you keep talking about','Have routines that run on their own']],
+];
+const QUIZ_R=[
+  {id:'quiet-reset',name:'The Quiet Reset',line:'Your winter arc is about rest, not more.',
+   text:'You don’t need a new personality this winter. You need sleep, slower mornings and a phone that lives in another room. This is the season you come back to yourself.',
+   habits:['Charge your phone outside the bedroom','A 20-minute walk without your phone','One slow morning every week'],rule:'Rest is part of the plan.',read:'done-romanticizing'},
+  {id:'comeback',name:'The Comeback Arc',line:'Your winter arc is about getting back to it.',
+   text:'You know how good it feels to be consistent, and you miss it. This winter is about showing up again, a little more each week, until it feels like you again.',
+   habits:['Workout clothes on the minute you wake up','Never miss twice in a row','Try one new class a month'],rule:'A short workout beats a skipped one.',read:'run-essentials'},
+  {id:'builder',name:'The Builder',line:'Your winter arc is about the idea in your notes app.',
+   text:'There’s something you keep talking about starting. This is the winter you give it real hours, starting small enough that you actually begin.',
+   habits:['Protect one hour a week for your thing','One goal per month, not ten','Close the laptop at a set time'],rule:'Start small, start now.',read:'side-project-full-time'},
+  {id:'soft-discipline',name:'The Soft Discipline',line:'Your winter arc is about routines that hold you.',
+   text:'You feel best when life has a shape. This winter is about calm, repeatable routines: the kind that carry you on the days motivation doesn’t show up.',
+   habits:['A weekly reset every Sunday','Make your bed the minute you get up','The same wake-up time, even on weekends'],rule:'Consistency over intensity.',read:'september-reset'},
+];
+let quiz={i:0,a:[]};
+const quizResult=()=>{const n=[0,0,0,0];quiz.a.forEach(k=>n[k]++);let best=0;n.forEach((v,k)=>{if(v>n[best]||(v===n[best]&&k===quiz.a[quiz.a.length-1]))best=k;});return QUIZ_R[best];};
+function quizView(){
+  if(quiz.i<QUIZ_Q.length){const [q,opts]=QUIZ_Q[quiz.i];
+    return `<div class="quiz-card"><p class="quiz-step">Question ${quiz.i+1} of ${QUIZ_Q.length}</p>
+      <div class="quiz-bar"><span style="width:${Math.round(quiz.i/QUIZ_Q.length*100)}%"></span></div>
+      <h2>${q}</h2><div class="quiz-opts">${opts.map((o,k)=>`<button type="button" class="quiz-opt" data-quiz-ans="${k}">${o}</button>`).join('')}</div>
+      ${quiz.i?'<button type="button" class="quiz-back" data-quiz="back">Back</button>':''}</div>`;}
+  const r=quizResult(), a=allArticles().find(x=>x.id===r.read);
+  return `<div class="quiz-card quiz-result"><p class="quiz-step">Your winter arc is</p><h2 class="quiz-name">${r.name}</h2>
+    <p class="quiz-line">${r.line}</p><p>${r.text}</p>
+    <p class="quiz-step">Three anchor habits</p><ol class="quiz-habits">${r.habits.map(h=>`<li>${h}</li>`).join('')}</ol>
+    <p class="quiz-rule">“${r.rule}”</p>
+    <div class="quiz-actions"><button type="button" class="button" data-quiz="share">Share to your story</button>
+      <a class="button quiz-alt" href="#/read/winter-arc-planner">Build your full plan</a></div>
+    <button type="button" class="quiz-back" data-quiz="again">Take it again</button>
+    ${a?`<p class="quiz-read">Made for ${r.name.replace(/^The /,'the ')}: <a href="#/read/${a.id}">${a.title}</a></p>`:''}</div>
+    <div class="quiz-sub"><p class="eyebrow">Free with the Sunday email</p><h3>Get the Winter Arc printable</h3>
+    ${editSignup('quiz-'+r.id,'sub-email-quiz')}</div>`;
+}
+function quizPage(){return `<section class="page-head edit-head quiz-head"><div class="wrap">
+  <p class="eyebrow">Free quiz &middot; 1 minute</p>
+  <h1>Which winter arc are you?</h1>
+  <p>Six quick questions. Find out what this winter is really about for you, and get three habits to start with.</p>
+</div></section><section class="wrap quiz-wrap" id="quiz-root">${quizView()}</section>`;}
+function quizDraw(){const r=$('#quiz-root');if(!r)return;r.innerHTML=quizView();
+  r.querySelectorAll('form.js-sub').forEach(f=>f.addEventListener('submit',async e=>{e.preventDefault();
+    const input=f.querySelector('input[type=email]'),btn=f.querySelector('button[type=submit]');if(btn)btn.disabled=true;
+    const res=await dbSubscribe(input.value,subSource(f.dataset.place||'quiz'));if(btn)btn.disabled=false;
+    if(res.error){toast(res.error.message);return;}printableThanks(f);}));
+  r.scrollIntoView({block:'start',behavior:'smooth'});}
+document.addEventListener('click',e=>{
+  const ans=e.target.closest('[data-quiz-ans]');
+  if(ans){quiz.a[quiz.i]=+ans.dataset.quizAns;quiz.i++;
+    if(quiz.i===QUIZ_Q.length){try{window.goatcounter&&window.goatcounter.count&&window.goatcounter.count({path:'quiz-'+quizResult().id,title:'Quiz result',event:true});}catch(_){}}
+    quizDraw();return;}
+  const b=e.target.closest('[data-quiz]');if(!b)return;
+  if(b.dataset.quiz==='back'){quiz.i=Math.max(0,quiz.i-1);quizDraw();}
+  else if(b.dataset.quiz==='again'){quiz={i:0,a:[]};quizDraw();}
+  else if(b.dataset.quiz==='share'){b.disabled=true;quizStory(quizResult()).catch(()=>{}).finally(()=>{b.disabled=false;});}
+});
+async function quizStory(r){
+  try{await Promise.all(['400 60px "Bodoni Moda"','italic 400 60px "Bodoni Moda"','400 120px Italianno','400 30px Jost'].map(f=>document.fonts.load(f)));}catch(e){}
+  const W=1080,H=1920,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  const BG='#efe9e1',INK='#3b322a',COCOA='#5a4433',MUTED='#7d6d60',RULE='#cdbfb0';
+  x.fillStyle=BG;x.fillRect(0,0,W,H);x.strokeStyle=RULE;x.lineWidth=2;x.strokeRect(54,54,W-108,H-108);
+  x.textAlign='center';x.textBaseline='alphabetic';
+  const spaced=(t,y,px,col,gap)=>{x.font=`400 ${px}px Jost, sans-serif`;x.fillStyle=col;const ch=[...t];const ws=ch.map(k=>x.measureText(k).width);const tot=ws.reduce((a,b)=>a+b,0)+gap*(ch.length-1);let cx=W/2-tot/2;x.textAlign='left';ch.forEach((k,i)=>{x.fillText(k,cx,y);cx+=ws[i]+gap;});x.textAlign='center';};
+  const wrap=(t,font,max)=>{x.font=font;const out=[];let cur='';t.split(/\s+/).forEach(w=>{const n=cur?cur+' '+w:w;if(x.measureText(n).width>max&&cur){out.push(cur);cur=w;}else cur=n;});if(cur)out.push(cur);return out;};
+  spaced('THE VIRI EDIT',300,28,MUTED,9);
+  spaced('MY WINTER ARC IS',420,26,MUTED,7);
+  let size=150,nl;do{nl=wrap(r.name,`400 ${size}px Italianno, cursive`,900);if(nl.length<=2)break;size-=10;}while(size>90);
+  let y=560;x.fillStyle=COCOA;nl.forEach(l=>{x.font=`400 ${size}px Italianno, cursive`;x.fillText(l,W/2,y);y+=size*0.95;});
+  y+=20;x.fillStyle=INK;wrap(r.line,'400 56px "Bodoni Moda", Georgia, serif',820).forEach(l=>{x.font='400 56px "Bodoni Moda", Georgia, serif';x.fillText(l,W/2,y);y+=56*1.3;});
+  y+=30;x.fillStyle=RULE;x.fillRect(W/2-40,y,80,2);y+=90;
+  spaced('THREE ANCHOR HABITS',y,24,MUTED,7);y+=78;
+  r.habits.forEach(h=>{wrap(h,'400 46px "Bodoni Moda", Georgia, serif',820).forEach(l=>{x.font='400 46px "Bodoni Moda", Georgia, serif';x.fillStyle=INK;x.fillText(l,W/2,y);y+=46*1.25;});y+=34;});
+  x.font='italic 400 50px "Bodoni Moda", Georgia, serif';x.fillStyle=COCOA;x.fillText('Which winter arc are you?',W/2,Math.min(Math.max(y+40,1580),1610));
+  spaced('VITALITYRITUAL.ORG/QUIZ',Math.min(Math.max(y+115,1655),1685),28,INK,9);
+  const blob=await new Promise(res=>c.toBlob(res,'image/png'));if(!blob)return;
+  try{window.goatcounter&&window.goatcounter.count&&window.goatcounter.count({path:'quiz-share',title:'Shared quiz result',event:true});}catch(e){}
+  const file=new File([blob],'my-winter-arc.png',{type:'image/png'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:r.name,text:`My winter arc is ${r.name}. Which one are you? vitalityritual.org/quiz/`});return;}
+    catch(e){if(e&&e.name==='AbortError')return;}}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='my-winter-arc.png';document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
+}
 /* vitalityritual.org/printable (13 Nov 2026): the free Winter Arc printable,
    unlocked by joining the VIRI Edit. Sign-ups here are tagged "printable:<from>". */
 const PRINTABLE_PDF='/free/winter-arc-printable.pdf';
@@ -4596,7 +4692,7 @@ function mount(el){
 }
 return {mount};
 })();
-function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':if(signedIn()){location.replace('#/feed');return;}html=editorialHome();break;case 'community':html=id==='about'?aboutPage():home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'subscribe':html=subscribePage();break;case 'printable':html=printablePage();break;case 'tools':html=toolsPage();break;case 'about':html=viriAboutPage();break;case 'connect':html=contactPage();break;case 'reply':html=replyPage(id);break;case 'thanks':html=thanksPage();break;case 'check-email':html=checkEmailPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'forgot':html=forgotPage();break;case 'notifications':html=notificationsPage();break;case 'confirm-subscription':html=confirmSubscriptionPage(id);break;case 'stop-emails':html=stopEmailsPage(id);break;case 'reset-password':html=resetPasswordPage();break;case 'profile':html=profilePage();break;case 'member':html=memberPage(id);if(typeof ensureMember==='function')ensureMember(id);break;case 'feed':html=feedPage();break;case 'i':html=invitePage(id);break;case 'post':html=postPage(id);break;case 'find':html=findPage();break;case 'messages':html=messagesPage();break;case 'settings':html=settingsPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=privacyPage();break;case 'terms':html=termsPage();break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',community:'Community',explore:'Explore',studios:'Studios & gyms',read:'The VIRI edit',subscribe:'Subscribe to the VIRI Edit',about:'About VIRI',connect:'Contact us',reply:'Reply to The VIRI Edit',thanks:'Thank you','check-email':'Check your email',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',forgot:'Forgot your password',notifications:'Notifications','confirm-subscription':'Confirm your subscription','stop-emails':'Stop the daily email','reset-password':'Choose a new password',profile:'Your circle',member:'A member',feed:'Feed',post:'Post',i:'You’re invited',find:'Find your people',messages:'Messages',settings:'Settings',book:'Book this class',privacy:'Your privacy',terms:'Terms of service'};document.title=`VIRI — ${names[path]||'Find your way'}`;if(path==='read'&&id){const art=allArticles().find(x=>x.id===id);if(art)document.title=`${art.title} — The VIRI Edit`;}$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#arc-tool'))ARC.mount($('#arc-tool'));if($('#fave-form'))bindFaves();if($('#auth-form'))bindAuth();if(path==='stop-emails'&&stopEmails.status==='start'){stopEmails.status='working';const tok=stopEmails.token;dbStopDigestEmails(tok).then(r=>{if(stopEmails.token!==tok)return;stopEmails.status=r&&r.data?'ok':'bad';if((location.hash||'').startsWith('#/stop-emails'))render(false);});}if(path==='forgot')bindForgot();if(path==='confirm-subscription'&&subConfirm.status==='start'){subConfirm.status='working';const tok=subConfirm.token;dbConfirmSubscription(tok).then(r=>{if(subConfirm.token!==tok)return;subConfirm.status=r&&r.data?'ok':'bad';if((location.hash||'').startsWith('#/confirm-subscription'))render(false);});}if(path==='notifications'&&state.unseenNotes&&typeof dbMarkNotificationsRead==='function')dbMarkNotificationsRead().then(()=>syncAccountLinks());if(path==='reset-password')bindReset();if(path==='read'&&id)updateReadProgress();if(path==='subscribe'&&matchMedia('(pointer:fine)').matches)$('#sub-email')?.focus({preventScroll:true});countView();/* the cursor waits in the field on a computer; on a phone it would pop the keyboard over the page */checkNewWeek();maybeWeekPrompt(path);if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='reply')bindReply();if(path==='check-email')startConfirmWatch();if(path==='find'){$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();runSearch();});if(typeof dbRoutineMatches==='function'&&state.roomMatches===undefined){state.roomMatches=[];dbRoutineMatches().then(()=>{if(location.hash==='#/find')render(false);});}if(state.found===undefined||state.found===null)runSearch();}if(path==='profile'&&signedIn()&&!goalHistoryLoaded&&typeof dbLoadGoalHistory==='function'){goalHistoryLoaded=true;dbLoadGoalHistory().then(r=>{if(r===null)state.goalHistory=null;if(location.hash==='#/profile')render(false);});}if(path==='profile'&&signedIn())checkAdmin();if(path==='messages'){$('#msg-form')?.addEventListener('submit',e=>{e.preventDefault();sendMessage(e.target);});const b=$('#msg-body');if(b)b.scrollTop=b.scrollHeight;if(msgThread&&typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);}/* Fetch on arrival, not on every render — render() re-runs this block, so an
+function render(scroll=true){revealObserver?.disconnect();const [path,id]=(location.hash.replace(/^#\/?/,'')||'').split('/');let html;switch(path){case '':if(signedIn()){location.replace('#/feed');return;}html=editorialHome();break;case 'community':html=id==='about'?aboutPage():home();break;case 'explore':html=explorePage();break;case 'studios':html=studiosPage(id);break;case 'read':html=readPage(id);break;case 'subscribe':html=subscribePage();break;case 'printable':html=printablePage();break;case 'quiz':html=quizPage();break;case 'tools':html=toolsPage();break;case 'about':html=viriAboutPage();break;case 'connect':html=contactPage();break;case 'reply':html=replyPage(id);break;case 'thanks':html=thanksPage();break;case 'check-email':html=checkEmailPage();break;case 'signup':html=signupPage();break;case 'start':html=polaroidPage();break;case 'join':html=joinPage();break;case 'login':html=authPage();break;case 'forgot':html=forgotPage();break;case 'notifications':html=notificationsPage();break;case 'confirm-subscription':html=confirmSubscriptionPage(id);break;case 'stop-emails':html=stopEmailsPage(id);break;case 'reset-password':html=resetPasswordPage();break;case 'profile':html=profilePage();break;case 'member':html=memberPage(id);if(typeof ensureMember==='function')ensureMember(id);break;case 'feed':html=feedPage();break;case 'i':html=invitePage(id);break;case 'post':html=postPage(id);break;case 'find':html=findPage();break;case 'messages':html=messagesPage();break;case 'settings':html=settingsPage();break;case 'book':html=bookPage(id);break;case 'privacy':html=privacyPage();break;case 'terms':html=termsPage();break;default:html=notFound();}$('#main').innerHTML=html;renderFooter();const names={'':'Vitality Ritual',community:'Community',explore:'Explore',studios:'Studios & gyms',read:'The VIRI edit',subscribe:'Subscribe to the VIRI Edit',about:'About VIRI',connect:'Contact us',reply:'Reply to The VIRI Edit',thanks:'Thank you','check-email':'Check your email',signup:'Sign up',start:'Join now',join:'Create your profile',login:'Welcome back',forgot:'Forgot your password',notifications:'Notifications','confirm-subscription':'Confirm your subscription','stop-emails':'Stop the daily email','reset-password':'Choose a new password',profile:'Your circle',member:'A member',feed:'Feed',post:'Post',i:'You’re invited',find:'Find your people',messages:'Messages',settings:'Settings',book:'Book this class',privacy:'Your privacy',terms:'Terms of service'};document.title=`VIRI — ${names[path]||'Find your way'}`;if(path==='read'&&id){const art=allArticles().find(x=>x.id===id);if(art)document.title=`${art.title} — The VIRI Edit`;}$$('.site-header nav a').forEach(a=>{if(a.getAttribute('href')===`#/${path}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#menu-panel').hidden=true;$('#menu-button').setAttribute('aria-expanded','false');$('#account-panel').hidden=true;$('#account-button').setAttribute('aria-expanded','false');syncAccountLinks();if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#main').focus({preventScroll:true});}initPageMotion();if($('#arc-tool'))ARC.mount($('#arc-tool'));if($('#fave-form'))bindFaves();if($('#auth-form'))bindAuth();if(path==='stop-emails'&&stopEmails.status==='start'){stopEmails.status='working';const tok=stopEmails.token;dbStopDigestEmails(tok).then(r=>{if(stopEmails.token!==tok)return;stopEmails.status=r&&r.data?'ok':'bad';if((location.hash||'').startsWith('#/stop-emails'))render(false);});}if(path==='forgot')bindForgot();if(path==='confirm-subscription'&&subConfirm.status==='start'){subConfirm.status='working';const tok=subConfirm.token;dbConfirmSubscription(tok).then(r=>{if(subConfirm.token!==tok)return;subConfirm.status=r&&r.data?'ok':'bad';if((location.hash||'').startsWith('#/confirm-subscription'))render(false);});}if(path==='notifications'&&state.unseenNotes&&typeof dbMarkNotificationsRead==='function')dbMarkNotificationsRead().then(()=>syncAccountLinks());if(path==='reset-password')bindReset();if(path==='read'&&id)updateReadProgress();if(path==='subscribe'&&matchMedia('(pointer:fine)').matches)$('#sub-email')?.focus({preventScroll:true});countView();/* the cursor waits in the field on a computer; on a phone it would pop the keyboard over the page */checkNewWeek();maybeWeekPrompt(path);if(path==='signup')bindSignup();if(path==='connect')bindContact();if(path==='reply')bindReply();if(path==='check-email')startConfirmWatch();if(path==='find'){$('#find-form')?.addEventListener('submit',e=>{e.preventDefault();runSearch();});if(typeof dbRoutineMatches==='function'&&state.roomMatches===undefined){state.roomMatches=[];dbRoutineMatches().then(()=>{if(location.hash==='#/find')render(false);});}if(state.found===undefined||state.found===null)runSearch();}if(path==='profile'&&signedIn()&&!goalHistoryLoaded&&typeof dbLoadGoalHistory==='function'){goalHistoryLoaded=true;dbLoadGoalHistory().then(r=>{if(r===null)state.goalHistory=null;if(location.hash==='#/profile')render(false);});}if(path==='profile'&&signedIn())checkAdmin();if(path==='messages'){$('#msg-form')?.addEventListener('submit',e=>{e.preventDefault();sendMessage(e.target);});const b=$('#msg-body');if(b)b.scrollTop=b.scrollHeight;if(msgThread&&typeof dbMarkThreadRead==='function')dbMarkThreadRead(msgThread);}/* Fetch on arrival, not on every render — render() re-runs this block, so an
    unguarded fetch-then-render is an infinite loop. The flag clears when you
    leave, so coming back fetches again. */
 if(path!=='feed')feedFetched=false;
