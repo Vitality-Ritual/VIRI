@@ -2381,3 +2381,10 @@ summary.pf-section-head::-webkit-details-marker{display:none}
 .article-prose .end-sub-kicker{font-size:9.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--taupe-deep);margin:0 0 10px;line-height:1.5}
 section.arc-promo p.arc-promo-kicker{font-size:9.5px;line-height:1.6;letter-spacing:.26em;margin:0 0 12px;color:var(--on-dark-dim)}
 section.arc-promo .arc-promo-inner > p:not(.arc-promo-kicker){font-size:16px;line-height:1.7}
+
+/* Free Winter Arc printable page (13 Nov 2026) */
+.print-page .edit-sub-kicker{display:none}
+.print-done{display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:clamp(28px,3.4vw,44px)}
+.print-done .edit-sub-kicker{display:block}
+.print-more{padding-bottom:80px}
+.print-preview{display:block;width:100%;height:auto;margin:0 auto clamp(40px,5vw,64px);border:1px solid var(--line)}
