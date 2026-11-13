@@ -730,7 +730,7 @@ const EDIT_QUESTION_NOTES={
   '1':'Morning runs, less scrolling, an actual budget, anything goes.',
   '2':'A race, a solo trip, a book. Tell me yours.',
   '3':'At work, in a friendship, with money. Tell me yours.',
-  '4':'Sweet, savory, or just coffee. Tell me yours.'
+  '4':'Sweet or savory, tell me yours.'
 };
 let replySent=null;
 function replyPage(issue){
