@@ -2434,3 +2434,7 @@ section.arc-promo .arc-promo-inner > p:not(.arc-promo-kicker){font-size:16px;lin
 .tool-tile-q{font-family:var(--display);font-style:italic}
 .button.quiz-alt{background:transparent;color:var(--cocoa);border-color:var(--cocoa)}.button.quiz-alt:hover{background:var(--cocoa);color:var(--paper)}
 .quiz-result .quiz-step+ol,.quiz-result p+.quiz-step{margin-top:26px}.quiz-habits{font-size:1.05rem!important}
+.tool-tile-photo{position:relative;background:#2f2620}
+.tool-tile-photo img{object-fit:cover!important;padding:0!important;object-position:50% 35%}
+.tool-tile-over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;font-family:var(--display);font-size:clamp(1.4rem,2.6vw,2rem);line-height:1.2;background:rgba(0,0,0,.22);text-shadow:0 2px 16px rgba(0,0,0,.5)}
+.tool-credit{font-size:11px!important;color:var(--muted);margin:-8px 0 14px!important}
