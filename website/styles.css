@@ -2390,3 +2390,19 @@ section.arc-promo .arc-promo-inner > p:not(.arc-promo-kicker){font-size:16px;lin
 .print-preview{display:block;width:100%;height:auto;margin:0 auto clamp(40px,5vw,64px);border:1px solid var(--line)}
 .arc-promo-print{margin-top:18px;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--on-dark);text-decoration:underline;text-underline-offset:4px}
 .arc-promo-print svg{width:12px;height:12px;vertical-align:-1px}
+/* Free tools page (13 Nov 2026) */
+.tools-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(20px,3vw,36px);padding-bottom:90px}
+.tool-card{display:flex;flex-direction:column;background:var(--paper,#fbf9f5);border:1px solid var(--line);color:inherit;text-decoration:none}
+.tool-tile{aspect-ratio:16/9;background:var(--cocoa);color:var(--on-dark);display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
+.tool-tile:has(img){background:#efe9e1}
+.tool-tile img{width:100%;height:100%;object-fit:contain;display:block;padding:6% 4%;box-sizing:border-box}
+.tool-tile-big{font-family:var(--display);font-size:clamp(4rem,9vw,7rem);line-height:1}
+.tool-tile-cap{font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--on-dark-dim);margin-top:10px}
+.tool-body{padding:clamp(20px,2.6vw,32px)}
+.tool-kicker{font-size:9.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--taupe-deep);margin:0 0 10px}
+.tool-body h2{font-family:var(--display);font-weight:400;font-size:clamp(1.5rem,2.4vw,2rem);line-height:1.15;margin:0 0 12px}
+.tool-body p{font-size:15px;line-height:1.7;color:var(--muted);margin:0 0 18px}
+.tool-cta{font-size:10px;letter-spacing:.24em;text-transform:uppercase;border-bottom:1px solid currentColor;padding-bottom:3px}
+.tool-cta svg{width:12px;height:12px;vertical-align:-1px}
+.tool-card:hover .tool-cta{color:var(--cocoa)}
+@media (max-width:760px){.tools-grid{grid-template-columns:1fr}}
