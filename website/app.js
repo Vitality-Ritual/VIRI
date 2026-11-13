@@ -4532,7 +4532,8 @@ function plan(){
     <footer class="arc-sheet-foot"><span class="arc-label">vitalityritual.org · The VIRI Winter Arc</span></footer>
   </article>
   ${mailNote?`<p class="arc-mailed">${esc(mailNote)}</p>`:''}
-  <div class="arc-actions"><button type="button" class="arc-btn" data-act="print">Save as PDF</button><button type="button" class="arc-btn" data-act="share">Share to your story</button><button type="button" class="arc-link" data-act="edit">Edit answers</button><button type="button" class="arc-link" data-act="reset">Start over</button></div>`;
+  <div class="arc-actions"><button type="button" class="arc-btn" data-act="print">Save as PDF</button><button type="button" class="arc-btn" data-act="share">Share to your story</button><button type="button" class="arc-link" data-act="edit">Edit answers</button><button type="button" class="arc-link" data-act="reset">Start over</button></div>
+  <p class="arc-print-cta">Want it on paper? <a href="#/printable">Get the free Winter Arc printable</a>: a 30-day habit tracker and thirty days of small habits.</p>`;
 }
 
 function draw(scroll){

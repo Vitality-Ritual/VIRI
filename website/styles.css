@@ -2406,3 +2406,5 @@ section.arc-promo .arc-promo-inner > p:not(.arc-promo-kicker){font-size:16px;lin
 .tool-cta svg{width:12px;height:12px;vertical-align:-1px}
 .tool-card:hover .tool-cta{color:var(--cocoa)}
 @media (max-width:760px){.tools-grid{grid-template-columns:1fr}}
+.arc-print-cta{text-align:center;font-size:14px;line-height:1.7;color:var(--muted);margin:22px auto 0;max-width:52ch}
+.arc-print-cta a{color:var(--cocoa);text-decoration:underline;text-underline-offset:3px}

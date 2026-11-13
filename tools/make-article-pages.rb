@@ -83,7 +83,7 @@ arts.each do |a|
   out << "website/read/#{a[:id]}/index.html"
 end
 
-urls = ["#{SITE}/"] + arts.map { |a| "#{SITE}/read/#{a[:id]}/" }
+urls = ["#{SITE}/", "#{SITE}/tools/", "#{SITE}/printable/", "#{SITE}/subscribe/"] + arts.map { |a| "#{SITE}/read/#{a[:id]}/" }
 sitemap = %(<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n) +
   urls.map { |u| "  <url><loc>#{u}</loc></url>" }.join("\n") + "\n</urlset>\n"
 File.write(File.join(WEB, 'sitemap.xml'), sitemap)
