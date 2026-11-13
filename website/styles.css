@@ -2412,3 +2412,25 @@ section.arc-promo .arc-promo-inner > p:not(.arc-promo-kicker){font-size:16px;lin
 .sub-thanks-head{font-size:15px;line-height:1.6;margin:0;color:inherit}
 .sub-thanks-note{font-size:12px;line-height:1.6;color:var(--muted);margin:0;max-width:44ch}
 .subscribe .sub-thanks,.rail .sub-thanks{align-items:flex-start;text-align:left}
+/* Which winter arc are you? quiz (13 Nov 2026) */
+.quiz-wrap{padding-bottom:90px;max-width:720px;margin:0 auto}
+.quiz-card{background:var(--paper,#fbf9f5);border:1px solid var(--line);padding:clamp(24px,4vw,48px);text-align:center}
+.quiz-step{font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--taupe-deep);margin:0 0 12px}
+.quiz-bar{height:2px;background:var(--line);margin:0 auto 28px;max-width:320px}.quiz-bar span{display:block;height:100%;background:var(--cocoa)}
+.quiz-card h2{font-family:var(--display);font-weight:400;font-size:clamp(1.6rem,3.4vw,2.3rem);line-height:1.15;margin:0 0 26px}
+.quiz-opts{display:grid;gap:12px}
+.quiz-opt{font:inherit;font-size:16px;line-height:1.4;padding:16px 20px;border:1px solid var(--line-2,#cdbfb0);background:transparent;color:inherit;cursor:pointer;text-align:center;border-radius:2px}
+.quiz-opt:hover,.quiz-opt:focus-visible{border-color:var(--cocoa);background:rgba(90,68,51,.05);outline:none}
+.quiz-back{margin-top:22px;background:none;border:0;font:inherit;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:4px}
+.quiz-name{font-size:clamp(2.2rem,6vw,3.4rem)!important;margin-bottom:10px!important}
+.quiz-line{font-family:var(--display);font-style:italic;font-size:1.2rem;margin:0 0 16px}
+.quiz-result p{line-height:1.7;color:var(--muted);max-width:52ch;margin-left:auto;margin-right:auto}
+.quiz-habits{list-style:none;padding:0;margin:0 0 20px;display:grid;gap:8px;font-family:var(--display);font-size:1.15rem}
+.quiz-rule{font-family:var(--display);font-style:italic;color:var(--cocoa)!important;font-size:1.1rem}
+.quiz-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:24px}
+.quiz-read{font-size:14px;margin-top:20px}.quiz-read a{color:var(--cocoa)}
+.quiz-sub{margin-top:clamp(28px,4vw,44px);text-align:center;display:flex;flex-direction:column;align-items:center}
+.quiz-sub h3{font-family:var(--display);font-weight:400;font-size:1.6rem;margin:6px 0 0}
+.tool-tile-q{font-family:var(--display);font-style:italic}
+.button.quiz-alt{background:transparent;color:var(--cocoa);border-color:var(--cocoa)}.button.quiz-alt:hover{background:var(--cocoa);color:var(--paper)}
+.quiz-result .quiz-step+ol,.quiz-result p+.quiz-step{margin-top:26px}.quiz-habits{font-size:1.05rem!important}
