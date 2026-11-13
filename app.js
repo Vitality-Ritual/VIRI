@@ -4396,6 +4396,55 @@ function oneLiner(gs){
   s=s.charAt(0).toUpperCase()+s.slice(1); return s.endsWith('”')?s.slice(0,-1)+'.”':s+'.';
 }
 
+/* "Share to your story": draws the plan as a 1080x1920 image (Instagram story size)
+   with the link back to the planner, then opens the phone's share sheet or downloads it. */
+async function storyImage(){
+  const tx=s=>{const e=document.createElement('div'); e.innerHTML=String(s||''); return e.textContent.trim();};
+  const gs=chosen(), d=dates(), amb=S.style==='ambitious';
+  const habits=gs.map(g=>[g.habit[0],amb?g.habit[2]:g.habit[1]]);
+  for(const h of DEFAULT_HABITS){if(habits.length>=3)break; habits.push(h);}
+  const line=tx(oneLiner(primary().slice(0,3)));
+  try{await Promise.all(['400 60px "Bodoni Moda"','italic 400 60px "Bodoni Moda"','400 120px Italianno','400 30px Jost'].map(f=>document.fonts.load(f)));}catch(e){}
+  const W=1080,H=1920,c=document.createElement('canvas'); c.width=W; c.height=H; const x=c.getContext('2d');
+  const BG='#efe9e1',INK='#3b322a',COCOA='#5a4433',MUTED='#7d6d60',RULE='#cdbfb0';
+  x.fillStyle=BG; x.fillRect(0,0,W,H);
+  x.strokeStyle=RULE; x.lineWidth=2; x.strokeRect(54,54,W-108,H-108);
+  x.textBaseline='alphabetic'; x.textAlign='center';
+  const spaced=(t,y,px,col,gap)=>{x.font=`400 ${px}px Jost, sans-serif`; x.fillStyle=col; const ch=[...t]; const ws=ch.map(k=>x.measureText(k).width); const tot=ws.reduce((a,b)=>a+b,0)+gap*(ch.length-1); let cx=W/2-tot/2; x.textAlign='left'; ch.forEach((k,i)=>{x.fillText(k,cx,y); cx+=ws[i]+gap;}); x.textAlign='center';};
+  const wrap=(t,font,max)=>{x.font=font; const out=[]; let cur=''; t.split(/\s+/).forEach(w=>{const n=cur?cur+' '+w:w; if(x.measureText(n).width>max&&cur){out.push(cur); cur=w;}else cur=n;}); if(cur)out.push(cur); return out;};
+  /* the top ~250px and bottom ~250px of a story sit under Instagram's own buttons */
+  spaced('THE VIRI EDIT',300,28,MUTED,9);
+  x.font='400 165px Italianno, cursive'; x.fillStyle=COCOA; x.fillText('My Winter Arc',W/2,500);
+  spaced(`${tx(d.label).toUpperCase()} · ${d.weeks} WEEKS`,615,26,MUTED,6);
+  let size=70, ll; do{ll=wrap(line,`400 ${size}px "Bodoni Moda", Georgia, serif`,840); if(ll.length<=4)break; size-=6;}while(size>40);
+  let y=760; x.fillStyle=INK; ll.forEach(l=>{x.fillText(l,W/2,y); y+=size*1.28;});
+  y+=30; x.fillStyle=RULE; x.fillRect(W/2-40,y,80,2); y+=95;
+  spaced('THREE ANCHOR HABITS',y,24,MUTED,7); y+=80;
+  /* habits shrink until the block ends above the sign-off (long goals wrap to 2 lines) */
+  const hs=habits.slice(0,3).map(([b,s])=>[tx(b),tx(s)]);
+  const sizes=[[52,33],[46,30],[42,28],[38,26]];
+  const lay=([tp,sp])=>hs.map(([b,s])=>({bl:wrap(b,`400 ${tp}px "Bodoni Moda", Georgia, serif`,820),sl:wrap(s,`400 ${sp}px Jost, sans-serif`,820).slice(0,2)}));
+  let pick=sizes[sizes.length-1], rows=lay(pick);
+  for(const z of sizes){const r=lay(z), h=r.reduce((t,o)=>t+o.bl.length*z[0]*1.23+o.sl.length*z[1]*1.4+z[0]*1.1,0); if(y+h<=1500){pick=z; rows=r; break;}}
+  const [tp,sp]=pick;
+  rows.forEach(({bl,sl})=>{
+    x.font=`400 ${tp}px "Bodoni Moda", Georgia, serif`; x.fillStyle=INK; bl.forEach(l=>{x.fillText(l,W/2,y); y+=tp*1.23;});
+    x.font=`400 ${sp}px Jost, sans-serif`; x.fillStyle=MUTED; sl.forEach(l=>{x.fillText(l,W/2,y); y+=sp*1.4;});
+    y+=tp*1.1;
+  });
+  x.font='italic 400 52px "Bodoni Moda", Georgia, serif'; x.fillStyle=COCOA; x.fillText('Build yours, free.',W/2,Math.min(Math.max(y+50,1580),1610));
+  spaced('VITALITYRITUAL.ORG',Math.min(Math.max(y+125,1655),1685),30,INK,10);
+  const blob=await new Promise(r=>c.toBlob(r,'image/png'));
+  if(!blob)return;
+  try{window.goatcounter&&window.goatcounter.count&&window.goatcounter.count({path:'planner-share',title:'Shared plan image',event:true});}catch(e){}
+  const file=new File([blob],'my-winter-arc.png',{type:'image/png'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:'My Winter Arc',text:'Built mine with the free VIRI Winter Arc planner: vitalityritual.org/read/winter-arc-planner/'}); return;}
+    catch(e){if(e&&e.name==='AbortError')return;}
+  }
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='my-winter-arc.png'; document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},1000);
+}
 function plan(){
   const gs=chosen(), d=dates(), amb=S.style==='ambitious';
   const wt=S.time==='morning'?'6:30 am':'6:00 pm', bt=S.time==='morning'?'7:30 am':'7:30 pm', bed=S.time==='morning'?'9:30':'10:30';
@@ -4445,7 +4494,7 @@ function plan(){
     <footer class="arc-sheet-foot"><span class="arc-label">vitalityritual.org · The VIRI Winter Arc</span></footer>
   </article>
   ${mailNote?`<p class="arc-mailed">${esc(mailNote)}</p>`:''}
-  <div class="arc-actions"><button type="button" class="arc-btn" data-act="print">Save as PDF</button><button type="button" class="arc-link" data-act="edit">Edit answers</button><button type="button" class="arc-link" data-act="reset">Start over</button></div>`;
+  <div class="arc-actions"><button type="button" class="arc-btn" data-act="print">Save as PDF</button><button type="button" class="arc-btn" data-act="share">Share to your story</button><button type="button" class="arc-link" data-act="edit">Edit answers</button><button type="button" class="arc-link" data-act="reset">Start over</button></div>`;
 }
 
 function draw(scroll){
@@ -4475,6 +4524,7 @@ function onClick(e){
   if(act==='back-quiz'){view='quiz'; return draw(true);}
   if(act==='edit'){view='quiz'; step=0; return draw(true);}
   if(act==='reset'){S=fresh(); step=0; view='quiz'; startISO=null; return draw(true);}
+  if(act==='share'){b.disabled=true; storyImage().catch(()=>{}).finally(()=>{b.disabled=false;}); return;}
   if(act==='print'){document.documentElement.classList.add('arc-print'); try{window.print();}finally{setTimeout(()=>document.documentElement.classList.remove('arc-print'),500);} }
 }
 function onInput(e){
