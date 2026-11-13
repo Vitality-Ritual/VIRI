@@ -316,7 +316,7 @@ function subscribePage(){return `<section class="page-head edit-head sub-page"><
 const TOOLS=[
   {href:'#/quiz',kicker:'Quiz · 1 minute',title:'Which Winter Arc Are You?',
    text:'Six quick questions to find out what this winter is really about for you, with three habits to start and a result to share to your story.',
-   cta:'Take the quiz',tile:'<span class="tool-tile-big tool-tile-q">?</span><span class="tool-tile-cap">six questions &middot; four arcs</span>'},
+   cta:'Take the quiz',photo:'assets/quiz-cover.jpg',over:'Which winter arc<br>are you?',credit:'Photo via Pinterest'},
   {href:'#/read/winter-arc-planner',kicker:'Interactive · 1 minute',title:'The Winter Arc Planner',
    text:'Answer five quick questions and get a one-page plan for the months ahead: a weekly rhythm, three anchor habits and a goal for each month. Save it as a PDF or share it to your story.',
    cta:'Build my plan',tile:'<span class="tool-tile-big">5</span><span class="tool-tile-cap">questions &middot; one plan</span>'},
@@ -330,8 +330,8 @@ function toolsPage(){return `<section class="page-head edit-head"><div class="wr
   <p>Free things we made to help you plan, track and actually keep going. More are on the way.</p>
 </div></section>
 <section class="wrap tools-grid">${TOOLS.map(t=>`<a class="tool-card" href="${t.href}">
-  <div class="tool-tile">${t.img?`<img src="${t.img}" alt="" loading="lazy">`:t.tile}</div>
-  <div class="tool-body"><p class="tool-kicker">${t.kicker}</p><h2>${t.title}</h2><p>${t.text}</p><span class="tool-cta">${t.cta} ${arrow}</span></div>
+  <div class="tool-tile${t.photo?' tool-tile-photo':''}">${t.photo?`<img src="${t.photo}" alt="" loading="lazy"><span class="tool-tile-over">${t.over||''}</span>`:t.img?`<img src="${t.img}" alt="" loading="lazy">`:t.tile}</div>
+  <div class="tool-body"><p class="tool-kicker">${t.kicker}</p><h2>${t.title}</h2><p>${t.text}</p>${t.credit?`<p class="tool-credit">${t.credit}</p>`:''}<span class="tool-cta">${t.cta} ${arrow}</span></div>
 </a>`).join('')}</section>`;}
 /* #/quiz and vitalityritual.org/quiz (13 Nov 2026): "Which winter arc are you?"
    Six questions, four results, a story image to share, and the sign-up box
