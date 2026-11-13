@@ -293,11 +293,12 @@ const articleEndSub=()=>`<section class="end-sub" aria-label="Subscribe to the V
   ${editSignup('article-end','sub-email-end')}
 </section>`;
 /* The Winter Arc planner as the headline offer: a text band, so no photo credit needed. */
-const arcPromo=()=>`<section class="arc-promo"><div class="arc-promo-inner">
+const arcPromo=(print=true)=>`<section class="arc-promo"><div class="arc-promo-inner">
   <p class="arc-promo-kicker">Free &middot; The Winter Arc Planner</p>
   <h2>Build your winter arc, free.</h2>
   <p>Answer five quick questions and get a one-page plan for the months ahead: a weekly rhythm, three anchor habits and a goal for each month.</p>
   ${button('Build my plan','#/read/winter-arc-planner','small light')}
+  ${print?`<a class="arc-promo-print" href="#/printable">Or get the free Winter Arc printable ${arrow}</a>`:''}
 </div></section>`;
 /* vitalityritual.org/#/subscribe (and /subscribe/, which forwards here): the one
    sign-up link for bios, pins and Substack. */
@@ -321,7 +322,7 @@ function printablePage(){return `<section class="page-head edit-head sub-page pr
   <div id="print-get">${editSignup('printable','sub-email-print').replace('>Subscribe<','>Get the printable<').replace('First looks at new articles and one thing worth trying. One email a week.','Join the VIRI Edit, a free Sunday email, and your download opens right here. Unsubscribe anytime.')}</div>
 </div></section>
 <section class="wrap print-more"><img class="print-preview" src="assets/printable-preview.jpg" alt="The three pages of the VIRI Winter Arc printable: a habit tracker, thirty days of small habits, and the season ahead" width="1600" height="680">
-  ${arcPromo()}
+  ${arcPromo(false)}
 </section>`;}
 function unlockPrintable(){const box=$('#print-get');if(!box)return;
   box.innerHTML=`<div class="print-done"><p class="edit-sub-kicker">You’re on the list</p>

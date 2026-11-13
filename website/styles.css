@@ -2388,3 +2388,5 @@ section.arc-promo .arc-promo-inner > p:not(.arc-promo-kicker){font-size:16px;lin
 .print-done .edit-sub-kicker{display:block}
 .print-more{padding-bottom:80px}
 .print-preview{display:block;width:100%;height:auto;margin:0 auto clamp(40px,5vw,64px);border:1px solid var(--line)}
+.arc-promo-print{margin-top:18px;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--on-dark);text-decoration:underline;text-underline-offset:4px}
+.arc-promo-print svg{width:12px;height:12px;vertical-align:-1px}
