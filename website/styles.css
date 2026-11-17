@@ -2438,3 +2438,37 @@ section.arc-promo .arc-promo-inner > p:not(.arc-promo-kicker){font-size:16px;lin
 .tool-tile-photo img{object-fit:cover!important;padding:0!important;object-position:50% 35%}
 .tool-tile-over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;font-family:var(--display);font-size:clamp(1.4rem,2.6vw,2rem);line-height:1.2;background:rgba(0,0,0,.22);text-shadow:0 2px 16px rgba(0,0,0,.5)}
 .tool-credit{font-size:11px!important;color:var(--muted);margin:-8px 0 14px!important}
+
+/* Styled cards inside articles (Type A definition, schedule comparison). Substack gets the PNG named in data-img. */
+.article-prose .edit-card{margin:30px auto 36px;max-width:560px;background:var(--paper);border:1px solid var(--line);padding:clamp(22px,4vw,38px)}
+.article-prose .edit-card.is-wide{max-width:none}
+.article-prose .edit-card p{margin:0}
+.article-prose .edit-card .ec-eyebrow{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);text-align:center}
+.article-prose .edit-card .ec-title{font-family:var(--display);text-align:center;font-size:clamp(19px,2.3vw,25px);letter-spacing:.16em;text-transform:uppercase;color:var(--cocoa);margin:10px 0 22px;line-height:1.25}
+.article-prose .edit-card ol,.article-prose .edit-card ul{list-style:none;padding:0;margin:0}
+.article-prose .edit-card li{padding-left:0;margin:0}
+.article-prose .edit-card .ec-traits{counter-reset:ec}
+.article-prose .edit-card .ec-traits li{position:relative;padding:14px 0 14px 46px;border-top:1px solid var(--line);font-size:16px;line-height:1.5;color:var(--muted)}
+.article-prose .edit-card .ec-traits li:last-child{border-bottom:1px solid var(--line)}
+.article-prose .edit-card .ec-traits li::before{counter-increment:ec;content:"0" counter(ec);position:absolute;left:0;top:12px;font-family:var(--display);font-style:italic;font-size:20px;color:var(--cocoa)}
+.article-prose .edit-card .ec-name{display:block;font-family:var(--display);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink);margin-bottom:3px}
+.article-prose .edit-card .ec-src{margin-top:16px;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+.article-prose .edit-card .ec-cols{display:grid;grid-template-columns:1fr 1fr;gap:28px 34px}
+.article-prose .edit-card .ec-label{font-family:var(--display);font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink)}
+.article-prose .edit-card .ec-kicker{font-family:var(--mark);font-style:italic;font-size:19px;color:var(--muted);margin:4px 0 12px}
+.article-prose .edit-card .ec-rows li{display:grid;grid-template-columns:104px 1fr;gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:15px;line-height:1.4;color:var(--ink)}
+.article-prose .edit-card .ec-rows em{color:var(--muted)}
+.article-prose .edit-card .is-old .ec-rows li{color:var(--muted)}
+.article-prose .edit-card .ec-time{font-family:var(--mark);font-style:italic;font-size:16px;color:var(--cocoa)}
+.article-prose .edit-card .ec-bar{border-top:1px solid var(--cocoa);padding-top:12px;font-size:15px;line-height:1.45;color:var(--ink)}
+.article-prose .edit-card .ec-bar span{display:block;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.article-prose .edit-card .ec-week{margin-top:28px;background:var(--cream-2);padding:18px 18px 20px;text-align:center}
+.article-prose .edit-card .ec-week ul{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:12px}
+.article-prose .edit-card .ec-week li{font-size:14px;line-height:1.35;color:var(--ink)}
+.article-prose .edit-card .ec-week em{color:var(--muted)}
+.article-prose .edit-card .ec-n{display:block;font-family:var(--display);font-style:italic;font-size:30px;line-height:1.1;color:var(--cocoa)}
+@media (max-width:640px){
+  .article-prose .edit-card .ec-cols{grid-template-columns:1fr}
+  .article-prose .edit-card .ec-week ul{grid-template-columns:1fr 1fr;row-gap:16px}
+  .article-prose .edit-card .ec-rows li{grid-template-columns:104px 1fr}
+}

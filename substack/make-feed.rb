@@ -20,7 +20,8 @@ arts = list.split(/\n\s*(?=\{id:')/).map { |c|
   f = ->(k) { c[/#{k}:'((?:[^'\\]|\\.)*)'/, 1].to_s.gsub("\\'", "'") }
   { id: f.('id'), category: f.('category'), title: f.('title'), img: f.('img'), author: f.('author'),
     date: f.('date'), desc: f.('desc'), body: c[/body:`(.*?)`\}/m, 1].to_s.gsub('${A}', SITE + 'assets/')
-          .gsub(%r{<div class="prose-pair">(.*?)</div>}m, '\\1') } # Substack has no side-by-side images
+          .gsub(%r{<div class="prose-pair">(.*?)</div>}m, '\\1')
+          .gsub(%r{<div class="edit-card[^"]*" data-img="([^"]+)" data-alt="([^"]*)">.*?<!--/edit-card-->}m) { %(<figure><img src="#{SITE}assets/#{$1}" alt="#{$2}"></figure>) } } # styled cards -> their PNG # Substack has no side-by-side images
 }.compact.reject { |a| SKIP.include?(a[:id]) }.sort_by { |a| a[:date] }
 x = ->(s) { CGI.escapeHTML(s) }
 items = arts.map { |a|
