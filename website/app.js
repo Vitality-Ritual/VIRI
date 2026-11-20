@@ -322,7 +322,7 @@ const TOOLS=[
    cta:'Pick a card',img:'assets/pick-a-card-cover.jpg'},
   {href:'#/workout-quiz',kicker:'Quiz · 1 minute',title:'Which Workout Matches Your Personality?',
    text:'Six quick questions to find the kind of workout you’ll actually stick with, plus three ways to start this week and a result to share to your story.',
-   cta:'Take the quiz',photo:'assets/workout-quiz-cover.jpg',over:'Which workout<br>matches you?',credit:'Photo via Pinterest'},
+   cta:'Take the quiz',photo:'assets/workout-quiz-cover-2.jpg',over:'Which workout<br>matches you?',credit:'Photo via Pinterest'},
   {href:'#/quiz',kicker:'Quiz · 1 minute',title:'Which Winter Arc Are You?',
    text:'Six quick questions to find out what this winter is really about for you, with three habits to start and a result to share to your story.',
    cta:'Take the quiz',photo:'assets/quiz-cover.jpg',over:'Which winter arc<br>are you?',credit:'Photo via Pinterest'},
