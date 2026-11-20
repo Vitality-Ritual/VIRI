@@ -4282,7 +4282,7 @@ function mount(root){
   root.classList.add('pk');
   root.innerHTML=`<ul class="pk-chips" aria-label="Choose a deck">${['all','light','medium','deeper'].map((m,i)=>`<li><button type="button" class="pk-chip" data-mood="${m}" aria-pressed="${i===0}">${m==='all'?'Any':LABEL[m]}</button></li>`).join('')}</ul>
   <div class="pk-spread" id="pk-spread"></div>
-  <div class="pk-under"><button type="button" class="pk-again" id="pk-again">Shuffle</button><button type="button" class="pk-keep" id="pk-keep" aria-pressed="false" hidden>Keep this card</button><span class="pk-hint" id="pk-hint">Pick one</span></div>
+  <div class="pk-under"><button type="button" class="pk-again" id="pk-again">Pick one for me</button><button type="button" class="pk-keep" id="pk-keep" aria-pressed="false" hidden>Keep this card</button><span class="pk-hint" id="pk-hint">Pick one</span></div>
   <section class="pk-kept-wrap" id="pk-kept-wrap" hidden><h3>Your kept cards</h3><p class="pk-note">Come back to these whenever you like. Anything you write stays on this device and goes nowhere else.</p><div class="pk-kept" id="pk-kept"></div></section>
   <p class="pk-fine">Your cards and notes are saved only in this browser.</p><div class="pk-sr" aria-live="polite" id="pk-live"></div>`;
   const q=s=>root.querySelector(s);
@@ -4322,7 +4322,7 @@ function mount(root){
     cards.forEach(c=>{c.classList.remove('chosen');const b=c.querySelector('.pk-inner');b.classList.remove('flipped');b.tabIndex=0;});
     spread.classList.remove('picked');
     timer=setTimeout(assign,was&&!reduce?650:0);
-    hint.textContent='Pick one';again.textContent='Shuffle';current=null;syncKeep();
+    hint.textContent='Pick one';again.textContent='Pick one for me';current=null;syncKeep();
   }
   function pick(i){
     if(picked)return;picked=true;
@@ -4338,7 +4338,7 @@ function mount(root){
     if(isKept(current.t))kept=kept.filter(k=>k.t!==current.t);else kept.push({t:current.t,k:current.k,bg:current.bg,fg:current.fg,e:current.e,note:''});
     saveKept();renderKept();syncKeep();
   });
-  again.addEventListener('click',deal);
+  again.addEventListener('click',()=>{if(picked)deal();else pick(Math.floor(Math.random()*cards.length));});
   root.querySelectorAll('.pk-chip').forEach(b=>b.addEventListener('click',()=>{
     mood=b.dataset.mood;queue=[];
     root.querySelectorAll('.pk-chip').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));
