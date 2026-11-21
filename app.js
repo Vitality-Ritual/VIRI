@@ -908,13 +908,15 @@ const EDIT_QUESTIONS={
   '1':'What’s one habit you’re trying to build right now?',
   '2':'What’s something you’ve always said you’d do “someday”?',
   '3':'What’s one lesson you had to learn the hard way?',
-  '4':'What’s your current go-to breakfast?'
+  '4':'What’s your current go-to breakfast?',
+  '5':'What’s the first thing you cut when your day falls apart?'
 };
 const EDIT_QUESTION_NOTES={
   '1':'Morning runs, less scrolling, an actual budget, anything goes.',
   '2':'A race, a solo trip, a book. Tell me yours.',
   '3':'At work, in a friendship, with money. Tell me yours.',
-  '4':'Sweet or savory, tell me yours.'
+  '4':'Sweet or savory, tell me yours.',
+  '5':'Your workout, your sleep, the to-do list. Tell me yours.'
 };
 let replySent=null;
 function replyPage(issue){
