@@ -325,7 +325,7 @@ const TOOLS=[
   {from:'2026-12-01',href:'#/read/december-checklist',kicker:'Checklist · 4 weeks',title:'The December Checklist',
    text:'Sixteen small activities, spread across the month. Do the ones you like, skip the ones you don’t, and tick them off as you go.',
    cta:'Open the checklist',img:'assets/december-checklist-cover.jpg'},
-  {href:'#/read/pick-a-card',kicker:'Reflection · 1 minute',title:'Pick a Card',
+  {href:'#/read/pick-a-card',kicker:'Reflection · 1 minute',title:'Pick a Card: 24 Questions to Reflect On Before the New Year',
    text:'Five cards, face down. Pick the one you’re drawn to, answer it however you like, and keep the ones you want to write about. Twenty-four questions for the end of the year.',
    cta:'Pick a card',img:'assets/pick-a-card-cover.jpg'},
   {href:'#/workout-quiz',kicker:'Quiz · 1 minute',title:'Which Workout Matches Your Personality?',
