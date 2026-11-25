@@ -12,7 +12,7 @@ require 'time'
 ROOT = File.expand_path('..', __dir__)
 SITE = 'https://vitalityritual.org/'
 # The Substack copy has 15 questions (five a round); the site's interactive deck has 24.
-COVER_FOR_SUBSTACK = { 'pick-a-card' => 'substack-pick-a-card.png', 'december-checklist' => 'substack-december-checklist.png', 'ultimate-guide-2027' => 'substack-guide-2027.png' }  # wide striped card, like the Turning 23 cover
+COVER_FOR_SUBSTACK = { 'pick-a-card' => 'substack-pick-a-card.png', 'december-checklist' => 'substack-december-checklist.png', 'ultimate-guide-2027' => 'substack-guide-2027.png', 'dc-restaurants' => 'substack-dc-restaurants.png' }  # wide striped card, like the Turning 23 cover
 TITLE_FOR_SUBSTACK = { 'pick-a-card' => 'Pick a Card: 15 Questions to Reflect On Before the New Year' }
 SKIP = %w[office-dressing] + ENV.fetch('ALSO_SKIP', '').split(',')
 src = File.read(File.join(ROOT, 'website/app.js'), encoding: 'utf-8')
