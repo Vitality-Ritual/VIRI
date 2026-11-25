@@ -11,6 +11,9 @@ require 'cgi'
 require 'time'
 ROOT = File.expand_path('..', __dir__)
 SITE = 'https://vitalityritual.org/'
+# The Substack copy has 15 questions (five a round); the site's interactive deck has 24.
+COVER_FOR_SUBSTACK = { 'pick-a-card' => 'substack-pick-a-card.png', 'december-checklist' => 'substack-december-checklist.png', 'ultimate-guide-2027' => 'substack-guide-2027.png' }  # wide striped card, like the Turning 23 cover
+TITLE_FOR_SUBSTACK = { 'pick-a-card' => 'Pick a Card: 15 Questions to Reflect On Before the New Year' }
 SKIP = %w[office-dressing] + ENV.fetch('ALSO_SKIP', '').split(',')
 src = File.read(File.join(ROOT, 'website/app.js'), encoding: 'utf-8')
 list = src[/const articles=\[(.*?)\n\];/m, 1] or abort 'articles not found'
@@ -19,28 +22,28 @@ arts = list.split(/\n\s*(?=\{id:')/).map { |c|
   next unless c.start_with?('{id:')
   f = ->(k) { c[/#{k}:'((?:[^'\\]|\\.)*)'/, 1].to_s.gsub("\\'", "'") }
   { id: f.('id'), category: f.('category'), title: f.('title'), img: f.('img'), author: f.('author'),
-    date: f.('date'), desc: f.('desc'), body: c[/body:`(.*?)`\}/m, 1].to_s.gsub('${A}', SITE + 'assets/')
+    date: f.('date'), desc: f.('desc'), body: c[/body:`(.*?)`\}/m, 1].to_s.gsub('${A}', SITE + 'assets/').gsub('href="#/read/', 'href="' + SITE + '#/read/')
           .gsub(%r{<div class="prose-pair">(.*?)</div>}m, '\\1')
           .gsub(%r{<div class="edit-card[^"]*" data-img="([^"]+)" data-alt="([^"]*)">.*?<!--/edit-card-->}m) { %(<figure><img src="#{SITE}assets/#{$1}" alt="#{$2}"></figure>) } } # styled cards -> their PNG # Substack has no side-by-side images
 }.compact.reject { |a| SKIP.include?(a[:id]) }.sort_by { |a| a[:date] }
 x = ->(s) { CGI.escapeHTML(s) }
 items = arts.map { |a|
   t = Time.new(*a[:date].split('-').map(&:to_i), 9, 0, 0, '-04:00')
-  img = SITE + 'assets/' + a[:img]
+  img = SITE + 'assets/' + COVER_FOR_SUBSTACK.fetch(a[:id], a[:img])
   # forms can't run on Substack: swap the reader-favorites box for a link back to the site
   body = a[:body].sub(%r{<div class="fave-reply".*\z}m) { %(<p><strong>What are you loving this month?</strong> Tell me on <a href="#{SITE}#/read/#{a[:id]}">vitalityritual.org</a>, where there’s a box for each category.</p>) }
   html = %(<p><img src="#{img}" alt="#{x.(a[:title])}"></p>) + body +
          %(<p><em>This story first appeared on <a href="#{SITE}#/read/#{a[:id]}">vitalityritual.org</a>.</em></p>)
   <<~ITEM
     <item>
-      <title>#{x.(a[:title])}</title>
+      <title>#{x.(TITLE_FOR_SUBSTACK.fetch(a[:id], a[:title]))}</title>
       <link>#{SITE}read/#{a[:id]}</link>
       <guid isPermaLink="false">viri-#{a[:id]}</guid>
       <pubDate>#{t.rfc2822}</pubDate>
       <dc:creator>#{x.(a[:author])}</dc:creator>
       <category>#{x.(a[:category])}</category>
       <description>#{x.(a[:desc])}</description>
-      <enclosure url="#{img}" type="image/#{a[:img].end_with?('.webp') ? 'webp' : 'jpeg'}" length="0"/>
+      <enclosure url="#{img}" type="image/#{img.end_with?('.webp') ? 'webp' : (img.end_with?('.png') ? 'png' : 'jpeg')}" length="0"/>
       <content:encoded><![CDATA[#{html}]]></content:encoded>
     </item>
   ITEM

@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Find your 2027 word</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Jost:wght@400;500&family=Mea+Culpa&display=swap">
+<style>
+/* Word of the year generator for the 2027 guide (Part 2). Standalone page; the same markup/JS moves into the site as WORDGEN.mount(root).
+   Same family as Pick a Card: flat, straight, warm neutrals, Bodoni + script. */
+:root{
+  --bg:#e9e4dc; --paper:#fbf9f5; --ink:#3b322a; --muted:#665a4e; --line:#d6cec2; --taupe:#7d6d60; --taupe-light:#bfb1a3;
+  --chip:#fbf9f5; --chip-on:#3b322a; --chip-on-ink:#f4efe8; --accent:#8C3B2E; --accent-ink:#f4efe8;
+  --display:'Bodoni Moda',Didot,Georgia,serif; --body:'Jost',system-ui,-apple-system,'Segoe UI',sans-serif; --script:'Mea Culpa','Snell Roundhand','Apple Chancery',cursive;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#2a221c; --paper:#342a23; --ink:#f1ebe3; --muted:#b9ab9c; --line:#4a3d33; --taupe:#a8998a; --taupe-light:#6a5b4f;
+  --chip:#2a221c; --chip-on:#f1ebe3; --chip-on-ink:#2a221c; --accent:#b4503f; --accent-ink:#f4efe8; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#2a221c; --paper:#342a23; --ink:#f1ebe3; --muted:#b9ab9c; --line:#4a3d33; --taupe:#a8998a; --taupe-light:#6a5b4f;
+  --chip:#2a221c; --chip-on:#f1ebe3; --chip-on-ink:#2a221c; --accent:#b4503f; --accent-ink:#f4efe8; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);-webkit-font-smoothing:antialiased;
+  padding-block:clamp(24px,5vw,64px);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wg{max-width:680px;margin:0 auto}
+.wg .script{font-family:var(--script);font-size:clamp(34px,6vw,48px);color:var(--taupe);line-height:1;margin:0 0 4px}
+.wg h1{font-family:var(--display);font-weight:400;font-size:clamp(38px,8vw,64px);line-height:1;letter-spacing:-.01em;margin:0 0 14px;text-wrap:balance}
+.wg h1 em{font-style:italic}
+.wg .lede{font-size:17px;line-height:1.55;color:var(--muted);max-width:44ch;margin:0 0 clamp(26px,5vw,40px)}
+.wg fieldset{border:0;border-top:1px solid var(--line);margin:0;padding:22px 0 8px;min-width:0}
+.wg legend{padding:0;float:left;width:100%;font-family:var(--display);font-size:clamp(22px,4vw,26px);line-height:1.2;margin:0 0 4px}
+.wg legend small{display:block;font-family:var(--body);font-size:14px;color:var(--muted);margin-top:4px;letter-spacing:.01em}
+.wg .chips{clear:both;display:flex;flex-wrap:wrap;gap:10px;list-style:none;padding:14px 0 0;margin:0}
+.wg .chip{font:500 15px/1 var(--body);letter-spacing:.02em;color:var(--ink);background:var(--chip);border:1px solid var(--taupe-light);border-radius:999px;padding:12px 18px;min-height:44px;cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+.wg .chip:hover{border-color:var(--ink)}
+.wg .chip[aria-pressed="true"]{background:var(--chip-on);color:var(--chip-on-ink);border-color:var(--chip-on)}
+.wg .chip:focus-visible,.wg .btn:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.wg .go{display:flex;align-items:center;flex-wrap:wrap;gap:16px;margin:26px 0 6px;border-top:1px solid var(--line);padding-top:26px}
+.wg .btn{font:500 13px/1 var(--body);letter-spacing:.16em;text-transform:uppercase;border-radius:999px;padding:16px 24px;min-height:48px;cursor:pointer;border:1px solid var(--ink);background:none;color:var(--ink)}
+.wg .btn.primary{background:var(--ink);color:var(--paper)}
+.wg .btn[disabled]{opacity:.45;cursor:default}
+.wg .hint{font-size:14px;color:var(--muted)}
+/* the result card: flat, straight, one big word */
+.wg .result{margin-top:30px}
+.wg .wcard{position:relative;background:var(--accent);color:var(--accent-ink);padding:clamp(36px,8vw,64px) clamp(22px,6vw,48px) clamp(30px,6vw,44px);text-align:center;box-shadow:inset 0 0 0 1px rgba(244,239,232,.18)}
+.wg .wcard::before{content:"";position:absolute;inset:14px;border:1px solid currentColor;opacity:.4;pointer-events:none}
+.wg .wcard .s{font-family:var(--script);font-size:clamp(30px,6vw,42px);line-height:1;opacity:.92}
+.wg .wcard .w{font-family:var(--display);font-style:italic;font-weight:400;font-size:clamp(52px,15vw,104px);line-height:1.04;letter-spacing:-.01em;margin:10px 0 14px;overflow-wrap:anywhere}
+.wg .wcard .m{font-size:clamp(16px,2.4vw,19px);line-height:1.5;max-width:30ch;margin:0 auto;opacity:.95}
+.wg .wcard .v{margin-top:26px;font-size:12px;letter-spacing:.34em;padding-left:.34em;text-transform:uppercase;opacity:.8}
+.wg .acts{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}
+.wg .check{font-size:15px;line-height:1.5;color:var(--muted);margin:18px 0 0;max-width:50ch}
+.wg .kept{margin-top:40px;border-top:1px solid var(--line);padding-top:24px}
+.wg .kept h2{font-family:var(--display);font-weight:400;font-size:26px;margin:0 0 6px}
+.wg .kept p{font-size:14px;color:var(--muted);margin:0 0 14px}
+.wg .kept ul{list-style:none;margin:0;padding:0}
+.wg .kept li{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.wg .kept li span{font-family:var(--display);font-style:italic;font-size:28px}
+.wg .kept li small{font-size:14px;color:var(--muted);flex:1;margin-left:6px}
+.wg .kept li button{font:500 12px/1 var(--body);letter-spacing:.14em;text-transform:uppercase;background:none;border:0;color:var(--muted);cursor:pointer;padding:12px 4px;min-height:44px}
+.wg .fine{font-size:13px;color:var(--muted);margin-top:30px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.wg .chip{transition:none}}
+</style>
+</head>
+<body>
+<div class="wg" id="wordgen"></div>
+<script>
+/* ---------- the word bank ----------
+   t = tags a word answers to. Three question sets feed it:
+   areas (what matters most), verbs (what you want more of), feelings (how you want to feel). */
+const AREAS=[['health','Health'],['career','Career'],['money','Money'],['relationships','Relationships'],['learning','Learning'],['fun','Fun']];
+const VERBS=[['rest','Rest'],['create','Creating'],['move','Moving'],['save','Saving'],['connect','Connecting'],['learn','Learning new things'],['finish','Finishing'],['simplify','Simplifying'],['start','Starting'],['decline','Saying no'],['play','Playing'],['build','Building']];
+const FEELS=[['calm','Calm'],['confident','Confident'],['energized','Energized'],['free','Free'],['grounded','Grounded'],['focused','Focused'],['playful','Playful'],['brave','Brave'],['soft','Soft'],['organized','Organized'],['light','Light'],['abundant','Abundant']];
+const BANK=[
+ ['Rest','Permission to stop earning your downtime.','health rest calm soft'],
+ ['Ease','Doing things the simpler way, on purpose.','simplify calm light free career'],
+ ['Enough','Knowing that what you have, and what you’ve done, counts.','money simplify calm grounded abundant'],
+ ['Courage','Doing it while you’re still a little scared.','start brave confident career relationships'],
+ ['Consistency','Small and steady beats big and rare.','build finish grounded focused health career'],
+ ['Bold','Taking up more space and asking for more.','start brave confident career'],
+ ['Gentle','Talking to yourself like someone you love.','soft calm rest health relationships'],
+ ['Focus','Fewer things, done properly.','focused simplify finish career learning'],
+ ['Play','Making room for things with no point.','play playful fun light free'],
+ ['Bloom','Growing at your own pace, in your own season.','learn create soft abundant health learning'],
+ ['Rooted','Staying steady while everything around you moves.','grounded calm build health relationships'],
+ ['Spark','Following whatever lights you up.','create energized playful fun learning'],
+ ['Clarity','Knowing what you want and saying it plainly.','focused confident simplify career money'],
+ ['Abundance','Expecting more good, not just less bad.','abundant money free light'],
+ ['Build','One brick at a time.','build career money finish organized'],
+ ['Finish','Closing the loops you keep leaving open.','finish organized focused career learning'],
+ ['Begin','Starting before you feel ready.','start brave energized career learning'],
+ ['Simplify','Less on the list, more in your day.','simplify calm organized light money'],
+ ['Connect','Showing up for the people who matter.','connect relationships soft playful'],
+ ['Present','Being where your feet are.','grounded calm relationships health fun'],
+ ['Glow','Feeling good in your own skin.','health confident energized soft'],
+ ['Strong','A body and a mind that can carry you.','move health confident build'],
+ ['Move','Letting your body lead more often.','move health energized free'],
+ ['Nourish','Feeding yourself well, in every sense.','health soft grounded abundant'],
+ ['Balance','Room for work, rest, and everything in between.','rest health calm grounded career'],
+ ['Intentional','Choosing on purpose, not by default.','focused organized simplify money career'],
+ ['Curious','Asking more questions than you answer.','learn playful free learning'],
+ ['Explore','Going somewhere new, big or small.','learn fun free playful energized'],
+ ['Adventure','Saying yes to what scares and thrills you.','fun brave free energized'],
+ ['Joy','Counting the good stuff, and making more of it.','fun playful light abundant'],
+ ['Freedom','Fewer shoulds, more choices.','free decline light money'],
+ ['Boundaries','Saying no without writing a speech.','decline confident relationships career grounded'],
+ ['Release','Letting go of what’s already finished with you.','decline simplify light free soft'],
+ ['Trust','Believing it can work out.','calm brave relationships grounded'],
+ ['Patience','Letting good things take their time.','calm build grounded soft money'],
+ ['Discipline','Doing it when you don’t feel like it.','build focused finish organized health'],
+ ['Momentum','One win leading to the next.','energized build start finish career'],
+ ['Thrive','Wanting more than just getting by.','energized abundant confident career health'],
+ ['Wealth','Building something that outlasts the paycheck.','save money build abundant organized'],
+ ['Secure','Enough saved to sleep well.','save money calm grounded organized'],
+ ['Invest','Putting time and money where you want things to grow.','save money learn learning build career'],
+ ['Declutter','Clearing space, inside and out.','simplify organized light calm'],
+ ['Create','Making things for no reason but wanting to.','create playful free fun learning'],
+ ['Soft','Being kind to yourself without making it a project.','soft rest calm health'],
+ ['Kind','To other people, and to yourself.','relationships soft connect calm'],
+ ['Steady','Showing up even when it isn’t exciting.','build grounded health career focused finish'],
+ ['Lighten','Taking things a little less seriously.','light playful rest calm fun'],
+ ['Choose','Making the decision and moving on.','decline confident focused career relationships'],
+ ['Open','To people, plans, and surprises.','connect relationships free playful brave'],
+ ['Shine','Letting yourself be seen.','confident brave career energized'],
+ ['Home','Making your space feel like yours.','simplify organized rest soft fun'],
+ ['Becoming','Not who you should be, but who you’re turning into.','learning brave soft grounded learn'],
+ ['Alive','Feeling it all, on an ordinary day.','energized playful move fun'],
+ ['Savor','Slowing down enough to enjoy it.','rest calm fun relationships grounded'],
+ ['Reset','Starting over any day, not just January.','start rest calm simplify'],
+ ['Leap','Taking the jump you keep looking at.','start brave career energized'],
+ ['Worthy','Not having to earn the good things.','confident soft abundant relationships money'],
+ ['Wild','A little less planned, a little more you.','free playful brave fun energized'],
+ ['Whole','All of you, not just the productive part.','soft grounded rest health relationships'],
+].map(([w,m,t])=>({w,m,t:t.split(' ')}));
+
+const KEY='viri-2027-word-v1';
+const COLORS=[['#8C3B2E','#f4efe8'],['#5a4433','#f4efe8'],['#7d6d60','#f4efe8'],['#73301F','#f4efe8'],['#4a392d','#f4efe8']];
+
+const WORDGEN=(()=>{
+function mount(root){
+  const pick={areas:new Set(),verbs:new Set(),feels:new Set()};
+  let shown=[],cur=null,colorI=0,kept=[];
+  try{kept=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){}
+  const chips=(grp,list)=>list.map(([k,l])=>`<li><button type="button" class="chip" data-g="${grp}" data-k="${k}" aria-pressed="false">${l}</button></li>`).join('');
+  root.innerHTML=`
+  <p class="script">need some help?</p>
+  <h1>Find your <em>2027 word</em></h1>
+  <p class="lede">Answer as many or as few as you like. We’ll suggest a word. Don’t love it? Ask for another one until one feels right.</p>
+  <fieldset><legend>What matters most to you right now?<small>Pick any</small></legend><ul class="chips">${chips('areas',AREAS)}</ul></fieldset>
+  <fieldset><legend>What do you want more of next year?<small>Pick any</small></legend><ul class="chips">${chips('verbs',VERBS)}</ul></fieldset>
+  <fieldset><legend>How do you want to feel?<small>Pick any</small></legend><ul class="chips">${chips('feels',FEELS)}</ul></fieldset>
+  <div class="go"><button type="button" class="btn primary" id="wg-go" disabled>Find my word</button><span class="hint" id="wg-hint">Pick at least one above</span></div>
+  <div class="result" id="wg-result" hidden></div>
+  <section class="kept" id="wg-kept" hidden><h2>Words you’ve kept</h2><p>Come back to these whenever you like. They stay on this device and go nowhere else.</p><ul id="wg-kept-list"></ul></section>
+  <p class="fine">Nothing you pick is sent anywhere.</p>
+  <div class="sr" aria-live="polite" id="wg-live"></div>`;
+  const q=s=>root.querySelector(s);
+  const go=q('#wg-go'),hint=q('#wg-hint'),res=q('#wg-result'),keptEl=q('#wg-kept'),keptList=q('#wg-kept-list'),live=q('#wg-live');
+  const total=()=>pick.areas.size+pick.verbs.size+pick.feels.size;
+  function sync(){const n=total();go.disabled=n===0;hint.textContent=n?`${n} picked`:'Pick at least one above'}
+  root.addEventListener('click',e=>{
+    const c=e.target.closest('.chip');
+    if(c){const s=pick[c.dataset.g];const on=c.getAttribute('aria-pressed')!=='true';c.setAttribute('aria-pressed',on);on?s.add(c.dataset.k):s.delete(c.dataset.k);shown=[];sync()}
+  });
+  function score(it){let n=0;for(const g of Object.values(pick))for(const k of g)if(it.t.includes(k))n++;return n}
+  function choose(){
+    let pool=BANK.map(it=>({it,s:score(it)}));
+    const best=Math.max(...pool.map(p=>p.s));
+    // everything within one point of the best match is a fair suggestion; skip the ones already shown
+    let ok=pool.filter(p=>p.s>=Math.max(1,best-1)&&!shown.includes(p.it.w));
+    if(!ok.length){shown=[];ok=pool.filter(p=>p.s>=Math.max(1,best-1))}
+    if(!ok.length)ok=pool;
+    // weight the strongest matches a little more
+    const bag=[];ok.forEach(p=>{for(let i=0;i<(p.s===best?3:1);i++)bag.push(p.it)});
+    return bag[Math.floor(Math.random()*bag.length)];
+  }
+  function show(it){
+    cur=it;shown.push(it.w);colorI=(colorI+1)%COLORS.length;
+    const [bg,fg]=COLORS[colorI];
+    const isKept=kept.some(k=>k.w===it.w);
+    res.hidden=false;
+    res.innerHTML=`<div class="wcard" id="wg-card" style="background:${bg};color:${fg}"><div class="s">your 2027 word</div><div class="w">${it.w}</div><p class="m">${it.m}</p><div class="v">The VIRI Edit</div></div>
+    <div class="acts"><button type="button" class="btn primary" id="wg-again">Another word</button><button type="button" class="btn" id="wg-keep" aria-pressed="${isKept}">${isKept?'Kept':'Keep this word'}</button><button type="button" class="btn" id="wg-save">Save as image</button></div>
+    <p class="check">Does it fit? Hold it up to your three themes. If it feels a little exciting, and something you’d say to yourself on a hard day, it’s the one.</p>`;
+    live.textContent=`Suggested word: ${it.w}. ${it.m}`;
+    q('#wg-again').onclick=()=>show(choose());
+    q('#wg-keep').onclick=keep;
+    q('#wg-save').onclick=()=>saveImage(it,bg,fg);
+  }
+  go.onclick=()=>{shown=[];show(choose());res.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'nearest'})};
+  function keep(){
+    if(!cur)return;
+    const i=kept.findIndex(k=>k.w===cur.w);
+    if(i>-1)kept.splice(i,1);else kept.push({w:cur.w,m:cur.m});
+    try{localStorage.setItem(KEY,JSON.stringify(kept))}catch(e){}
+    const b=q('#wg-keep');const on=i<0;b.setAttribute('aria-pressed',on);b.textContent=on?'Kept':'Keep this word';
+    renderKept();
+  }
+  function renderKept(){
+    keptEl.hidden=!kept.length;
+    keptList.innerHTML=kept.map((k,i)=>`<li><span>${k.w}</span><small>${k.m}</small><button type="button" data-rm="${i}" aria-label="Remove ${k.w}">Remove</button></li>`).join('');
+  }
+  keptList.addEventListener('click',e=>{
+    const b=e.target.closest('[data-rm]');if(!b)return;
+    kept.splice(+b.dataset.rm,1);try{localStorage.setItem(KEY,JSON.stringify(kept))}catch(e){}
+    renderKept();const kb=q('#wg-keep');if(kb&&cur){const on=kept.some(k=>k.w===cur.w);kb.setAttribute('aria-pressed',on);kb.textContent=on?'Kept':'Keep this word'}
+  });
+  // "Save as image": a 1080x1350 card drawn on a canvas, for a story or a screenshot-free share
+  async function saveImage(it,bg,fg){
+    try{
+      await Promise.all([document.fonts.load("italic 120px 'Bodoni Moda'"),document.fonts.load("80px 'Mea Culpa'"),document.fonts.load("22px Jost")]);
+      const W=1080,H=1350,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+      x.fillStyle=bg;x.fillRect(0,0,W,H);
+      x.strokeStyle=fg;x.globalAlpha=.4;x.lineWidth=2;x.strokeRect(54,54,W-108,H-108);x.globalAlpha=1;
+      x.fillStyle=fg;x.textAlign='center';
+      x.font="96px 'Mea Culpa'";x.fillText('my 2027 word',W/2,330);
+      let size=280;x.font=`italic ${size}px 'Bodoni Moda'`;
+      while(x.measureText(it.w).width>W-220&&size>80){size-=8;x.font=`italic ${size}px 'Bodoni Moda'`}
+      x.fillText(it.w,W/2,H/2+size*.28);
+      // meaning, wrapped
+      x.font="34px Jost";const words=it.m.split(' ');let line='',y=H/2+size*.28+110;const lines=[];
+      for(const w of words){const t=line?line+' '+w:w;if(x.measureText(t).width>W-340&&line){lines.push(line);line=w}else line=t}
+      lines.push(line);x.globalAlpha=.95;lines.forEach((l,i)=>x.fillText(l,W/2,y+i*50));x.globalAlpha=.8;
+      x.font="500 24px Jost";x.letterSpacing='8px';x.fillText('THE VIRI EDIT',W/2+4,H-120);x.letterSpacing='0px';
+      const blob=await new Promise(r=>c.toBlob(r,'image/png'));
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`my-2027-word-${it.w.toLowerCase()}.png`;document.body.appendChild(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    }catch(e){live.textContent='Could not save the image. A screenshot of the card works too.'}
+  }
+  renderKept();sync();
+  // ?demo=Ease&pick=calm,rest  (used to render the preview image; harmless otherwise)
+  const sp=new URLSearchParams(location.search);
+  if(sp.has('demo')){
+    document.documentElement.dataset.theme='light';
+    (sp.get('pick')||'').split(',').filter(Boolean).forEach(k=>{const b=root.querySelector(`.chip[data-k="${k}"]`);if(b)b.click()});
+    const it=BANK.find(b=>b.w.toLowerCase()===sp.get('demo').toLowerCase());if(it){colorI=-1;show(it)}
+  }
+}
+return{mount};
+})();
+WORDGEN.mount(document.getElementById('wordgen'));
+</script>
+</body>
+</html>
